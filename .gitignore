@@ -1,0 +1,20 @@
+# Ignore STM32CubeIDE build files
+project/Debug/
+project/Release/
+*.elf
+*.list
+*.map
+*.o
+*.d
+*.su
+*.cyclo
+*.mk
+
+# Ignore CubeIDE settings (optional)
+.project
+.cproject
+.settings/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
