@@ -1,0 +1,2 @@
+../Core/Src/camera_snapshot.c:15:5:camera_init	8	static
+../Core/Src/camera_snapshot.c:19:5:camera_snapshot	16	static
