@@ -9,7 +9,7 @@ typedef struct {
     float gyroscope_axis_1;
     float gyroscope_axis_2;
     float gyroscope_axis_3;
-} SensorData;
+} SensorsData;
 
 
 void init_sensors(void);
