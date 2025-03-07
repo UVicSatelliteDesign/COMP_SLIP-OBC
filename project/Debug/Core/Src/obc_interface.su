@@ -1,0 +1,2 @@
+../Core/Src/obc_interface.c:10:6:store_data	4	static
+../Core/Src/obc_interface.c:15:6:store_image	4	static
