@@ -1,2 +1,6 @@
-../Core/Src/obc_interface.c:10:6:store_data	1
-../Core/Src/obc_interface.c:15:6:store_image	1
+../Core/Src/obc_interface.c:22:6:mount_SD	2
+../Core/Src/obc_interface.c:32:6:format_SD	3
+../Core/Src/obc_interface.c:46:6:setup_SD	3
+../Core/Src/obc_interface.c:61:6:store_data	23
+../Core/Src/obc_interface.c:121:6:store_image	2
+../Core/Src/obc_interface.c:137:6:unmount_SD	1
