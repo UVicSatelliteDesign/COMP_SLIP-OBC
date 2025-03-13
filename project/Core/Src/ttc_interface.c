@@ -6,9 +6,18 @@
 #define MAX_ATTEMPTS 5 //maximum number of attempts
 #define PACKET_SIZE 8 //maximum data chunk transmitted in one SPI transmission
 
-//Port and Pin Definitions
-#define Transciever_CS GPIO_PIN_x //Chip select pin place holder
-#define Transciever_GPIO_Port GPIOx //Transciever port placeholder
+//CC12x ports
+#define CC12_CSn_GPIO                      GPIOx //Chip select port
+#define CC12_SPI_GPIO                      GPIOx //SPI port
+#define CC12_Event_GPIO                    GPIOx //GPIO place holder for interrupts (if used), must have EXTI
+
+//CC12x pins
+#define CC12_CSn_PIN                      GPIO_PIN_x //Chip select pin place holder
+#define CC12_SI_PIN                       GPIO_PIN_x //SPI MOSI compatible pin place holder
+#define CC12_SO_PIN                       GPIO_PIN_x //SPI MISO compatible pin place holder
+#define CC12_SCLK_PIN                     GPIO_PIN_x //Serial clock placeholder for the tranciever
+#define CC12_Event_PIN                    GPIO_PIN_x //GPIO place holder for interrupts (if used), must have EXTI
+
 
 HAL_StatusTypeDef status;
 
