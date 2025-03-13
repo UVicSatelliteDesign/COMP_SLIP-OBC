@@ -1,0 +1,54 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <signal.h>
+#include <pthread.h>
+#include <unistd.h>
+
+// Global dirty bit
+volatile int dirty_bit = 0;
+
+// Semaphore (as a simple counter)
+volatile int semaphore = 0;
+
+// Interrupt Service Routine (ISR) - Simulated with a signal handler
+void interrupt_handler(int signum) {
+    // Modify semaphore in ISR
+    semaphore++;
+    
+    // Set dirty bit to indicate change
+    dirty_bit = 1;
+    
+    printf("[Interrupt] Semaphore updated. Dirty bit set.\n");
+}
+
+// Function to simulate an interrupt event
+void* simulate_interrupt(void* arg) {
+    while (1) {
+        sleep(2); // Simulate hardware event timing
+        raise(SIGUSR1); // Trigger the interrupt
+    }
+    return NULL;
+}
+
+int main() {
+    // Register the signal handler for simulated interrupt
+    signal(SIGUSR1, interrupt_handler);
+
+    // Thread to simulate interrupt occurring
+    pthread_t int_thread;
+    pthread_create(&int_thread, NULL, simulate_interrupt, NULL);
+
+    // Main loop
+    while (1) {
+        if (dirty_bit) {
+            // Process semaphore update
+            printf("[Main] Detected semaphore change: %d\n", semaphore);
+            
+            // Clear dirty bit after processing
+            dirty_bit = 0;
+        }
+        usleep(500000); // Small delay to simulate main program work
+    }
+
+    return 0;
+}
