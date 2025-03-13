@@ -37,13 +37,10 @@ void transmit(uint16_t *data, uint16_t data_size){
     return HAL_ERROR; //this can be changed
   }
 
-  //first while loop 
-  while(byte_offset < sizeof(data_size)){
-    data_chunk_size = (data_size - byte_offset) > PACKET_SIZE ? PACKET_SIZE : (data_size - byte_offset); 
-    timeout_count = 0; 
+
     while((ack ==0) && (timeout_count< MAX_ATTEMPTS)){
       //Drive chip select low (acivate) before transmission
-      HAL_GPIO_WritePin(Transciever_GPIO_Port, Transciever_CS, GPIO_PIN_RESET);
+      CC12_Select();
 
       //Get the status of the HAL transmission
       status = HAL_SPI_TRANSMIT(hspi, &data[byte_offset], data_chunk_size, TRANS_TIMEOUT);
@@ -58,5 +55,23 @@ void transmit(uint16_t *data, uint16_t data_size){
     byte_offset += data_chunk_size;
   }
   //Drive high to deactivate
-  HAL_GPIO_WritePin(Transcievr_GPIO_Port, Transcievr_CS, GPIO_PIN_SET);
+   CC12_Deselect();
+}
+
+
+//*****************SPI Read Write Helpers CC12******************
+//enable SPI (make active by setting low
+void CC12_Select(){
+      HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_RESET);
+}
+
+//disable SPI by driving high (do this at end of transmission)
+void CC12_Deselect(){
+      HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_SET);
+}
+//*********************Helpers for TX communication*************
+//Used to set a single register (configuration)
+void CC12_Set_Register(uint8_t reg, uint8_t value){
+  CC12_Select();
+  CC12_SPI_Transfer
 }
