@@ -112,17 +112,21 @@ void store_data(uint8_t data[MAX_DATA_SIZE], int type){
 }
 
 // Store images on SD card
-void store_image(/* TODO: arguments (JPEG data) */){
-	uint8_t size = strlen("UVR-SLIP/Images/image.txt") + 10;
+void store_image(uint8_t data[IMAGE_BUFFER_SIZE]){
+	uint8_t size = strlen("UVR-SLIP/Images/image.jpeg") + 10;
 	char path[size];
-	snprintf(path, size, "UVR-SLIP/Images/image%04d.txt", image_count);
+	snprintf(path, size, "UVR-SLIP/Images/image%04d.jpeg", image_count);
 	res = f_open(&SDFile, path, FA_CREATE_ALWAYS | FA_WRITE);
 	if (res != FR_OK){
 		// TODO: implement error handling
 		Error_Handler();
 	}
 
-	// TODO: store JPEG data in opened file
+	res = f_write(&SDFile, data, strlen((char *)data), (void *)&byteswritten);
+	if((byteswritten == 0) || (res != FR_OK)){
+		// TODO: implement error handling
+		Error_Handler();
+	}
 
 	f_close(&SDFile);
 	image_count++;
