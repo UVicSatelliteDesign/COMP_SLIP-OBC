@@ -32,6 +32,7 @@ typedef struct {
   uint8_t *data; //pointer to the dynamically allocated data buffer
   uint8_t length; //length of the data in bytes
   uint8_t retries; //number of retransmissions for this packet
+  bool ack_req; //if this data type requires an acknowledgement, set by data packager
 }TxPayload_t;
 
 
@@ -50,47 +51,72 @@ void vTransmitTask(void *pvParameters){
   while(1){
     //wait for data to be placed on queue
     if(xQueueReceive(txQueue, &txBuffer, portMAX_DELAY) == pdPASS){
-      //check if the pointer on the queue is valid
-      if(txBuffer != NULL && txBuffer->data != NULL){
-        // check the TX FIFO space
-        status = cc120xGetTxStatus();
-        if((status & 0xF0) == 0xF0){
-          // wait for FIFO to clear or handle a timeout
-          
-          //Handle timeout: reset FIFO or return error 
-          
-          //then transmit
-        }
-        // write the packet length first: we use variable packet mode
-        status = cc120xSpiWriteTxFifo(&txBuffer->length, 1);//the size of the packet should always be just one byte
-        if(status!=0){
-          //free memory before exiting
-          free(txBuffer->data); //free the data buffer in the structure
-          free(txBuffer); //free the data structure
-          continue;
-        }
-        //now write the data
-        status = cc120xSpiWriteTxFifo(txBuffer->data, txBuffer->length);//
-        if(status !=0){
-          //free memory before exiting
-          free(txBuffer->data); //free the data buffer in the structure
-          free(txBuffer); //free the data structure
-          continue;
-        }
- 
-        // trigger transmission: send TX Strobe command
-        status = cc120xSpiCmdStrobe(CC120X_STX);
-        // wait for transmission to complete
-
-        
-        
-        // free after transmission
-        free(txBuffer->data);
-        free(txBuffer);
-
+      status = transmit(txBuffer)
+      handle_tx_memory(txBuffer);
       }
-    }
   }
 }
+
+//transmits the data and sends specific error codes to allow for better handling/more customizable behaviot
+tx_status_t transmit(TxPayload_t *txBuffer){
+  rfStatus_t status;
+
+  if(txBuffer == NULL || txBuffer->data == NULL){
+    return TX_ERROR_NULL_BUFFER;
+  }
+
+  //retry transimission up to txBuffer-> retries
+  for(uint8_t attempt = 0; attempt <= txBuffer->retries; attempt++){
+    //check for space on the buffer
+    if((cc120xGetTxStatus() & 0xF0) == 0xF0){
+      
+          // wait for FIFO to clear or handle a timeout        
+          //Handle timeout: reset FIFO or return error 
+    }
+    //write the length first
+    status = cc120xSpiWriteTxFifo(&txBuffer->length, 1);//the size of the packet should always be just one byte
+      if (status == 0xF0) // FIFO Full
+      {
+          cc120xSpiCmdStrobe(CC120X_SFTX); // Flush TX FIFO
+          continue; // Retry
+      }
+      else if (status == 0xFF) // SPI Failure
+      {
+          return TX_ERROR_SPI_FAILURE;
+      }
+    //write data payload
+    status = cc120xSpiWriteTxFifo(txBuffer->data, txBuffer->length);//
+      if (status == 0xF0) //FIFO Full
+      {
+          cc120xSpiCmdStrobe(CC120X_SFTX); // Flush TX FIFO
+          continue; // Retry
+      }
+
+      //check for SPI Failure
+      if (status == 0xFF){
+          
+          continue; // Retry
+      }
+
+    // trigger transmission: send TX Strobe command
+    status = cc120xSpiCmdStrobe(CC120X_STX);
+    // wait for transmission to complete
+    while((cc120xGetTxStatus() & 0x70)==0x20){
+      //measure time and timeout
+    }
+}
+
+//free memory
+void handle_tx_memory(TxPayload_t *txBuffer){
+  if(txBuffer != NULL){
+    free(txBuffer->data);
+    free(txBuffer);
+  }
+}
+//get the error message type
+type get_tx_error(something){
+//complete implementation
+}
+//transmit message function
 
 
