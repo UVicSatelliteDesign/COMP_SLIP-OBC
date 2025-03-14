@@ -1,43 +1,28 @@
 #include "obc.h"
-#include <math.h>
+#include <stdio.h>
+#include <string.h>
 
+extern UART_HandleTypeDef huart3; // Use UART for debugging
 
-/*
-xTaskCreate(BMS_Task, "BMS", 256, NULL, 2, NULL);
-vTaskStartScheduler(); // Start FreeRTOS scheduler
-*/
-// Put these in main two in main ^
+void OBC_Task(void *argument) {
+    BatteryData receivedData;
+    char message[100]; // Buffer for UART messages
 
-void init_bms() {
-    HAL_ADC_Start(&hadc1);
-}
+    while (1) {
+        // Wait for data from BMS queue
+        if (osMessageQueueGet(bmsQueue, &receivedData, NULL, osWaitForever) == osOK) {
+            // Convert float values to strings and send via UART
+            snprintf(message, sizeof(message),
+                     "[OBC] Battery: V=%d.%02dV, I=%d.%02dA, SoC=%d.%02d%%, Power=%d.%02dW, Energy=%d.%02dWh\n",
+                     (int)receivedData.voltage, (int)(receivedData.voltage * 100) % 100,
+                     (int)receivedData.current, (int)(receivedData.current * 100) % 100,
+                     (int)receivedData.state_of_charge, (int)(receivedData.state_of_charge * 100) % 100,
+                     (int)receivedData.power_usage, (int)(receivedData.power_usage * 100) % 100,
+                     (int)receivedData.total_energy_used, (int)(receivedData.total_energy_used * 100) % 100);
 
-float read_battery_voltage() {
-    HAL_ADC_PollForConversion(&hadc1, 100);
-    uint32_t raw = HAL_ADC_GetValue(&hadc1);
-    return (raw / 4095.0) * 3.3 * 11;
-}
+            HAL_UART_Transmit(&huart3, (uint8_t *)message, strlen(message), HAL_MAX_DELAY);
+        }
 
-float read_battery_current() {
-    HAL_ADC_PollForConversion(&hadc2, 100);
-    uint32_t raw = HAL_ADC_GetValue(&hadc2);
-    return (raw / 4095.0) * 3.3 / 0.01;
-}
-
-float read_battery_temperature() {
-    HAL_ADC_PollForConversion(&hadc3, 100);
-    uint32_t raw = HAL_ADC_GetValue(&hadc3);
-    float resistance = (10000 * raw) / (4095 - raw);
-    return 1 / (0.001129148 + (0.000234125 * log(resistance))) - 273.15;
-}
-
-BatteryData get_battery_data() {
-    BatteryData data;
-    data.voltage = read_battery_voltage();
-    data.current = read_battery_current();
-    data.temperature = read_battery_temperature();
-    data.state_of_charge = (data.voltage - 3.4) / (4.2 - 3.4) * 100.0; // Example SoC
-    data.state_of_health = 90.0; // Placeholder SoH
-
-    return data;
+        osDelay(5000); // Update every 5 seconds
+    }
 }

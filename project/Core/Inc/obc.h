@@ -2,17 +2,12 @@
 #define SRC_OBC_H_
 
 #include "stm32h7xx_hal.h"
+#include "obc_interface.h"
 
-typedef struct {
-    float voltage;
-    float current;
-    float temperature;
-    float state_of_charge;
-    float state_of_health;
-} BatteryData;
+// RTOS Queue for receiving battery data from BMS
+extern osMessageQueueId_t bmsQueue;
 
-void init_bms(void);
-BatteryData get_battery_data(void);
-
+// Function prototypes
+void OBC_Task(void *argument);
 
 #endif /* SRC_OBC_H_ */
