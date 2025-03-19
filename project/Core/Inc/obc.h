@@ -3,6 +3,7 @@
 
 #include "stm32h7xx_hal.h"
 #include "obc_interface.h"
+// #include "cmsis_os.h"
 
 // RTOS Queue for receiving battery data from BMS
 extern osMessageQueueId_t bmsQueue;
