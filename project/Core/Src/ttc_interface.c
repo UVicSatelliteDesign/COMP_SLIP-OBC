@@ -32,7 +32,7 @@ void transmit(){
   CC12_SendCommand(CC12_TRANS_START);
 }
 
-void writeToTransmitBuffer(uint8_t *data){
+void writeToTransmitBuffer(uint8_t *data, uint16 length){
   //pull cs low to start spi communication
   HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_RESET);
 
@@ -40,10 +40,14 @@ void writeToTransmitBuffer(uint8_t *data){
   while(HAL_GPIO_ReadPin(CC12_SPI_GPIO,CC12_SO_PIN));
 
   //send the burst command
-  CC12_SendCommand(CC12_BURST_TRANS);
+  CC12_SendCommand(0x00|CC12_BURST_TRANS);
 
-  HAL_SPI_Transmit(&hspi1, data, length, HAL_MAX_DELAY);
-  
+  //transmit the data packet
+  for(int i = 0; i < length; i++){
+    HAL_SPI_Transmit(&hspi1, *data, length, HAL_MAX_DELAY);
+    while ((STATUS_REGISTER & 0x02) == 0);//wait for transmission to complete
+    data++;//go to next
+  }
   //pull CS high to end SPI communication
   HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_SET);
 }
@@ -58,7 +62,8 @@ void CC12_SendCommand(uint8_t command){
 
   //transmit command over spi
   HAL_SPI_Transmit(&hspi1, &command, 1, HAL_MAX_DELAY);
-
+  while ((STATUS_REGISTER & 0x02) == 0);
+  
   //pull CS high to end spi
   HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_SET);
 }
