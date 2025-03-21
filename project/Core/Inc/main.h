@@ -76,6 +76,21 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 
+// From OBC
+
+#define REQUEST_GPS 0x01
+#define CAMERA_READY 0x02
+#define SENSOR_READY 0x04
+#define CAMERA_ERROR 0x08
+#define SENSOR_ERROR 0x10
+#define MEMORY_ERROR 0x20
+
+// From TTC
+
+#define REQUEST_CAMERA 0x01
+#define GPS_READY 0x02
+#define GPS_ERROR 0x04
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
