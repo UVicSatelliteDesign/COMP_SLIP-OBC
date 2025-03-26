@@ -58,7 +58,7 @@ void read_acceleration(){
 }
 
 //writes current sensor values to flash/global struct and returns struct with final values
-SensorsData get_sensors_data(){ 
+SensorsData read_sensors(){ 
     SensorsData data; // initialise empty struct and/or write over flash
     data.temperature = read_temperature(); // storetemperature and pressure to struct
     data.pressure = read_pressure();
@@ -77,4 +77,25 @@ float get_temperature(){
 float get_pressure(){
     float pressure = read_sensor_flash_data().pressure;
     return pressure;
+}
+
+float read_gyroscope_x1(){
+    return 1.1;
+}
+float read_gyroscope_x2(){
+    return 2.1;
+}
+
+float read_gyroscope_x3(){
+    return 3.1;
+}
+
+float read_acceleration_x1(){
+    return 1.2;
+}
+float read_acceleration_x2(){
+    return 2.2;
+}
+float read_acceleration_x3(){
+    return 3.2;
 }

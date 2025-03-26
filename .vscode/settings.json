@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "obc_interface.h": "c",
+        "stdio.h": "c"
+    }
+}
