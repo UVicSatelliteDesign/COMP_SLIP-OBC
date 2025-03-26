@@ -78,12 +78,14 @@ void Error_Handler(void);
 
 // From OBC
 
-#define REQUEST_GPS 0x01
-#define CAMERA_READY 0x02
-#define SENSOR_READY 0x04
-#define CAMERA_ERROR 0x08
-#define SENSOR_ERROR 0x10
-#define MEMORY_ERROR 0x20
+#define REQUEST_GPS 0x0001
+#define CAMERA_READY 0x0002
+#define SENSOR_READY 0x0004
+#define CAMERA_ERROR 0x0008
+#define SENSOR_ERROR 0x0010
+#define MEMORY_ERROR 0x0020
+#define IDLE_WARNING 0x0040
+#define LOW_POWER_WARNING 0x0080
 
 // From TTC
 

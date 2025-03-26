@@ -1,29 +1,37 @@
 #include "obc.h"
 #include "cmsis_os.h"
 
+int mode = IDLE;
+
 void obc_notifications(void *vpParameters) {
-    uint32_t received_notification;
+    uint32_t received_notification = 0;
     
     for (;;) {
         // Non-blocking check for notifications with a 0ms timeout
         received_notification = ulTaskNotifyTake(pdFALSE, 0);
 
         if (received_notification & REQUEST_CAMERA) {
-            int result = take_snapshot(/* TODO: Create and add camera configurations */);
+        	if (mode == IDLE) {
+        		ulTaskNotify(ttc_notification, IDLE_WARNING, eSetValueWithOverwrite);
+        	} else if (mode == LOW_POWER) {
+        		ulTaskNotify(ttc_notification, LOW_POWER_WARNING, eSetValueWithOverwrite);
+        	} else {
+        		int result = take_snapshot(/* TODO: Create and add camera configurations */);
 
-            if (result == 1) {
-            	ulTaskNotify(ttc_notifications, CAMERA_ERROR, eSetValueWithOverwrite);
-            } else {
-            	ulTaskNotify(ttc_notifications, CAMERA_READY, eSetValueWithOverwrite);
+				if (result == 1) {
+					ulTaskNotify(ttc_notifications, CAMERA_ERROR, eSetValueWithOverwrite);
+				} else {
+					ulTaskNotify(ttc_notifications, CAMERA_READY, eSetValueWithOverwrite);
 
-            	// TODO: Retrieve camera data from flash and write to external memory
+					// TODO: Retrieve camera data from flash and write to external memory
 
-            	uint32_t camera_buffer[IMAGE_BUFFER_SIZE];
+					uint32_t camera_buffer[IMAGE_BUFFER_SIZE];
 
-            	Flash_Read_Data(/* Camera address, camera_buffer, camera size */);
+					Flash_Read_Data(/* Camera address, camera_buffer, camera size */);
 
-            	store_data(/* camera_buffer */);
-            }
+					store_data(/* camera_buffer */);
+				}
+        	}
         }
 
         if (received_notification & GPS_READY) {
@@ -52,12 +60,20 @@ void obc_notifications(void *vpParameters) {
     }
 }
 
-void data_task(void *vpParamters) {
+void data_task(void *vpParameters) {
 	for (;;) {
 		read_bms();
 		read_sensors();
 		ulTaskNotify(ttc_notifications, REQUEST_GPS, eSetValueWithOverwrite);
 
 		vTaskDelay(pdMS_TO_TICKS(20000)); // eg. 1000 = 1 second
+	}
+}
+
+void low_power_task(void *vpParameters) {
+	for (;;) {
+		if (mode != LOW_POWER && battery_health() < LOW_POWER_THRESHOLD) {
+		mode = LOW_POWER;
+		}
 	}
 }
