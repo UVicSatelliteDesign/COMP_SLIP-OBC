@@ -14,7 +14,7 @@ void ttc_notifications(void *vpParameters) {
         }
 
         if (received_notification & CAMERA_ERROR) {
-        	// Tell ground station theres an error
+        	// Tell ground station there's an error
         }
 
         if (received_notification & IDLE_WARNING) {
@@ -33,7 +33,7 @@ void ttc_notifications(void *vpParameters) {
         	int gps_result = 0; //gps_hl();
 
 			// Send task notification to the OBC
-			if(gps_result & 0) {
+			if(gps_result == 0) {
 				ulTaskNotify(obc_notifications, GPS_READY, eSetValueWithOverwrite);
 				//transmit all data from flash
 			} else {
@@ -44,7 +44,7 @@ void ttc_notifications(void *vpParameters) {
         // if status change notif send to ground station
     }
 }
-// If request for camera data Notify OBC that camera data is needed
+// If request for camera data, Notify OBC that camera data is needed
 	// this should go in receive function:
 	// ulTaskNotify(obc_notifications, REQUEST_CAMERA, eSetValueWithOverwrite);
 
@@ -52,5 +52,3 @@ void transmit_camera(/*pointer to camera data?, offset*/) {
 	// Call if acknowledgment of camera data + request for next bytes received
 	// call transmit with pointer to camera data + offset, type, total length
 }
-//pointer to payload, type (in slack), total length of camera data - give to transmit
-// if we need to retransmit need offset
