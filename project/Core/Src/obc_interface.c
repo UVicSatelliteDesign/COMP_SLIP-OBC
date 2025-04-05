@@ -2,10 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define T_DATA 0
-#define T_WARNING 1
-#define T_ERROR 2
-
 // SD card variables
 FRESULT res; // FatFS result code
 uint32_t byteswritten; // File write count

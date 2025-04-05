@@ -2,6 +2,11 @@
 
 #define MAX_DATA_SIZE 100 // For telemetry, errors, warnings
 
+// For type argument of store_data
+#define T_DATA 0
+#define T_WARNING 1
+#define T_ERROR 2
+
 // Functions for storing to SD card
 FRESULT mount_SD();
 FRESULT format_SD();
