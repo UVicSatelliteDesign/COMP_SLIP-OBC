@@ -88,7 +88,7 @@ FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
 }
 
 // Store images on SD card
-FRESULT store_image(uint8_t data[IMAGE_BUFFER_SIZE]){
+FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
 	uint8_t size = strlen("UVR-SLIP/Images/image.jpeg") + 10;
 	char path[size];
 	snprintf(path, size, "UVR-SLIP/Images/image%04d.jpeg", image_count);
@@ -97,7 +97,7 @@ FRESULT store_image(uint8_t data[IMAGE_BUFFER_SIZE]){
 		// Error handling
 		return res;
 	}
-	res = f_write(&SDFile, data, IMAGE_BUFFER_SIZE, (void *)&byteswritten);
+	res = f_write(&SDFile, data, MAX_IMAGE_BUFFER_SIZE, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
 		// Error handling
 		return res;
