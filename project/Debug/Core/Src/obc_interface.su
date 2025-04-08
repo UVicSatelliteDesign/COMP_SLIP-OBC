@@ -1,6 +1,0 @@
-../Core/Src/obc_interface.c:22:6:mount_SD	8	static
-../Core/Src/obc_interface.c:32:6:format_SD	16	static
-../Core/Src/obc_interface.c:46:6:setup_SD	8	static
-../Core/Src/obc_interface.c:61:6:store_data	16	static
-../Core/Src/obc_interface.c:121:6:store_image	40	dynamic
-../Core/Src/obc_interface.c:137:6:unmount_SD	8	static
