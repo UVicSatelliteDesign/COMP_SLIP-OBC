@@ -11,10 +11,12 @@ void ttc_notifications(void *vpParameters) {
 
         if (received_notification & CAMERA_READY) {
             // Call transmit function with pointer to camera data in flash
+        	transmit(FLASH_CAMERA_DATA, CAMERA_DATA_TYPE, CAMERA_DATA_LEN);
         }
 
         if (received_notification & CAMERA_ERROR) {
         	// Tell ground station there's an error
+        	transmit_camera_error();
         }
 
         if (received_notification & IDLE_WARNING) {
@@ -25,30 +27,30 @@ void ttc_notifications(void *vpParameters) {
         if (received_notification & LOW_POWER_WARNING) {
         	// Can't take photos in LOW POWER mode
         	// Tell ground station low power, no picture
-        	// Call transmit
+        	transmit_low_power(); // Call transmit
         }
 
         if (received_notification & REQUEST_GPS) {
         	// Call interface function to read GPS
-        	int gps_result = 0; //gps_hl();
+        	int gps_result = gps_hl();
 
 			// Send task notification to the OBC
 			if(gps_result == 0) {
 				ulTaskNotify(obc_notifications, GPS_READY, eSetValueWithOverwrite);
 				//transmit all data from flash
+				transmit(FLASH_SENSOR_DATA, SENSOR_DATA_TYPE, SENSOR_DATA_LEN);
 			} else {
 				ulTaskNotify(obc_notifications, GPS_ERROR, eSetValueWithOverwrite);
 			}
         }
-
-        // if status change notif send to ground station
     }
 }
-// If request for camera data, Notify OBC that camera data is needed
+// If received packet is request for camera data, Notify OBC that camera data is needed
 	// this should go in receive function:
 	// ulTaskNotify(obc_notifications, REQUEST_CAMERA, eSetValueWithOverwrite);
 
-void transmit_camera(/*pointer to camera data?, offset*/) {
+void transmit_camera(int offset) {
 	// Call if acknowledgment of camera data + request for next bytes received
 	// call transmit with pointer to camera data + offset, type, total length
+	transmit(FLASH_CAMERA_DATA + offset, CAMERA_DATA_TYPE, CAMERA_DATA_LEN);
 }
