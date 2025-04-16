@@ -2,6 +2,7 @@
 #include "cmsis_os.h"
 
 int mode = IDLE;
+HAL_StatusTypeDef status;
 
 void obc_notifications(void *vpParameters) {
     uint32_t received_notification = 0;
@@ -10,26 +11,21 @@ void obc_notifications(void *vpParameters) {
         // Non-blocking check for notifications with a 0ms timeout
         received_notification = ulTaskNotifyTake(pdFALSE, 0);
 
+        // Image requested from TTC
         if (received_notification & REQUEST_CAMERA) {
         	if (mode == IDLE) {
         		ulTaskNotify(ttc_notification, IDLE_WARNING, eSetValueWithOverwrite);
         	} else if (mode == LOW_POWER) {
         		ulTaskNotify(ttc_notification, LOW_POWER_WARNING, eSetValueWithOverwrite);
         	} else {
-        		int result = take_snapshot(/* TODO: Create and add camera configurations */);
-
-				if (result == 1) {
-					ulTaskNotify(ttc_notifications, CAMERA_ERROR, eSetValueWithOverwrite);
-				} else {
-					ulTaskNotify(ttc_notifications, CAMERA_READY, eSetValueWithOverwrite);
-
-					// TODO: Retrieve camera data from flash and write to external memory
-
-					uint32_t camera_buffer[IMAGE_BUFFER_SIZE];
-
-					Flash_Read_Data(/* Camera address, camera_buffer, camera size */);
-
-					store_data(/* camera_buffer */);
+        		freeImageBuffer();
+        		status = capture_snapshot();
+        		if (status == HAL_OK) {
+        			save_image_to_flash();
+        			// Save to memory
+        			ulTaskNotify(ttc_notifications, CAMERA_READY, eSetValueWithOverwrite);
+        		} else {
+        			ulTaskNotify(ttc_notifications, CAMERA_ERROR, eSetValueWithOverwrite);
 				}
         	}
         }
