@@ -13,6 +13,7 @@ typedef struct { // struct containing sensor data values
 } SensorsData;
 
 SensorsData read_sensors(); // writes to memory and returns a SensorsData struct with latest sensor values
+SensorsData read_sensor_flash_data(); // returns current flash data
 float get_temperature(); // returns current temperature from flash memory, does not update
 float get_pressure();
 
