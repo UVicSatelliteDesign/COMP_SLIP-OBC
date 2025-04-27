@@ -32,12 +32,12 @@ void write_sensor_flash_data(SensorsData data){ // write to flash wrapper
 
 float read_temperature(){ // temperature hardware wrapper
     //dummy value degree celsius
-    return 20;
+    return 10;
 }
 
 float read_pressure(){ // pressure hardware wrapper
     //dummy value atmospheres
-    return 0.9;
+    return 20;
 }
 // gyroscope hardware wrapper, writes straight to flash
 void read_gyro(){      
@@ -80,22 +80,22 @@ float get_pressure(){
 }
 
 float read_gyroscope_x1(){
-    return 1.1;
+    return 31;
 }
 float read_gyroscope_x2(){
-    return 2.1;
+    return 32;
 }
 
 float read_gyroscope_x3(){
-    return 3.1;
+    return 33;
 }
 
 float read_acceleration_x1(){
-    return 1.2;
+    return 41;
 }
 float read_acceleration_x2(){
-    return 2.2;
+    return 42;
 }
 float read_acceleration_x3(){
-    return 3.2;
+    return 43;
 }

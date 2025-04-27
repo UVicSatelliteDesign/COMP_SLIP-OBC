@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "string.h"
+#include "obc_interface.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -84,6 +85,31 @@ static void MX_USB_OTG_FS_PCD_Init(void);
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
+void blink_orange_led(){
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, GPIO_PIN_SET);
+	HAL_Delay(50);
+//	  Delay_ms(1000);
+	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, GPIO_PIN_RESET);
+	HAL_Delay(50);
+}
+
+void blink_green_led(){
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET);
+	  HAL_Delay(50);
+	 //	  Delay_ms(1000);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
+	  HAL_Delay(50);
+	 //	  Delay_ms(1000);
+}
+
+void blink_red_led(){
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
+	HAL_Delay(50);
+	 //	  Delay_ms(1000);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
+	HAL_Delay(50);
+}
+
 
 /**
   * @brief  The application entry point.
@@ -118,15 +144,15 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
   /* USER CODE BEGIN 2 */
-
+  SensorsData data = read_sensors();
   /* USER CODE END 2 */
-
+  
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
-
+    
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
