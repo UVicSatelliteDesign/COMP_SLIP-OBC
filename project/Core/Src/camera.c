@@ -411,6 +411,10 @@ HAL_StatusTypeDef capture_snapshot(Camera_t *camera){
 
     OV5640_Stop(&camera->cameraHandle);
     camera->actualImageSize = getImageSize(camera);
+
+    // reset flag
+    capture_complete_flag = 0;
+
     return status;
 }
 
