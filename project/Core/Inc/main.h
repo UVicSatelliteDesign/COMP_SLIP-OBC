@@ -89,9 +89,11 @@ void Error_Handler(void);
 
 // From TTC
 
-#define REQUEST_CAMERA 0x01
-#define GPS_READY 0x02
-#define GPS_ERROR 0x04
+#define REQUEST_CAMERA 0x0001
+#define GPS_READY 0x0002
+#define GPS_ERROR 0x0004
+#define LOW_POWER 0x0008
+#define NOMINAL 0x0010
 
 /* USER CODE END Private defines */
 

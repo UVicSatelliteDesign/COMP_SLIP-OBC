@@ -22,7 +22,9 @@ void obc_notifications(void *vpParameters) {
         		status = capture_snapshot();
         		if (status == HAL_OK) {
         			save_image_to_flash();
-        			// Save to memory
+        			float image_buffer[MAX_IMAGE_BUFFER_SIZE];
+        			Flash_Read_Data(/* Image address, image_buffer, image size */);
+        			store_image(image_buffer);
         			ulTaskNotify(ttc_notifications, CAMERA_READY, eSetValueWithOverwrite);
         		} else {
         			ulTaskNotify(ttc_notifications, CAMERA_ERROR, eSetValueWithOverwrite);
@@ -52,17 +54,31 @@ void obc_notifications(void *vpParameters) {
         	store_data(err_msg, T_ERROR);
         }
 
+        if (received_notification & LOW_POWER_MODE) {
+        	mode = LOW_POWER;
+        }
+
+        if (received_notification & NOMINAL) {
+        	mode = NOMINAL;
+        }
+
         received_notification = 0;
     }
 }
 
 void data_task(void *vpParameters) {
 	for (;;) {
-		read_bms();
-		read_sensors();
-		ulTaskNotify(ttc_notifications, REQUEST_GPS, eSetValueWithOverwrite);
+		if (mode != IDLE) {
+			read_bms();
+			read_sensors();
+			ulTaskNotify(ttc_notifications, REQUEST_GPS, eSetValueWithOverwrite);
+		}
 
-		vTaskDelay(pdMS_TO_TICKS(20000)); // eg. 1000 = 1 second
+		if (mode == NOMINAL) {
+			vTaskDelay(pdMS_TO_TICKS(20000)); // eg. 1000 = 1 second
+		} else if ( mode == LOW_POWER) {
+			vTaskDelay(pdMS_TO_TICKS(60000)); // Replace these with define in .h
+		}
 	}
 }
 
