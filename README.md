@@ -6,7 +6,9 @@ General Process
 2. Whenever there is any change to the .ioc you need to provide a proper workflow on how to make that particular change and to which pin.
 3. Ping the ioc manager who will be checking this pin with the Necessary Document, and confirming if the pin is the designated pin.
 4. Write your code in stm32 cube ide. Once this is done. Wait for confirmation from the ioc manager for the go ahead.
-5. Once received, create a pull request by changing committing only files in the include and src folder or any folder you have made code changes in.
+5. Once received, do a git pull before you create a pull request by changing committing only files in the include and src folder or any folder you have made code changes in.
+
+
 The role of ioc manager is to:
 1. Update the .ioc file and and push those changes to GitHub.
 2. Clone from dev initially. its the only branch where no changes have been made yet.
