@@ -1,7 +1,12 @@
-#ifndef SRC_OBC_H_
-#define SRC_OBC_H_
+#ifndef OBC_H
+#define OBC_H
 
 #include "stm32h7xx_hal.h"
+#include "FreeRTOS.h"
+#include "task.h"
+
+#define REQUEST_CAMERA 0x01
+#define CAMERA_READY 0x02
 
 typedef struct {
     float voltage;
@@ -13,6 +18,6 @@ typedef struct {
 
 void init_bms(void);
 BatteryData get_battery_data(void);
+void obc_notifications(void *vpParameters);
 
-
-#endif /* SRC_OBC_H_ */
+#endif // OBC_H
