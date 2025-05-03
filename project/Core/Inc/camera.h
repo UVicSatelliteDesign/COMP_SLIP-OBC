@@ -65,7 +65,6 @@ typedef struct Camera_t {
     /** Camera identifier and context */
     uint32_t cameraId; /**< Unique camera ID. */
     OV5640_Object_t cameraHandle; /**< Camera handle for managing the camera. */
-    // TODO: set up another I2C channel because ov5640 addresses are not changeable.
 
     /** GPIO configuration */
     // cameras should be connected to the same gpio pins
@@ -74,9 +73,6 @@ typedef struct Camera_t {
 
     /** Camera context for managing the camera's registers */
     ov5640_ctx_t ctx; /**< OV5640 context structure. */ // initialize ctx.handle with the relevant i2c bus
-
-    /** Function pointers for camera operations */
-//    int32_t(*write_reg)(ov5640_ctx_t *ctx, uint16_t reg, uint8_t *pdata, uint16_t length); /**< Function pointer for writing to camera registers. */
 
 } Camera_t;
 
@@ -160,5 +156,11 @@ HAL_StatusTypeDef capture_snapshot(Camera_t *camera);
  * - JPEG end marker (0xFFD9)
  */
 uint32_t getImageSize(Camera_t *camera);
+
+/** 
+* @brief Deallocates image buffer memory
+* @param[in,out] camera Pointer to the Camera_t structure
+*/
+void freeImageBuffer(Camera_t *camera);
 
 #endif /* INC_CAMERA_H_ */
