@@ -7,9 +7,9 @@
 #define FLASH_SAVE_ADDRESS  ((uint32_t)0x081E0000) // Example sector 7 start (adjust based on your chip)
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
-extern ADC_HandleTypeDef hadc1;
-extern ADC_HandleTypeDef hadc2;
-extern ADC_HandleTypeDef hadc3;
+extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
+extern ADC_HandleTypeDef hadc_current; // ADC handler for current
+extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature
 
 // SD card variables
 FRESULT res; // FatFS result code
@@ -20,41 +20,29 @@ uint8_t rtext[_MAX_SS]; // File read buffer
 
 uint16_t image_count = 0; // Keep track of images stored for file names
 
-// Struct to store battery data
-typedef struct {
-    float voltage;
-    float current;
-    float temperature;
-    float state_of_charge;
-    float power_usage;
-    float total_energy_used;
-    float estimated_life;
-    uint32_t magic;
-} BatteryData;
-
 BatteryData battery_backup = {0};
 
 void init_bms() {
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_Start(&hadc2);
-    HAL_ADC_Start(&hadc3);
+    HAL_ADC_Start(&hadc_voltage);
+    HAL_ADC_Start(&hadc_current);
+    HAL_ADC_Start(&hadc_temperature);
 }
 
 float read_battery_voltage() {
-    HAL_ADC_PollForConversion(&hadc1, 100);
-    uint32_t raw = HAL_ADC_GetValue(&hadc1);
+    HAL_ADC_PollForConversion(&hadc_voltage, 100);
+    uint32_t raw = HAL_ADC_GetValue(&hadc_voltage);
     return (raw / 4095.0f) * 3.3f * 11.0f;
 }
 
 float read_battery_current() {
-    HAL_ADC_PollForConversion(&hadc2, 100);
-    uint32_t raw = HAL_ADC_GetValue(&hadc2);
+    HAL_ADC_PollForConversion(&hadc_current, 100);
+    uint32_t raw = HAL_ADC_GetValue(&hadc_current);
     return (raw / 4095.0f) * 3.3f / 0.01f;
 }
 
 float read_battery_temperature() {
-    HAL_ADC_PollForConversion(&hadc3, 100);
-    uint32_t raw = HAL_ADC_GetValue(&hadc3);
+    HAL_ADC_PollForConversion(&hadc_temperature, 100);
+    uint32_t raw = HAL_ADC_GetValue(&hadc_temperature);
     float resistance = (10000.0f * raw) / (4095.0f - raw);
     return 1.0f / (0.001129148f + (0.000234125f * logf(resistance))) - 273.15f;
 }
@@ -97,22 +85,36 @@ BatteryData get_battery_data(float dt) {
 }
 
 void save_battery_data_to_flash(BatteryData *data) {
-    HAL_FLASH_Unlock();
+	HAL_FLASH_Unlock();
 
-    FLASH_EraseInitTypeDef erase;
-    uint32_t pageError;
-    erase.TypeErase = FLASH_TYPEERASE_SECTORS;
-    erase.Sector = FLASH_SECTOR_7; // Change based on actual layout
-    erase.NbSectors = 1;
-    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;
-    HAL_FLASHEx_Erase(&erase, &pageError);
+	    // 1. Setup flash erase configuration
+	    FLASH_EraseInitTypeDef erase;
+	    uint32_t pageError;
 
-    uint32_t *src = (uint32_t *)data;
-    for (uint32_t i = 0; i < sizeof(BatteryData) / 4; i++) {
-        HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, FLASH_SAVE_ADDRESS + i * 4, src[i]);
-    }
+	    erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
+	    erase.Sector = FLASH_SECTOR_7;                   // Make sure this is correct for your chip!
+	    erase.NbSectors = 1;
+	    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
 
-    HAL_FLASH_Lock();
+	    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK) {
+	        // Handle erase error
+	        HAL_FLASH_Lock();
+	        return;
+	    }
+
+	    // 2. Write the data in 64-bit chunks
+	    uint64_t *src = (uint64_t *)data;
+	    uint32_t numWords = sizeof(BatteryData) / 8;
+
+	    for (uint32_t i = 0; i < numWords; i++) {
+	        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SAVE_ADDRESS + (i * 8), src[i]) != HAL_OK) {
+	            // Handle write error
+	            HAL_FLASH_Lock();
+	            return;
+	        }
+	    }
+
+	    HAL_FLASH_Lock();
 }
 
 void load_battery_data_from_flash() {
@@ -123,7 +125,6 @@ void load_battery_data_from_flash() {
         memset(&battery_backup, 0, sizeof(BatteryData));
     }
 }
-
 
 
 // Mount SD card
