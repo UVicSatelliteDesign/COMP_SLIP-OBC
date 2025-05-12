@@ -86,14 +86,16 @@ void Error_Handler(void);
 #define MEMORY_ERROR 0x0020
 #define IDLE_WARNING 0x0040
 #define LOW_POWER_WARNING 0x0080
+#define MODE_NOMINAL 0x0100
+#define MODE_LOW_POWER 0x0200
 
 // From TTC
 
 #define REQUEST_CAMERA 0x0001
 #define GPS_READY 0x0002
 #define GPS_ERROR 0x0004
-#define LOW_POWER 0x0008
-#define NOMINAL 0x0010
+#define SET_LOW_POWER 0x0008
+#define SET_NOMINAL 0x0010
 
 /* USER CODE END Private defines */
 
