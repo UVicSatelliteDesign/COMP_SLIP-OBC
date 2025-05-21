@@ -1,0 +1,4 @@
+#ifndef TTC_INTERFACE_H
+#define TTC_INTERFACE_H
+
+#endif // TTC_INTERFACE_H

@@ -1,5 +1,6 @@
 #include "ttc.h"
-#include "cmsis_os.h"
+#include "ttc_interface.h"
+#include "main.h"
 
 void ttc_notifications(void *vpParameters) {
     uint32_t received_notification = 0;

@@ -1,5 +1,6 @@
 #include "obc.h"
-#include "cmsis_os.h"
+#include "obc_interface.h"
+#include "main.h"
 
 int mode = IDLE;
 HAL_StatusTypeDef status;
@@ -14,11 +15,11 @@ void obc_notifications(void *vpParameters) {
         // Image requested from TTC
         if (received_notification & REQUEST_CAMERA) {
         	if (mode == IDLE) {
-        		ulTaskNotify(ttc_notification, IDLE_WARNING, eSetValueWithOverwrite);
+        		xTaskNotify(ttc_notifications, IDLE_WARNING, eSetValueWithOverwrite);
         		store_data("Idle image request", T_WARNING);
 
         	} else if (mode == LOW_POWER) {
-        		ulTaskNotify(ttc_notification, LOW_POWER_WARNING, eSetValueWithOverwrite);
+        		xTaskNotify(ttc_notifications, LOW_POWER_WARNING, eSetValueWithOverwrite);
         		store_data("Low power image request", T_WARNING);
 
         	} else {
@@ -34,11 +35,11 @@ void obc_notifications(void *vpParameters) {
         			store_image(image_buffer);
 
         			// Notify TTC there is an image
-        			ulTaskNotify(ttc_notifications, CAMERA_READY, eSetValueWithOverwrite);
+        			xTaskNotify(ttc_notifications, CAMERA_READY, eSetValueWithOverwrite);
         		} else {
 
         			//Error collecting image
-        			ulTaskNotify(ttc_notifications, CAMERA_ERROR, eSetValueWithOverwrite);
+        			xTaskNotify(ttc_notifications, CAMERA_ERROR, eSetValueWithOverwrite);
         			store_data("Camera error", T_ERROR);
 				}
         	}
@@ -84,7 +85,7 @@ void data_task(void *vpParameters) {
 		if (mode != IDLE) {
 			read_bms();
 			read_sensors();
-			ulTaskNotify(ttc_notifications, REQUEST_GPS, eSetValueWithOverwrite);
+			xTaskNotify(ttc_notifications, REQUEST_GPS, eSetValueWithOverwrite);
 		}
 
 		if (mode == NOMINAL) {
@@ -106,8 +107,8 @@ void low_power_task(void *vpParameters) {
 void set_mode(int m) {
 	mode = m;
 	if (m == NOMINAL) {
-		ulTaskNotify(ttc_notifications, MODE_NOMINAL, eSetValueWithOverwrite);
+		xTaskNotify(ttc_notifications, MODE_NOMINAL, eSetValueWithOverwrite);
 	} else if (m == LOW_POWER) {
-		ulTaskNotify(ttc_notifications, MODE_LOW_POWER, eSetValueWithOverwrite);
+		xTaskNotify(ttc_notifications, MODE_LOW_POWER, eSetValueWithOverwrite);
 	}
 }
