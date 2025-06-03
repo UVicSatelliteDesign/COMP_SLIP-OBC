@@ -10,22 +10,57 @@
 #define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
+SensorsData sensor_backup = {0};
+
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
     Hal_ADC_START(&PressureSensor);
 }
 
-SensorsData load_sensor_data_from_flash()(){ // retrieve from flash wrapper
-    // void Flash_Read_Data (uint32_t StartPageAddress, uint32_t *RxBuf, uint16_t numberofwords); 
-    SensorsData sensor_flash_data = dummy_flash_address;
-    return sensor_flash_data;
+void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
+    HAL_FLASH_Unlock();
+
+    // 1. Setup flash erase configuration
+    FLASH_EraseInitTypeDef erase;
+    uint32_t pageError;
+
+    erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
+    erase.Sector = FLASH_SECTOR_7;                   // Make sure this is correct for your chip!
+    erase.NbSectors = 1;
+    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
+
+    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK) {
+        // Handle erase error
+        HAL_FLASH_Lock();
+        return;
+    }
+
+    // 2. Write the data in 64-bit chunks
+    uint64_t *src = (uint64_t *)data;
+    uint32_t numWords = sizeof(SensorsData) / 8;
+
+    for (uint32_t i = 0; i < numWords; i++) {
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SAVE_ADDRESS + (i * 8), src[i]) != HAL_OK) {
+            // Handle write error
+            HAL_FLASH_Lock();
+            return;
+        }
+    }
+
+    HAL_FLASH_Lock();
 }
 
-void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
-    // uint32_t Flash_Write_Data (uint32_t StartPageAddress, uint32_t *Data, uint16_t numberofwords);
-    dummy_flash_address = data;
+SensorsData load_sensor_data_from_flash(){ // retrieve from flash wrapper
+    SensorsData *flash_data = (SensorsData *)FLASH_SENSOR_ADDRESS;
+    if (flash_data->magic == FLASH_MAGIC) {
+        memcpy(&sensor_backup, flash_data, sizeof(SensorsData));
+    } else {
+        memset(&sensor_backup, 0, sizeof(SensorsData));
+    }
 }
+
+
 
 float read_temperature(){ // temperature hardware wrapper
     //dummy value degree celsius
@@ -51,6 +86,7 @@ SensorsData read_sensors(){
     data.magic = FLASH_MAGIC;
     save_sensor_data_to_flash(&data);
     return data; // return filled struct
+}
 
 
 float read_gyroscope_x1(){
