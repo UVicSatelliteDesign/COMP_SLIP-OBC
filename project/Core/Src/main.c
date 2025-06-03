@@ -21,6 +21,7 @@
 #include "string.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
+#include "ttc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -28,6 +29,7 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
+typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -82,6 +84,19 @@ const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for receivequeue */
+osMessageQueueId_t receivequeueHandle;
+const osMessageQueueAttr_t receivequeue_attributes = {
+  .name = "receivequeue"
+};
+/* Definitions for myBinarySem01 */
+osSemaphoreId_t myBinarySem01Handle;
+osStaticSemaphoreDef_t myBinarySem01ControlBlock;
+const osSemaphoreAttr_t myBinarySem01_attributes = {
+  .name = "myBinarySem01",
+  .cb_mem = &myBinarySem01ControlBlock,
+  .cb_size = sizeof(myBinarySem01ControlBlock),
 };
 /* USER CODE BEGIN PV */
 
@@ -158,6 +173,10 @@ int main(void)
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* creation of myBinarySem01 */
+  myBinarySem01Handle = osSemaphoreNew(1, 0, &myBinarySem01_attributes);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -165,6 +184,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* creation of receivequeue */
+  receivequeueHandle = osMessageQueueNew (8, sizeof(FIFOsize), &receivequeue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
