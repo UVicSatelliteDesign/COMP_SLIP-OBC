@@ -1,22 +1,15 @@
 #include "obc_interface.h"
+#include "stm32h7xx_hal.h"
+#include <math.h>
+#include <string.h>
+#include <stdio.h>
 //////////////
 // README
 // todo:
-//      freeRTOS: task priority, task depth
-//      flash: dedicated memory section
-//      sensor hardware implementation
 /////////////
+#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section
 
-// xTaskCreate(Sensors_Task, "Sensors", 256, NULL, 2, NULL);
 
-// uint32_t sensor_flash_address 
-// SensorsData get_sensor_flash_data(){ // pseudo code
-//     // SensorsData sensor_flash_data = readflash(sensor_flash_address);
-//     return sensor_flash_data;
-// }
-
-// example address definition: uint32_t sensor_flash_address = 0x08004410;
-SensorsData dummy_flash_address; // dummy value global variable, mimics storage in flash address - only use in direct flash interaction functions i.e. flash read, write wrappers
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
