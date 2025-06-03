@@ -41,7 +41,7 @@ void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
     uint32_t numWords = sizeof(SensorsData) / 8;
 
     for (uint32_t i = 0; i < numWords; i++) {
-        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SAVE_ADDRESS + (i * 8), src[i]) != HAL_OK) {
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SENSOR_ADDRESS + (i * 8), src[i]) != HAL_OK) {
             // Handle write error
             HAL_FLASH_Lock();
             return;
