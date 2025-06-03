@@ -86,6 +86,11 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for receivequeue */
+osMessageQueueId_t receivequeueHandle;
+const osMessageQueueAttr_t receivequeue_attributes = {
+  .name = "receivequeue"
+};
 /* Definitions for myBinarySem01 */
 osSemaphoreId_t myBinarySem01Handle;
 osStaticSemaphoreDef_t myBinarySem01ControlBlock;
@@ -182,6 +187,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* creation of receivequeue */
+  receivequeueHandle = osMessageQueueNew (8, sizeof(FIFOsize), &receivequeue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
