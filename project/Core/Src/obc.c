@@ -1,6 +1,7 @@
 #include "obc.h"
 #include "obc_interface.h"
 #include "main.h"
+#include "time.h"
 
 int mode = IDLE;
 HAL_StatusTypeDef status;
@@ -59,9 +60,9 @@ void obc_notifications(void *vpParameters) {
         	Flash_Read_Data(/* GPS address, gps_buffer, GPS size */);
 
         	// Save telemetry to memory
-        	store_data(/* bms_buffer, T_DATA */);
-        	store_data(/* sensor_buffer, T_DATA */);
-        	store_data(/* gps_buffer, T_DATA */);
+        	store_data((uint8_t*)bms_buffer, T_DATA);
+        	store_data((uint8_t*)sensor_buffer, T_DATA);
+        	store_data((uint8_t*)gps_buffer, T_DATA);
         }
 
         if (received_notification & GPS_ERROR) {
@@ -97,8 +98,14 @@ void data_task(void *vpParameters) {
 }
 
 void low_power_task(void *vpParameters) {
+	BatteryData battery_data;
+	int current_time = 0;
+	int previous_time = 0;
 	for (;;) {
-		if (mode != LOW_POWER && battery_health() < LOW_POWER_THRESHOLD) {
+		current_time = HAL_GetTick();
+		battery_data = get_battery_data(current_time-previous_time);
+		previous_time = HAL_GetTick();
+		if (mode != LOW_POWER && battery_data.state_of_charge < LOW_POWER_THRESHOLD) {
 		set_mode(LOW_POWER);
 		}
 	}

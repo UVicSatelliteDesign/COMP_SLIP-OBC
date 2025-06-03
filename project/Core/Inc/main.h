@@ -28,11 +28,13 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
-#include "FreeRTOS.h"
-#include "task.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "string.h"
 
 /* USER CODE END Includes */
 
@@ -76,8 +78,6 @@ void ttc_notifications(void *vpParameters);
 #define USB_OTG_FS_PWR_EN_GPIO_Port GPIOD
 #define USB_OTG_FS_OVCR_Pin GPIO_PIN_7
 #define USB_OTG_FS_OVCR_GPIO_Port GPIOG
-#define LD2_Pin GPIO_PIN_1
-#define LD2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 
