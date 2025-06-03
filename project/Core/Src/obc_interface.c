@@ -18,6 +18,10 @@
 // example address definition: uint32_t sensor_flash_address = 0x08004410;
 SensorsData dummy_flash_address; // dummy value global variable, mimics storage in flash address - only use in direct flash interaction functions i.e. flash read, write wrappers
 
+void init_sensors() {
+    HAL_ADC_Start(&TemperatureSensor); 
+    Hal_ADC_START(&PressureSensor);
+}
 
 SensorsData read_sensor_flash_data(){ // retrieve from flash wrapper
     // void Flash_Read_Data (uint32_t StartPageAddress, uint32_t *RxBuf, uint16_t numberofwords); 
