@@ -10,6 +10,9 @@
 #define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
+extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature
+extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure
+
 SensorsData sensor_backup = {0};
 
 
