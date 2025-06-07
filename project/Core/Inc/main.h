@@ -81,26 +81,27 @@ void ttc_notifications(void *vpParameters);
 
 /* USER CODE BEGIN Private defines */
 
-// From OBC
+/*
+ * Set mode from TTC: REQUEST & <MODE>
+ * Notify TTC of mode change: INFO & <MODE>
+ * Notify TTC of peripheral ready: INFO & <PERIPHERAL>
+ */
 
-#define REQUEST_GPS 0x0001
-#define CAMERA_READY 0x0002
-#define SENSOR_READY 0x0004
-#define CAMERA_ERROR 0x0008
-#define SENSOR_ERROR 0x0010
-#define MEMORY_ERROR 0x0020
-#define IDLE_WARNING 0x0040
-#define LOW_POWER_WARNING 0x0080
-#define MODE_NOMINAL 0x0100
-#define MODE_LOW_POWER 0x0200
+#define REQUEST 0x0001
+#define INFO 0x0002
+#define WARNING 0x0004
+#define ERROR 0x0008
 
-// From TTC
+#define IDLE 0x0010
+#define NOMINAL 0x0020
+#define LOW_POWER 0x0040
 
-#define REQUEST_CAMERA 0x0001
-#define GPS_READY 0x0002
-#define GPS_ERROR 0x0004
-#define SET_LOW_POWER 0x0008
-#define SET_NOMINAL 0x0010
+#define CAMERA 0x0100
+#define SENSORS 0x0200
+#define GPS 0x0400
+#define MEMORY 0x0800
+
+// TODO: Add error codes 0x1000 - 0x8000
 
 /* USER CODE END Private defines */
 
