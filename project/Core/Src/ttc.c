@@ -9,7 +9,7 @@ void ttc_notifications(void *vpParameters) {
         // Non-blocking check for notifications with a 0ms timeout
         received_notification = ulTaskNotifyTake(pdFALSE, 0);
 
-        if (received_notification & CAMERA_READY) {
+        if (received_notification & INFO & CAMERA) {
             // TODO
         }
         received_notification = 0;
