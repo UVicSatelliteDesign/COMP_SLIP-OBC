@@ -135,7 +135,7 @@ SensorsData sensor_backup = {0};
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
-    Hal_ADC_START(&PressureSensor);
+    Hal_ADC_Start(&PressureSensor);
 }
 
 void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
