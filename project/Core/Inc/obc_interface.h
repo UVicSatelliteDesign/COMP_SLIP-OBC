@@ -1,6 +1,29 @@
-#ifndef SRC_OBC_H_
-#define SRC_OBC_H_
+#ifndef SRC_OBC_INTERFACE_H_
+#define SRC_OBC_INTERFACE_H_
+
 #include "stm32h7xx_hal.h"
+#include "fatfs.h"
+#include "camera.h"
+
+#define MAX_DATA_SIZE 100 // For telemetry, errors, warnings
+
+// For type argument of store_data
+#define T_DATA 0
+#define T_WARNING 1
+#define T_ERROR 2
+
+// Battery data structure
+typedef struct {
+    float voltage;
+    float current;
+    float temperature;
+    float state_of_charge;
+    float power_usage;
+    float total_energy_used;
+    float estimated_life;
+} BatteryData;
+
+////////////sensors start
 typedef struct { 		// struct containing sensor data values
     float temperature;        	// temperature, celsius
     float pressure;             	// pressure, unit tbd
@@ -28,6 +51,18 @@ float read_gyroscope_x3();
 float read_acceleration_x1(); // poll accelerometer
 float read_acceleration_x2();
 float read_acceleration_x3();
+/////////////////sensors end
 
+// Function prototypes
+void init_bms(void);
+BatteryData get_battery_data(float dt);
 
-#endif /* SRC_OBC_H_ */
+// Functions for storing to SD card
+FRESULT mount_SD();
+FRESULT format_SD();
+FRESULT setup_SD();
+FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type);
+FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]);
+FRESULT unmount_SD();
+
+#endif /* SRC_OBC_INTERFACE_H_ */

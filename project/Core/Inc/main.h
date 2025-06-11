@@ -59,6 +59,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define TemperatureSensor_Pin GPIO_PIN_2
+#define TemperatureSensor_GPIO_Port GPIOC
+#define PressureSensor_Pin GPIO_PIN_3
+#define PressureSensor_GPIO_Port GPIOC
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
 #define LD3_Pin GPIO_PIN_14
@@ -71,8 +75,6 @@ void Error_Handler(void);
 #define USB_OTG_FS_PWR_EN_GPIO_Port GPIOD
 #define USB_OTG_FS_OVCR_Pin GPIO_PIN_7
 #define USB_OTG_FS_OVCR_GPIO_Port GPIOG
-#define LD2_Pin GPIO_PIN_1
-#define LD2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 
