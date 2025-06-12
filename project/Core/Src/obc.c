@@ -1,4 +1,7 @@
 #include "obc.h"
+
+#include <math.h>
+
 #include "cmsis_os.h"
 #include "camera.h"
 #include <string.h>
@@ -25,6 +28,7 @@ void obc_notifications(void *vpParameters) {
     }
 }
 
+<<<<<<< HEAD
 /**
  * @todo create an RTOS object that stores, gives the signal that its done, when the RTOS object
  * is called, keep requesting.  
@@ -56,3 +60,5 @@ void obc_send_image(uint8_t *image_buffer){
         osMessageQueuePut(imageQueueHandle, &image_buffer, 0, 0);
     }
 }
+=======
+>>>>>>> 7e173d740136134bb848edb303a15efe936b312f
