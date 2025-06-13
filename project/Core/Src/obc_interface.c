@@ -132,7 +132,7 @@ void load_battery_data_from_flash() {
 }
 
 //////////////////sensors functions start
-SensorsData sensor_backup = {0};
+SensorsData sensor_backup = {0}; // Data is written to this by pointer when retrieved from flash memory
 
 
 void init_sensors() {
