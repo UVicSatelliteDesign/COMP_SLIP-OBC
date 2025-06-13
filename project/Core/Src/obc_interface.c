@@ -173,7 +173,7 @@ void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
     HAL_FLASH_Lock();
 }
 
-SensorsData load_sensor_data_from_flash(){ // retrieve from flash wrapper
+void load_sensor_data_from_flash(){ // retrieves flash data and uses a pointer to write it to the sensor_backup struct
     SensorsData *flash_data = (SensorsData *)FLASH_SENSOR_ADDRESS;
     if (flash_data->magic == FLASH_MAGIC) {
         memcpy(&sensor_backup, flash_data, sizeof(SensorsData));

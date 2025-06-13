@@ -38,7 +38,7 @@ typedef struct { 		// struct containing sensor data values
 
 void init_sensors(); // initialises pins
 void save_sensor_data_to_flash(SensorsData *data); // handles saving to flash
-SensorsData load_sensor_data_from_flash(); // handles retrieval from flash
+void load_sensor_data_from_flash(); // retrieves flash data and uses a pointer to write to the sensor_backup struct
 SensorsData read_sensors(); // polls sensors, calls save_sensor_data_to_flash, returns sensor data object
 
 float read_temperature(); // poll temperature sensor
