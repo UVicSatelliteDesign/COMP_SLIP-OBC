@@ -15,6 +15,8 @@ extern osMessageQueueId_t receivequeueHandle; // the message queue used for rece
 extern osSemaphoreId_t myBinarySem01Handle;   // used to protect the dirty bit. it is a sempahore
 
 
+void get_gps(); // UART communication with GPS
+
 
 
 
