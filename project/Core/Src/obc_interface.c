@@ -148,7 +148,7 @@ void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
     uint32_t pageError;
 
     erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
-    erase.Sector = FLASH_SECTOR_7;                   // Make sure this is correct for your chip!
+    erase.Sector = FLASH_SENSOR_ADDRESS;                   // Make sure this is correct for your chip!
     erase.NbSectors = 1;
     erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
 
