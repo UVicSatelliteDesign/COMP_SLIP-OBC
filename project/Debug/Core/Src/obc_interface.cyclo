@@ -1,0 +1,15 @@
+../Core/Src/obc_interface.c:22:13:read_sensor_flash_data	1
+../Core/Src/obc_interface.c:28:6:write_sensor_flash_data	1
+../Core/Src/obc_interface.c:33:7:read_temperature	1
+../Core/Src/obc_interface.c:38:7:read_pressure	1
+../Core/Src/obc_interface.c:43:6:read_gyro	1
+../Core/Src/obc_interface.c:52:6:read_acceleration	1
+../Core/Src/obc_interface.c:61:13:read_sensors	1
+../Core/Src/obc_interface.c:72:7:get_temperature	1
+../Core/Src/obc_interface.c:77:7:get_pressure	1
+../Core/Src/obc_interface.c:82:7:read_gyroscope_x1	1
+../Core/Src/obc_interface.c:85:7:read_gyroscope_x2	1
+../Core/Src/obc_interface.c:89:7:read_gyroscope_x3	1
+../Core/Src/obc_interface.c:93:7:read_acceleration_x1	1
+../Core/Src/obc_interface.c:96:7:read_acceleration_x2	1
+../Core/Src/obc_interface.c:99:7:read_acceleration_x3	1

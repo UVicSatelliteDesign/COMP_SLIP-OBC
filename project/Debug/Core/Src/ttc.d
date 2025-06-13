@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+Core/Src/ttc.o: ../Core/Src/ttc.c ../Core/Inc/ttc.h
+../Core/Inc/ttc.h:
+=======
 Core/Src/ttc.o: ../Core/Src/ttc.c ../Core/Inc/ttc.h ../Core/Inc/obc.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../Core/Inc/FreeRTOSConfig.h \
@@ -23,3 +27,4 @@ Core/Src/ttc.o: ../Core/Src/ttc.c ../Core/Inc/ttc.h ../Core/Inc/obc.h \
 ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h:
+>>>>>>> dev

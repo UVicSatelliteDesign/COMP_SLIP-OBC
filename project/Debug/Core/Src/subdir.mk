@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (12.3.rel1)
+# Toolchain: GNU Tools for STM32 (13.3.rel1)
 ################################################################################
 
 # Add inputs and outputs from these tool invocations to the build variables 
@@ -51,7 +51,11 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
+<<<<<<< HEAD
+	-$(RM) ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/obc.cyclo ./Core/Src/obc.d ./Core/Src/obc.o ./Core/Src/obc.su ./Core/Src/obc_interface.cyclo ./Core/Src/obc_interface.d ./Core/Src/obc_interface.o ./Core/Src/obc_interface.su ./Core/Src/stm32h7xx_hal_msp.cyclo ./Core/Src/stm32h7xx_hal_msp.d ./Core/Src/stm32h7xx_hal_msp.o ./Core/Src/stm32h7xx_hal_msp.su ./Core/Src/stm32h7xx_it.cyclo ./Core/Src/stm32h7xx_it.d ./Core/Src/stm32h7xx_it.o ./Core/Src/stm32h7xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32h7xx.cyclo ./Core/Src/system_stm32h7xx.d ./Core/Src/system_stm32h7xx.o ./Core/Src/system_stm32h7xx.su ./Core/Src/ttc.cyclo ./Core/Src/ttc.d ./Core/Src/ttc.o ./Core/Src/ttc.su ./Core/Src/ttc_interface.cyclo ./Core/Src/ttc_interface.d ./Core/Src/ttc_interface.o ./Core/Src/ttc_interface.su
+=======
 	-$(RM) ./Core/Src/freertos.cyclo ./Core/Src/freertos.d ./Core/Src/freertos.o ./Core/Src/freertos.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/obc.cyclo ./Core/Src/obc.d ./Core/Src/obc.o ./Core/Src/obc.su ./Core/Src/obc_interface.cyclo ./Core/Src/obc_interface.d ./Core/Src/obc_interface.o ./Core/Src/obc_interface.su ./Core/Src/stm32h7xx_hal_msp.cyclo ./Core/Src/stm32h7xx_hal_msp.d ./Core/Src/stm32h7xx_hal_msp.o ./Core/Src/stm32h7xx_hal_msp.su ./Core/Src/stm32h7xx_it.cyclo ./Core/Src/stm32h7xx_it.d ./Core/Src/stm32h7xx_it.o ./Core/Src/stm32h7xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32h7xx.cyclo ./Core/Src/system_stm32h7xx.d ./Core/Src/system_stm32h7xx.o ./Core/Src/system_stm32h7xx.su ./Core/Src/ttc.cyclo ./Core/Src/ttc.d ./Core/Src/ttc.o ./Core/Src/ttc.su ./Core/Src/ttc_interface.cyclo ./Core/Src/ttc_interface.d ./Core/Src/ttc_interface.o ./Core/Src/ttc_interface.su
+>>>>>>> dev
 
 .PHONY: clean-Core-2f-Src
 
