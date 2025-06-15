@@ -71,6 +71,7 @@ void receive() {
 		case PayloadType.PING:
 			// Acknowledge ping
 			generatepacket(PayloadType.PING, Null, 0);
+			transmit();
 			break;
 		case PayloadType.NOMINAL:
 			ulTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
@@ -82,6 +83,7 @@ void receive() {
 			ulTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
 			uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 			generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
+			transmit();
 			break;
 		case PayloadType.CAMERA_1_END:
 			// request for image, notify OBC
