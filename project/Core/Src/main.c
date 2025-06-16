@@ -175,6 +175,8 @@ int main(void)
   xTaskCreate(data_task, "Data Task", 					configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
   xTaskCreate(low_power_task, "Lower Power Task", 		configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 10, NULL); // Highest priority
 
+  // TTC Tasks:
+
   xTaskCreate(ttc_notifications, "TTC Notifications", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
 
 

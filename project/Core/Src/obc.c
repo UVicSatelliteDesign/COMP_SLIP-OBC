@@ -3,7 +3,7 @@
 #include "main.h"
 #include "time.h"
 
-int mode = IDLE;
+int mode = IDLE_MODE; // Start the payload in idle mode
 HAL_StatusTypeDef status;
 BatteryData battery_data;
 
@@ -11,16 +11,18 @@ void obc_notifications(void *vpParameters) {
     uint32_t received_notification = 0;
     
     for (;;) {
-        // Non-blocking check for notifications with a 0ms timeout
-        received_notification = ulTaskNotifyTake(pdFALSE, 0);
+    	// Check for a notification from the TTC
+        received_notification = ulTaskNotifyTake(pdTRUE, 0); // Set the notification value to 0 with 0s timeout
 
         // Image requested from TTC
         if (received_notification & REQUEST & CAMERA) {
-        	if (mode == IDLE) {
+        	if (mode == IDLE_MODE) {
+        		// Send idle warning
         		xTaskNotify(ttc_notifications, WARNING & IDLE, eSetValueWithOverwrite);
         		store_data("Idle image request", T_WARNING);
 
         	} else if (mode == LOW_POWER) {
+        		// Send Low power warning
         		xTaskNotify(ttc_notifications, WARNING & LOW_POWER, eSetValueWithOverwrite);
         		store_data("Low power image request", T_WARNING);
 
@@ -53,15 +55,18 @@ void obc_notifications(void *vpParameters) {
         	SensorsData sensor_data;
         	BatteryData battery_data;
         	// TODO: GPS
+        	// TODO: Altimeter
 
         	sensor_data = load_sensor_data_from_flash();
         	battery_data = load_battery_data_from_flash();
         	// TODO: GPS
+        	// TODO: Altimeter
 
         	// Save telemetry to memory
         	store_data((uint8_t*)&sensor_data, T_DATA);
         	store_data((uint8_t*)&battery_data, T_DATA);
         	// TODO: GPS
+        	// TODO: Altimeter
         }
 
         if (received_notification & ERROR & GPS) {
@@ -69,11 +74,11 @@ void obc_notifications(void *vpParameters) {
         }
 
         if (received_notification & REQUEST & LOW_POWER) {
-        	set_mode(LOW_POWER); // Ground station requested low power
+        	set_mode(LOW_POWER_MODE); // Ground station requested low power
         }
 
         if (received_notification & REQUEST & NOMINAL) {
-        	set_mode(NOMINAL); // Ground station requested nominal
+        	set_mode(NOMINAL_MODE); // Ground station requested nominal
         }
 
         received_notification = 0;
@@ -82,6 +87,7 @@ void obc_notifications(void *vpParameters) {
 
 // Collect data
 void data_task(void *vpParameters) {
+	// TODO: Add altimeter readings
 	SensorsData sensor_data;
 	for (;;) {
 		if (mode != IDLE) {
@@ -107,8 +113,8 @@ void low_power_task(void *vpParameters) {
 		current_time = HAL_GetTick();
 		battery_data = get_battery_data(current_time-previous_time); // Use the amount of time since the last call
 		previous_time = HAL_GetTick();
-		if (mode != LOW_POWER && battery_data.state_of_charge < LOW_POWER_THRESHOLD) { // If power drops too low switch to low power
-		set_mode(LOW_POWER);
+		if (mode != LOW_POWER_MODE && battery_data.state_of_charge < LOW_POWER_THRESHOLD) { // If power drops too low switch to low power
+		set_mode(LOW_POWER_MODE);
 		}
 	}
 }

@@ -35,6 +35,7 @@ extern "C" {
 #include "FreeRTOS.h"
 #include "task.h"
 #include "string.h"
+#include "stdio.h"
 
 /* USER CODE END Includes */
 

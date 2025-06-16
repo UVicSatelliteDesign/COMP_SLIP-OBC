@@ -1,6 +1,8 @@
 #include "obc_interface.h"
 #include "main.h"
 
+// TODO: Move flash addresses to main.h and include each used address
+
 #define FLASH_SAVE_ADDRESS  ((uint32_t)0x081E0000) // Example sector 7 start (adjust based on your chip)
 #define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0 // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
@@ -150,6 +152,94 @@ FRESULT format_SD(){
 	// 	// Error handling
 	// }
 	return res;
+}
+
+// Create folders (run once)
+FRESULT setup_SD(){
+	// Could change this layout later
+	res = f_mkdir("UVR-SLIP");
+	if (res != FR_OK){
+		// Error handling
+		return res;
+	}
+	res = f_mkdir("UVR-SLIP/Images");
+	// if (res != FR_OK){
+	// 	// Error handling
+	// 	return res;
+	// }
+	return res;
+}
+
+// Store telemetry/errors/etc on SD card
+FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
+	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
+	if (res != FR_OK){
+        f_close(&SDFile);
+		// Error handling
+		return res;
+	}
+	const char* prefix = NULL;
+	switch (type) {
+		case T_DATA:
+			prefix = "DATA: ";
+		break;
+		case T_WARNING:
+			prefix = "WARNING: ";
+		break;
+		case T_ERROR:
+			prefix = "ERROR: ";
+		break;
+		default:
+			prefix = "UNKNOWN: ";
+		break;
+	}
+	res = f_write(&SDFile, prefix, strlen(prefix), (void *)&byteswritten);
+	if((byteswritten == 0) || (res != FR_OK)){
+        f_close(&SDFile);
+		// Error handling
+		return res;
+	}
+	res = f_write(&SDFile, data, strlen((char *)data), (void *)&byteswritten);
+	if((byteswritten == 0) || (res != FR_OK)){
+        f_close(&SDFile);
+		// Error handling
+		return res;
+	}
+	res = f_write(&SDFile, "\n", strlen((char *)"\n"), (void *)&byteswritten);
+	if((byteswritten == 0) || (res != FR_OK)){
+        f_close(&SDFile);
+		// Error handling
+		return res;
+	}
+	f_close(&SDFile);
+	return res;
+}
+
+// Store images on SD card
+FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
+	uint8_t size = strlen("UVR-SLIP/Images/image.jpeg") + 10;
+	char path[size];
+	snprintf(path, size, "UVR-SLIP/Images/image%04d.jpeg", image_count);
+	res = f_open(&SDFile, path, FA_CREATE_ALWAYS | FA_WRITE);
+	if (res != FR_OK){
+        f_close(&SDFile);
+		// Error handling
+		return res;
+	}
+	res = f_write(&SDFile, data, MAX_IMAGE_BUFFER_SIZE, (void *)&byteswritten);
+	if((byteswritten == 0) || (res != FR_OK)){
+        f_close(&SDFile);
+		// Error handling
+		return res;
+	}
+	f_close(&SDFile);
+	image_count++;
+	return res;
+}
+
+// Unmount SD card
+FRESULT unmount_SD(){
+	return f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
 }
 
 void init_sensors() {

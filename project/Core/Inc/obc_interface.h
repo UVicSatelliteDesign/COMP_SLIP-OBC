@@ -9,7 +9,7 @@
 #define T_ERROR 2
 
 #define MAX_DATA_SIZE 100 // For telemetry, errors, warnings
-#define MAX_IMAGE_BUFFER_SIZE 100 // TODO: Temp
+#define MAX_IMAGE_BUFFER_SIZE 100 // TODO: Change to actual value
 
 // Battery data structure
 typedef struct {
@@ -23,6 +23,7 @@ typedef struct {
     uint32_t magic;
 } BatteryData;
 
+// Sensor data structure
 typedef struct {
 	float temperature;        	// temperature, celsius
 	float pressure;             	// pressure, unit tbd
@@ -35,11 +36,21 @@ typedef struct {
 	uint32_t magic;
 } SensorsData;
 
-// Function prototypes
-void init_bms(void);
+// BMS prototypes
+void init_bms();
+float read_battery_voltage();
+float read_battery_current();
+float read_battery_temperature();
+float calculate_state_of_charge(float current, float dt);
+float calculate_state_of_charge(float current, float dt);
+float calculate_power_usage(float voltage, float current);
+float calculate_energy_usage(float power, float dt);
+float estimate_battery_life(float state_of_charge, float avg_power_draw);
 BatteryData get_battery_data(float dt);
+void save_battery_data_to_flash(BatteryData *data);
+BatteryData load_battery_data_from_flash();
 
-// Functions for storing to SD card
+// Memory prototypes
 FRESULT mount_SD();
 FRESULT format_SD();
 FRESULT setup_SD();
@@ -47,15 +58,17 @@ FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type);
 FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]);
 FRESULT unmount_SD();
 
-// Dummy functions
+// Camera prototypes
 void freeImageBuffer();
 int capture_snapshot();
 void save_image_to_flash();
-void Flash_Read_Data();
-void save_battery_data_to_flash(BatteryData *data);
-BatteryData load_battery_data_from_flash();
+
+// Sensor prototypes
+void init_sensors();
 void save_sensor_data_to_flash(SensorsData *data);
 SensorsData load_sensor_data_from_flash();
+float read_temperature();
+float read_pressure();
 SensorsData read_sensors();
 float read_gyroscope_x1();
 float read_gyroscope_x2();

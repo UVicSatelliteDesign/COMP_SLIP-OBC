@@ -1,14 +1,15 @@
 #ifndef OBC_H
 #define OBC_H
 
-#define IDLE 0
-#define NOMINAL 1
-#define LOW_POWER 2
+#define IDLE_MODE 0
+#define NOMINAL_MODE 1
+#define LOW_POWER_MODE 2
 
-#define LOW_POWER_THRESHOLD 10
+#define LOW_POWER_THRESHOLD 10 // TODO: Replace with actual value
 
-#define NOMINAL_INTERVAL 20000 // 1000 = 1 second
-#define LOW_POWER_INTERVAL 60000
+// 1000 = 1 second
+#define NOMINAL_INTERVAL 5000 // 5 seconds
+#define LOW_POWER_INTERVAL 20000 // 20 seconds
 
 void set_mode(int m);
 
