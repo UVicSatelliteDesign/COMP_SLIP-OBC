@@ -61,7 +61,7 @@ void receive() {
 	uint8_t data_buffer[128];
 	osStatus_t status = osMessageQueueGet(receivequeueHandle, &data_buffer, NULL, 0U);   // wait for message
 	if (status != osOK) {
-		ulTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
+		xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
 		return; // Error
 	}
 	uint8_t packet_length = data_buffer[0];
@@ -74,24 +74,24 @@ void receive() {
 			transmit();
 			break;
 		case PayloadType.NOMINAL:
-			ulTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
+			xTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
 			uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 			generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
 			transmit();
 			break;
 		case PayloadType.LOW_POWER:
-			ulTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
+			xTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
 			uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 			generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
 			transmit();
 			break;
 		case PayloadType.CAMERA_1_END:
 			// request for image, notify OBC
-			ulTaskNotify(obc_notifications, REQUEST & CAMERA, eSetValueWithOverwrite);
+			xTaskNotify(obc_notifications, REQUEST & CAMERA, eSetValueWithOverwrite);
 			break;
 		case PayloadType.CAMERA_2_END:
 		// request for image, notify OBC
-			ulTaskNotify(obc_notifications, REQUEST & CAMERA, eSetValueWithOverwrite);
+			xTaskNotify(obc_notifications, REQUEST & CAMERA, eSetValueWithOverwrite);
 			break;
 		case PayloadType.ACK_REC_CAMER:
 		// set as acknowledged
@@ -114,7 +114,7 @@ void receive() {
 		else:
 		// Error: should not be receiving other packet types
 			// Notify OBC of packet error
-			ulTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
+			xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
 			break;
 	}
 }
