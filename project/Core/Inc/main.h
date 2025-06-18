@@ -75,6 +75,8 @@ void Error_Handler(void);
 #define USB_OTG_FS_PWR_EN_GPIO_Port GPIOD
 #define USB_OTG_FS_OVCR_Pin GPIO_PIN_7
 #define USB_OTG_FS_OVCR_GPIO_Port GPIOG
+#define GPS_UART_Pin GPIO_PIN_1
+#define GPS_UART_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

@@ -659,12 +659,12 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     /**UART4 GPIO Configuration
     PD1     ------> UART4_TX
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    GPIO_InitStruct.Pin = GPS_UART_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF8_UART4;
-    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPS_UART_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN UART4_MspInit 1 */
 
@@ -726,7 +726,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     /**UART4 GPIO Configuration
     PD1     ------> UART4_TX
     */
-    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_1);
+    HAL_GPIO_DeInit(GPS_UART_GPIO_Port, GPS_UART_Pin);
 
   /* USER CODE BEGIN UART4_MspDeInit 1 */
 
