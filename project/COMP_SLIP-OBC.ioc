@@ -416,4 +416,4 @@ VP_SYS_VS_Systick.Signal=SYS_VS_Systick
 board=NUCLEO-H743ZI2
 boardIOC=true
 rtos.0.ip=FREERTOS
-isbadioc=true
+isbadioc=false
