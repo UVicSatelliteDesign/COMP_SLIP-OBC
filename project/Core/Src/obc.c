@@ -9,6 +9,7 @@ BatteryData battery_data;
 
 void obc_notifications(void *vpParameters) {
     uint32_t received_notification = 0;
+    int camera = 1;
     
     for (;;) {
     	// Check for a notification from the TTC
@@ -30,11 +31,11 @@ void obc_notifications(void *vpParameters) {
         		// Take a picture
         		freeImageBuffer();
         		if (received_notification & SUB_1) {
-        			int camera = 1;
+        			camera = 1;
         			// TODO: Initialize camera 1
         			status = capture_snapshot();
         		} else {
-        			int camera = 2;
+        			camera = 2;
         			// TODO: Initialize camera 2
         			status = capture_snapshot();
         		}
@@ -70,8 +71,8 @@ void obc_notifications(void *vpParameters) {
         	// TODO: GPS
         	// TODO: Altimeter
 
-        	sensor_data = load_sensor_data_from_flash();
-        	battery_data = load_battery_data_from_flash();
+        	load_sensor_data_from_flash();
+        	load_battery_data_from_flash();
         	// TODO: GPS
         	// TODO: Altimeter
 
