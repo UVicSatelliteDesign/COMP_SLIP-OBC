@@ -90,21 +90,32 @@ void low_power_task(void *vpParameters);
  * Notify TTC of peripheral ready: INFO & <PERIPHERAL>
  */
 
+// Message type
+
 #define REQUEST 0x0001
 #define INFO 0x0002
 #define WARNING 0x0004
 #define ERROR 0x0008
 
+// Mode
+
 #define IDLE 0x0010
 #define NOMINAL 0x0020
 #define LOW_POWER 0x0040
+
+// Peripheral type
 
 #define CAMERA 0x0100
 #define SENSORS 0x0200
 #define GPS 0x0400
 #define MEMORY 0x0800
 
-// TODO: Add error codes 0x1000 - 0x8000
+// Peripheral subtype
+
+#define SUB_1 0x1000 // Camera 1,	Temperature,	Memory Read
+#define SUB_2 0x2000 // Camera 2,	Pressure,		Memory Write
+#define SUB_3 0x4000 // 			Acceleration
+#define SUB_4 0x8000 // 			Gyroscope
 
 /* USER CODE END Private defines */
 

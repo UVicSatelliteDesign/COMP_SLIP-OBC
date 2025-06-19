@@ -29,7 +29,15 @@ void obc_notifications(void *vpParameters) {
         	} else {
         		// Take a picture
         		freeImageBuffer();
-        		status = capture_snapshot();
+        		if (received_notification & SUB_1) {
+        			int camera = 1;
+        			// TODO: Initialize camera 1
+        			status = capture_snapshot();
+        		} else {
+        			int camera = 2;
+        			// TODO: Initialize camera 2
+        			status = capture_snapshot();
+        		}
 
         		if (status == HAL_OK) {
         			// Store image
@@ -43,8 +51,13 @@ void obc_notifications(void *vpParameters) {
         		} else {
 
         			//Error collecting image
-        			xTaskNotify(ttc_notifications, ERROR & CAMERA, eSetValueWithOverwrite);
-        			store_data("Camera error", T_ERROR);
+        			if (camera == 1) {
+        				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
+        				store_data("Camera 2 error", T_ERROR);
+        			} else {
+        				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
+        				store_data("Camera 1 error", T_ERROR);
+        			}
 				}
         	}
         }
