@@ -3,6 +3,11 @@
 #include "obc.h"
 #include "cmsis_os.h"
 
+uint16_t sequenceNum; // Current sequence number
+uint16_t last_received_seq_num; // last received seq num ack
+uint8_t transmit_count = 0;
+uint8_t ACK_RECV_TIMEOUT = 3000;
+
 void ttc_notifications(void *vpParameters) {
     uint32_t received_notification;
     
@@ -48,6 +53,23 @@ void ttc_notifications(void *vpParameters) {
     }
 }
 
+void handle_transmit(PayloadType type, uint8_t *payload, uint8_t payloadLen) {
+	/* Handle transmitting packet and retransmission */
+	while (transmit_count < MAX_ATTEMPTS) {
+		sequenceNum++;
+		generatepacket(type, &payload, payloadLen);
+		transmit();
+		transmit_count++;
+		vTaskDelay(pdMS_TO_TICKS(ACK_RECV_TIMEOUT));
+		if (sequenceNum == last_acked_seq_num) {
+			// Packet acknowledged yay!
+			transmit_count = 0;
+			return;
+		}
+	}
+	// Reach max retransmission, enter lost state
+}
+
 void receive() {
 	/*
 	 * Read from queue of bits:
@@ -87,29 +109,40 @@ void receive() {
 			break;
 		case PayloadType.CAMERA_1_END:
 			// request for image, notify OBC
-			xTaskNotify(obc_notifications, REQUEST & CAMERA, eSetValueWithOverwrite);
+			xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_1, eSetValueWithOverwrite);
 			break;
 		case PayloadType.CAMERA_2_END:
 		// request for image, notify OBC
-			xTaskNotify(obc_notifications, REQUEST & CAMERA, eSetValueWithOverwrite);
+			xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_2, eSetValueWithOverwrite);
 			break;
 		case PayloadType.ACK_REC_CAMER:
-		// set as acknowledged
-		// Contains an offset
 			uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			uint8_t camera = data_buffer[4];
+			// Contains an offset
 			uint32_t acked_offset =
-					(data_buffer[4] << 16) |
-					(data_buffer[5] << 8) |
-					(data_buffer[6]);
-			uint16_t seq_num = (data_buffer[7] << 8) | (data_buffer[8]);
+					(data_buffer[5] << 16) |
+					(data_buffer[6] << 8) |
+					(data_buffer[7]);
+			uint16_t seq_num = (data_buffer[8] << 8) | (data_buffer[9]);
+			// set as acknowledged
+			last_received_seq_num = acked_seq_num;
+			packageAndSendChunks(PayloadType.CAMERA, /*cam data pointer*/, /*full data len*/, acked_seq_num, acked_offset);
+			transmit();
 			break;
 		case PayloadType.ACK_REC_TELEMETRY:
-		// set as acknowledged
+			// set as acknowledged
 			uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			last_received_seq_num = acked_seq_num;
 			break;
 		case PayloadType.ACK_REC_ERROR:
-		// set as acknowledged
+			// set as acknowledged
 			uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			last_received_seq_num = acked_seq_num;
+			break;
+		case PayloadType.ERROR_DUP:
+			// last packet was received twice by GS
+			uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			last_received_seq_num = acked_seq_num;
 			break;
 		else:
 		// Error: should not be receiving other packet types
