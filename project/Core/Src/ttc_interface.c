@@ -144,6 +144,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	}
 }
 
+sequenceNum = 0;
+
 void transmit()
 {
 	// Write packet length to NUM_TXBYTES

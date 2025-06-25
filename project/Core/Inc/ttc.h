@@ -2,9 +2,13 @@
 #define TTC_H
 #include "ttc_interface.h"
 
+extern TimerHandle_t retransmission_timer; // Timer handle, created in main
+
 void ttc_notifications(void *vpParameters);
 
-void transmit_camera();
+void vRetransmissionTimerCallback( TimerHandle_t xTimer );
+
+void receive();
 
 void Task_receiveLL(void *vpParamemeters);
 
