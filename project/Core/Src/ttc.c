@@ -5,8 +5,8 @@
 #include "semphr.h"
 #include "stdint.h"
 
-uint16_t last_received_seq_num; // last received seq num ack
-uint8_t ACK_RECV_TIMEOUT = 3000;
+uint16_t last_received_seq_num;	 // last received seq num ack
+uint8_t ACK_RECV_TIMEOUT = 3000; // timeout before checking for an acknowledgement TODO: change to real value
 
 void ttc_notifications(void *vpParameters)
 {
@@ -92,7 +92,7 @@ void Task_receiveLL(void *pvParameters)
 	}
 }
 
-void handle_transmit(PayloadType type, uint8_t *payload, uint8_t payloadLen)
+void handle_transmit()
 {
 	/* Handle transmitting packet and retransmission */
 	transmit();
