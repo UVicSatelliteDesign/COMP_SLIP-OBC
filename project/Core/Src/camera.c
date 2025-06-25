@@ -202,6 +202,9 @@ int32_t configure_camera2(Camera_t *camera, uint8_t *buffer) {
 int32_t camera_init(Camera_t *camera) {
     int32_t status;
 
+    // power camera on (active mode)
+    OV5640_Start(&camera->cameraHandle);
+
     // reset the camera
     uint8_t systemControlRegValue = 0x80;
     status = ov5640_write_reg(&camera->ctx, OV5640_SYSTEM_CTROL0, &systemControlRegValue, 1);
@@ -279,8 +282,9 @@ int32_t camera_init(Camera_t *camera) {
 	 // OV5640_ZoomConfig(&camera->cameraHandle, camera->Zoom);
 	 // OV5640_NightModeConfig(&camera->cameraHandle, camera->NightMode);
 
-
-    OV5640_Start(&camera->cameraHandle);
+    // put camera into low power mode
+    OV5640_Stop(&camera->cameraHandle);
+    
     camera->status = OV5640_OK;
     return OV5640_OK;
 }
