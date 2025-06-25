@@ -3,9 +3,7 @@
 #include "obc.h"
 #include "cmsis_os.h"
 
-uint16_t sequenceNum; // Current sequence number
 uint16_t last_received_seq_num; // last received seq num ack
-uint8_t transmit_count = 0;
 uint8_t ACK_RECV_TIMEOUT = 3000;
 
 void ttc_notifications(void *vpParameters) {
@@ -55,19 +53,33 @@ void ttc_notifications(void *vpParameters) {
 
 void handle_transmit(PayloadType type, uint8_t *payload, uint8_t payloadLen) {
 	/* Handle transmitting packet and retransmission */
-	while (transmit_count < MAX_ATTEMPTS) {
-		sequenceNum++;
-		generatepacket(type, &payload, payloadLen);
-		transmit();
-		transmit_count++;
-		vTaskDelay(pdMS_TO_TICKS(ACK_RECV_TIMEOUT));
-		if (sequenceNum == last_acked_seq_num) {
-			// Packet acknowledged yay!
-			transmit_count = 0;
-			return;
-		}
+	transmit();
+	xTimerStart(retransmission_timer, 0); // Start retransmission timer
+}
+void vRetransmissionTimerCallback( TimerHandle_t xTimer ) {
+	// Timer callback function for handling retransmission
+	// Get number of times timer has expired (saved in timer ID)
+	uint32_t expiry_count = ( uint32_t ) pvTimerGetTimerID( xTimer );
+	expiry_count++;
+
+	// Compare last received seq num
+	if (sequenceNum == last_acked_seq_num) {
+		// Packet acknowledged yay!
+		expiry_count = 0;
+		vTimerSetTimerID( xTimer, ( void * ) expiry_count );
+		xTimerStop(xTimer, 0);
+		return;
 	}
-	// Reach max retransmission, enter lost state
+	// If not acked, check if we have more attempts or not
+	if (expiry_count == MAX_ATTEMPTS) {
+		// TODO: Enter lost state
+		expiry_count = 0;
+		vTimerSetTimerID(xTimer, (void *) expiry_count);
+		xTimerStop(xTimer, 0);
+		return;
+	}
+	vTimerSetTimerID(xTimer, (void *) expiry_count);
+	handle_transmit();
 }
 
 void receive() {
@@ -93,26 +105,26 @@ void receive() {
 		case PayloadType.PING:
 			// Acknowledge ping
 			generatepacket(PayloadType.PING, Null, 0);
-			transmit();
+			handle_transmit();
 			break;
 		case PayloadType.NOMINAL:
 			xTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
 			uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 			generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
-			transmit();
+			handle_transmit();
 			break;
 		case PayloadType.LOW_POWER:
 			xTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
 			uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 			generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
-			transmit();
+			handle_transmit();
 			break;
 		case PayloadType.CAMERA_1_END:
 			// request for image, notify OBC
 			xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_1, eSetValueWithOverwrite);
 			break;
 		case PayloadType.CAMERA_2_END:
-		// request for image, notify OBC
+			// request for image, notify OBC
 			xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_2, eSetValueWithOverwrite);
 			break;
 		case PayloadType.ACK_REC_CAMER:
@@ -127,7 +139,7 @@ void receive() {
 			// set as acknowledged
 			last_received_seq_num = acked_seq_num;
 			packageAndSendChunks(PayloadType.CAMERA, /*cam data pointer*/, /*full data len*/, acked_seq_num, acked_offset);
-			transmit();
+			handle_transmit();
 			break;
 		case PayloadType.ACK_REC_TELEMETRY:
 			// set as acknowledged
