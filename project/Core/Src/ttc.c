@@ -3,6 +3,9 @@
 #include "obc.h"
 #include "cmsis_os.h"
 
+uint16_t last_received_seq_num; // last received seq num ack
+uint8_t ACK_RECV_TIMEOUT = 3000; // timeout before checking for an acknowledgement TODO: change to real value
+
 void ttc_notifications(void *vpParameters) {
     uint32_t received_notification;
     
@@ -47,6 +50,116 @@ void ttc_notifications(void *vpParameters) {
         }
     }
 }
-// If received packet is request for camera data, Notify OBC that camera data is needed
-	// this should go in receive function:
-	// ulTaskNotify(obc_notifications, REQUEST_CAMERA, eSetValueWithOverwrite);
+
+void handle_transmit() {
+	/* Handle transmitting packet and retransmission */
+	transmit();
+	xTimerStart(retransmission_timer, 0); // Start retransmission timer
+}
+void vRetransmissionTimerCallback( TimerHandle_t xTimer ) {
+	// Timer callback function for handling retransmission
+	// Get number of times timer has expired (saved in timer ID)
+	uint32_t expiry_count = ( uint32_t ) pvTimerGetTimerID( xTimer );
+	expiry_count++;
+
+	// Compare last received seq num
+	if (sequenceNum == last_acked_seq_num) {
+		// Packet acknowledged yay!
+		expiry_count = 0;
+		vTimerSetTimerID( xTimer, ( void * ) expiry_count );
+		xTimerStop(xTimer, 0);
+		return;
+	}
+	// If not acked, check if we have more attempts or not
+	if (expiry_count == MAX_ATTEMPTS) {
+		// TODO: Enter lost state
+		expiry_count = 0;
+		vTimerSetTimerID(xTimer, (void *) expiry_count);
+		xTimerStop(xTimer, 0);
+		return;
+	}
+	vTimerSetTimerID(xTimer, (void *) expiry_count);
+	handle_transmit();
+}
+
+void receive() {
+	/*
+	 * Read from queue of bits:
+	 *
+	 * Length -> 1 byte
+	 * Payload type -> 1 byte
+	 * Data -> variable length (length - 2 [- 3])
+	 * Offset -> 3 bytes
+	 * Seq num -> 2 bytes
+	*/
+	uint8_t data_buffer[128];
+	osStatus_t status = osMessageQueueGet(receivequeueHandle, &data_buffer, NULL, 0U);   // wait for message
+	if (status != osOK) {
+		xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
+		return; // Error
+	}
+	uint8_t packet_length = data_buffer[0];
+	PayloadType packet_type = (PayloadType) data_buffer[1];
+
+	switch(packet_type) {
+		case PayloadType.PING:
+			// Acknowledge ping
+			generatepacket(PayloadType.PING, Null, 0);
+			handle_transmit();
+			break;
+		case PayloadType.NOMINAL:
+			xTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
+			uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
+			handle_transmit();
+			break;
+		case PayloadType.LOW_POWER:
+			xTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
+			uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
+			handle_transmit();
+			break;
+		case PayloadType.CAMERA_1_END:
+			// request for image, notify OBC
+			xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_1, eSetValueWithOverwrite);
+			break;
+		case PayloadType.CAMERA_2_END:
+			// request for image, notify OBC
+			xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_2, eSetValueWithOverwrite);
+			break;
+		case PayloadType.ACK_REC_CAMER:
+			uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			uint8_t camera = data_buffer[4];
+			// Contains an offset
+			uint32_t acked_offset =
+					(data_buffer[5] << 16) |
+					(data_buffer[6] << 8) |
+					(data_buffer[7]);
+			uint16_t seq_num = (data_buffer[8] << 8) | (data_buffer[9]);
+			// set as acknowledged
+			last_received_seq_num = acked_seq_num;
+			packageAndSendChunks(PayloadType.CAMERA, /*cam data pointer*/, /*full data len*/, acked_seq_num, acked_offset);
+			handle_transmit();
+			break;
+		case PayloadType.ACK_REC_TELEMETRY:
+			// set as acknowledged
+			uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			last_received_seq_num = acked_seq_num;
+			break;
+		case PayloadType.ACK_REC_ERROR:
+			// set as acknowledged
+			uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			last_received_seq_num = acked_seq_num;
+			break;
+		case PayloadType.ERROR_DUP:
+			// last packet was received twice by GS
+			uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+			last_received_seq_num = acked_seq_num;
+			break;
+		else:
+		// Error: should not be receiving other packet types
+			// Notify OBC of packet error
+			xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
+			break;
+	}
+}

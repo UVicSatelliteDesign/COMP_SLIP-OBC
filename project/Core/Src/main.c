@@ -100,6 +100,9 @@ const osSemaphoreAttr_t myBinarySem01_attributes = {
   .cb_mem = &myBinarySem01ControlBlock,
   .cb_size = sizeof(myBinarySem01ControlBlock),
 };
+/* Definitions for retransmission software timer */
+TimerHandle_t retransmission_timer;
+int retransmission_timer_id = 0;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -187,6 +190,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+  retransmission_timer = xTimerCreate(“Retransmission timer”, pdMS_TO_TICKS(ACK_RECV_TIMEOUT), pdTRUE, retransmission_timer_id, vRetransmissionTimerCallback);
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
