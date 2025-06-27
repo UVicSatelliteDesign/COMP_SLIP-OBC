@@ -14,8 +14,8 @@ extern volatile bool dirtyBit;	// the bool dirty bit originally set to false
 extern osMessageQueueId_t receivequeueHandle; // the message queue used for receiving info from the trasnciever
 extern osSemaphoreId_t myBinarySem01Handle;   // used to protect the dirty bit. it is a sempahore
 
-
-void get_gps(); // UART communication with GPS
+/////// get_gps() will need a way to pass data, either a write to flash function or a return type
+void get_gps(); // This uses UART to receive a $GPRMC gps data sentence from the gps and write it to a buffer
 
 
 
