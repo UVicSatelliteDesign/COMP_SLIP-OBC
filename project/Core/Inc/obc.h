@@ -1,23 +1,16 @@
 #ifndef OBC_H
 #define OBC_H
 
-#include "stm32h7xx_hal.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#define NOMINAL_MODE 0
+#define LOW_POWER_MODE 1
 
-#define REQUEST_CAMERA 0x01
-#define CAMERA_READY 0x02
+#define LOW_POWER_THRESHOLD 10 // TODO: Replace with actual value
 
-typedef struct {
-    float voltage;
-    float current;
-    float temperature;
-    float state_of_charge;
-    float state_of_health;
-} BatteryData;
+// 1000 = 1 second
+#define NOMINAL_INTERVAL 5000 // 5 seconds
+#define LOW_POWER_INTERVAL 20000 // 20 seconds
+#define IMAGE_INTERVAL 30000 // 30 seconds
 
-void init_bms(void);
-BatteryData get_battery_data(void);
-void obc_notifications(void *vpParameters);
+void set_mode(int m);
 
 #endif // OBC_H
