@@ -1,4 +1,5 @@
 #include "obc_interface.h"
+#include "camera.h"
 #include "main.h"
 
 // TODO: Move flash addresses to main.h and include each used address

@@ -102,6 +102,8 @@ const osSemaphoreAttr_t myBinarySem01_attributes = {
 };
 /* USER CODE BEGIN PV */
 
+SemaphoreHandle_t image_mutex;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -202,6 +204,8 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
+
+  image_mutex = xSemaphoreCreateMutex();
 
   // OBC Tasks:
 

@@ -10,7 +10,6 @@
 #define T_ERROR 2
 
 #define MAX_DATA_SIZE 100 // For telemetry, errors, warnings
-#define MAX_IMAGE_BUFFER_SIZE 100 // TODO: Change to actual value
 
 // Battery data structure
 typedef struct {

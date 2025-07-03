@@ -36,6 +36,7 @@ extern "C" {
 #include "task.h"
 #include "string.h"
 #include "stdio.h"
+#include "semphr.h"
 
 /* USER CODE END Includes */
 
@@ -103,9 +104,8 @@ void low_power_task(void *vpParameters);
 
 // Mode
 
-#define IDLE 0x0010
-#define NOMINAL 0x0020
-#define LOW_POWER 0x0040
+#define NOMINAL 0x0010
+#define LOW_POWER 0x0020
 
 // Peripheral type
 
