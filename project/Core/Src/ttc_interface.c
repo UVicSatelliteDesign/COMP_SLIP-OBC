@@ -1,4 +1,5 @@
 #include "ttc_interface.h"
+#include "flash_interface.h"
 #include "stm32h7xx_hal.h"
 
 uint8_t gps_rx_buffer[]; // gps reception buffer
