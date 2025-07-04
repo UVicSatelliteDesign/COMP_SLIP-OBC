@@ -17,4 +17,4 @@ memory_size: the amount of memory to copy to flash
 flash_address: the destination address in flash memory
 */
 
-bool flash_write(void* memory_address, int memory_size, uint32_t flash_address);
+bool flash_write(void* memory_address, int memory_size, uint16_t flash_address);
