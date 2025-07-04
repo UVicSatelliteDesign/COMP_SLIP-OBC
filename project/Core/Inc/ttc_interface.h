@@ -14,6 +14,11 @@ extern volatile bool dirtyBit;	// the bool dirty bit originally set to false
 extern osMessageQueueId_t receivequeueHandle; // the message queue used for receiving info from the trasnciever
 extern osSemaphoreId_t myBinarySem01Handle;   // used to protect the dirty bit. it is a sempahore
 
+/*
+get_gps() polls gps data into a buffer and writes the buffer to flash.
+This function returns true if successful, and returns false otherwise
+*/
+bool get_gps();
 
 
 
