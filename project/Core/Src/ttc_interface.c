@@ -12,7 +12,10 @@ extern UART_HandleTypeDef huart3; // this is the gps reception pin handler
 
 
 ///////// get_gps() is waiting on a write to flash feature
-void get_gps(){ // this is formatted for polling
+bool get_gps(){ // this is formatted for polling
     HAL_UART_Receive (&huart3, gps_rx_buffer, NMEA_sentence_size, interrupt_timeout_length);
-    flash_write(*gps_rx_buffer, NMEA_sentence_size, GPS_FLASH_ADDRESS);
+    if(flash_write(*gps_rx_buffer, NMEA_sentence_size, GPS_FLASH_ADDRESS) == true){
+        return true;
+    }
+    return false;
 }
