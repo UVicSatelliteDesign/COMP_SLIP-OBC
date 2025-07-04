@@ -1,0 +1,4 @@
+/*
+A general use flash operation interface
+
+*/
