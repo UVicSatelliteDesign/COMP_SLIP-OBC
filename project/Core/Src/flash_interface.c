@@ -1,4 +1,4 @@
 /*
-A general purpose flahs operation interface
+A general purpose flash operation interface
 
 */
