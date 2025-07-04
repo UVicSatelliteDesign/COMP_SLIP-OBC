@@ -5,6 +5,7 @@
 
 uint16_t last_received_seq_num; // last received seq num ack
 uint8_t ACK_RECV_TIMEOUT = 3000; // timeout before checking for an acknowledgement TODO: change to real value
+int communication_status = 1; // Nominal=1, Lost=0
 
 void ttc_notifications(void *vpParameters) {
     uint32_t received_notification;
@@ -53,8 +54,10 @@ void ttc_notifications(void *vpParameters) {
 
 void handle_transmit() {
 	/* Handle transmitting packet and retransmission */
-	transmit();
-	xTimerStart(retransmission_timer, 0); // Start retransmission timer
+	if(communication_status) {
+		transmit();
+		xTimerStart(retransmission_timer, 0); // Start retransmission timer
+	}
 }
 void vRetransmissionTimerCallback( TimerHandle_t xTimer ) {
 	// Timer callback function for handling retransmission
@@ -72,7 +75,8 @@ void vRetransmissionTimerCallback( TimerHandle_t xTimer ) {
 	}
 	// If not acked, check if we have more attempts or not
 	if (expiry_count == MAX_ATTEMPTS) {
-		// TODO: Enter lost state
+		// Enter lost state
+		communication_status = 0;
 		expiry_count = 0;
 		vTimerSetTimerID(xTimer, (void *) expiry_count);
 		xTimerStop(xTimer, 0);
@@ -92,6 +96,8 @@ void receive() {
 	 * Offset -> 3 bytes
 	 * Seq num -> 2 bytes
 	*/
+	// Received a packet so we should be in nominal state
+	communication_state = 1;
 	uint8_t data_buffer[128];
 	osStatus_t status = osMessageQueueGet(receivequeueHandle, &data_buffer, NULL, 0U);   // wait for message
 	if (status != osOK) {
