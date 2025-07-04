@@ -5,9 +5,9 @@
 #include "semphr.h"
 #include "stdint.h"
 
-uint16_t last_received_seq_num;	 // last received seq num ack
-uint8_t ACK_RECV_TIMEOUT = 3000; // timeout before checking for an acknowledgement TODO: change to real value
-int communication_status = 1;	 // Nominal=1, Lost=0
+uint16_t last_received_seq_num;			 // last received seq num ack
+uint8_t ACK_RECV_TIMEOUT = 3000;		 // timeout before checking for an acknowledgement TODO: change to real value
+int communication_status = COMM_NOMINAL; // Nominal=1, Lost=0
 
 void ttc_notifications(void *vpParameters)
 {
@@ -123,7 +123,7 @@ void vRetransmissionTimerCallback(TimerHandle_t xTimer)
 	if (expiry_count == MAX_ATTEMPTS)
 	{
 		// Enter lost state
-		communication_status = 0;
+		communication_status = COMM_LOST;
 		expiry_count = 0;
 		vTimerSetTimerID(xTimer, (void *)expiry_count);
 		xTimerStop(xTimer, 0);
@@ -145,7 +145,8 @@ void receive()
 	 * Seq num -> 2 bytes
 	 */
 	// Received a packet so we should be in nominal state
-	communication_status = 1;
+	communication_status = COMM_NOMINAL;
+	// Read data from buffer
 	uint8_t data_buffer[128];
 	osStatus_t status = osMessageQueueGet(receivequeueHandle, &data_buffer, NULL, 0U); // wait for message
 	if (status != osOK)
