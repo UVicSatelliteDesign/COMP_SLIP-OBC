@@ -11,7 +11,9 @@ uint16_t GPS_FLASH_ADDRESS; // not actual address, change to real address
 extern UART_HandleTypeDef huart3; // this is the gps reception pin handler
 
 
-///////// get_gps() is waiting on a write to flash feature
+/*
+get_gps() polls gps data into a buffer and writes the buffer to flash.
+This function returns true if successful, and returns false otherwise*/
 bool get_gps(){ // this is formatted for polling
     HAL_UART_Receive (&huart3, gps_rx_buffer, NMEA_sentence_size, interrupt_timeout_length);
     if(flash_write(*gps_rx_buffer, NMEA_sentence_size, GPS_FLASH_ADDRESS) == true){
