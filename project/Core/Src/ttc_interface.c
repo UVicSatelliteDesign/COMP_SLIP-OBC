@@ -13,7 +13,10 @@ extern UART_HandleTypeDef huart3; // this is the gps reception pin handler
 
 /*
 get_gps() polls gps data into a buffer and writes the buffer to flash.
-This function returns true if successful, and returns false otherwise*/
+This uses UART to receive a $GPRMC gps data sentence from the gps and write it to a buffer
+This function returns true if successful, and returns false otherwise
+
+*/
 bool get_gps(){ // this is formatted for polling
     HAL_UART_Receive (&huart3, gps_rx_buffer, NMEA_sentence_size, interrupt_timeout_length);
     if(flash_write(*gps_rx_buffer, NMEA_sentence_size, GPS_FLASH_ADDRESS) == true){
