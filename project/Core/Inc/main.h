@@ -65,6 +65,9 @@ void Error_Handler(void);
 #define PressureSensor_GPIO_Port GPIOC
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
+#define Transciever_exti_Pin GPIO_PIN_13
+#define Transciever_exti_GPIO_Port GPIOF
+#define Transciever_exti_EXTI_IRQn EXTI15_10_IRQn
 #define STLINK_RX_Pin GPIO_PIN_8
 #define STLINK_RX_GPIO_Port GPIOD
 #define STLINK_TX_Pin GPIO_PIN_9
