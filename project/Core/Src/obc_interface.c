@@ -4,6 +4,12 @@
 #include <string.h>
 #include <stdio.h>
 
+// I2C Addresses
+#define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high, shift left for HAL
+#define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
+#define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
+#define TEMP_ADDR (0x40 << 1) // 0x40 if ADD0 pin is pulled low, 0x41 if ADD0 is pulled high
+
 #define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section, sensor flash save address
 #define FLASH_SAVE_ADDRESS  ((uint32_t)0x081E0000) // Example sector 7 start (adjust based on your chip)
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
@@ -216,18 +222,18 @@ SensorsData read_sensors(){
     return data; // return filled struct
 }
 
-
+// Gyroscope (I2C)
 float read_gyroscope_x1(){
     return 31;
 }
 float read_gyroscope_x2(){
     return 32;
 }
-
 float read_gyroscope_x3(){
     return 33;
 }
 
+// Accelerometer (I2C)
 float read_acceleration_x1(){
     return 41;
 }
@@ -237,6 +243,13 @@ float read_acceleration_x2(){
 float read_acceleration_x3(){
     return 43;
 }
+
+// Altimeter (I2C)
+//
+
+// Temperature (I2C)
+//
+
 /////////////sensors functions end
 
 
