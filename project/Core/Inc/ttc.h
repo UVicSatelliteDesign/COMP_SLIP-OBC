@@ -6,4 +6,6 @@ void ttc_notifications(void *vpParameters);
 
 void transmit_camera();
 
+void Task_receiveLL(void *vpParamemeters);
+
 #endif // TTC_H

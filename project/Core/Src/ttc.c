@@ -2,7 +2,7 @@
 #include "ttc_interface.h"
 #include "obc.h"
 #include "cmsis_os.h"
-
+#include "semphr.h"
 void ttc_notifications(void *vpParameters) {
     uint32_t received_notification;
     
@@ -47,6 +47,34 @@ void ttc_notifications(void *vpParameters) {
         }
     }
 }
+
+/*
+ * @brief The task will trigger whenever the semaphore is given by the ISR. This is the information from the CC1201. The information
+ * enters a queue
+ *
+ * @parameters: void *pvParameters
+ *
+ *
+ *
+ * @return true  Data was successfully pushed to the queue.
+ * @return false Failed to push to queue (e.g., queue full or NULL queue handle).
+ *
+ *
+ *
+ */
+
+void Task_receiveLL(void *pvParameters) {
+    while (1) {
+        if (xSemaphoreTake(myBinarySem01Handle, portMAX_DELAY) == pdTRUE) {
+            // ISR gave semaphore
+
+			ReadRegisterBurst() ;   // Runs the LL function after semaphore triggered
+
+        }
+    }
+}
+
+
 // If received packet is request for camera data, Notify OBC that camera data is needed
 	// this should go in receive function:
 	// ulTaskNotify(obc_notifications, REQUEST_CAMERA, eSetValueWithOverwrite);
