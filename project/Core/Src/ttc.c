@@ -133,7 +133,7 @@ void vRetransmissionTimerCallback(TimerHandle_t xTimer)
 	handle_transmit();
 }
 
-void receive()
+void receive(void *vpParameters)
 {
 	/*
 	 * Read from queue of bits:

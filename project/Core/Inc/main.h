@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.h
+ * @brief          : Header for main.c file.
+ *                   This file contains the common defines of the application.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2025 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -23,7 +23,8 @@
 #define __MAIN_H
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -32,8 +33,8 @@ extern "C" {
 #include "ttc.h"
 #include "obc.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+  /* Private includes ----------------------------------------------------------*/
+  /* USER CODE BEGIN Includes */
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -41,36 +42,37 @@ extern "C" {
 #include "stdio.h"
 #include "semphr.h"
 
-/* USER CODE END Includes */
+  /* USER CODE END Includes */
 
-/* Exported types ------------------------------------------------------------*/
-/* USER CODE BEGIN ET */
+  /* Exported types ------------------------------------------------------------*/
+  /* USER CODE BEGIN ET */
 
-/* USER CODE END ET */
+  /* USER CODE END ET */
 
-/* Exported constants --------------------------------------------------------*/
-/* USER CODE BEGIN EC */
+  /* Exported constants --------------------------------------------------------*/
+  /* USER CODE BEGIN EC */
 
-/* USER CODE END EC */
+  /* USER CODE END EC */
 
-/* Exported macro ------------------------------------------------------------*/
-/* USER CODE BEGIN EM */
+  /* Exported macro ------------------------------------------------------------*/
+  /* USER CODE BEGIN EM */
 
-/* USER CODE END EM */
+  /* USER CODE END EM */
 
-/* Exported functions prototypes ---------------------------------------------*/
-void Error_Handler(void);
+  /* Exported functions prototypes ---------------------------------------------*/
+  void Error_Handler(void);
 
-/* USER CODE BEGIN EFP */
+  /* USER CODE BEGIN EFP */
 
-void obc_notifications(void *vpParameters);
-void ttc_notifications(void *vpParameters);
-void data_task(void *vpParameters);
-void low_power_task(void *vpParameters);
+  void obc_notifications(void *vpParameters);
+  void ttc_notifications(void *vpParameters);
+  void data_task(void *vpParameters);
+  void low_power_task(void *vpParameters);
+  void receive(void *vpParameters);
 
-/* USER CODE END EFP */
+  /* USER CODE END EFP */
 
-/* Private defines -----------------------------------------------------------*/
+  /* Private defines -----------------------------------------------------------*/
 
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
@@ -126,41 +128,41 @@ void low_power_task(void *vpParameters);
 #define Transceiver_exti_Pin GPIO_PIN_5
 #define Transceiver_exti_GPIO_Port GPIOD
 
-/* USER CODE BEGIN Private defines */
+  /* USER CODE BEGIN Private defines */
 
-/*
- * Set mode from TTC: REQUEST & <MODE>
- * Notify TTC of mode change: INFO & <MODE>
- * Notify TTC of peripheral ready: INFO & <PERIPHERAL>
- */
+  /*
+   * Set mode from TTC: REQUEST & <MODE>
+   * Notify TTC of mode change: INFO & <MODE>
+   * Notify TTC of peripheral ready: INFO & <PERIPHERAL>
+   */
 
-// Message type
+  // Message type
 
 #define REQUEST 0x0001
 #define INFO 0x0002
 #define WARNING 0x0004
 #define ERROR 0x0008
 
-// Mode
+  // Mode
 
 #define NOMINAL 0x0010
 #define LOW_POWER 0x0020
 
-// Peripheral type
+  // Peripheral type
 
 #define CAMERA 0x0100
 #define SENSORS 0x0200
 #define GPS 0x0400
 #define MEMORY 0x0800
 
-// Peripheral subtype
+  // Peripheral subtype
 
 #define SUB_1 0x1000 // Camera 1,	Temperature,	Memory Read
 #define SUB_2 0x2000 // Camera 2,	Pressure,		Memory Write
 #define SUB_3 0x4000 // 			Acceleration
 #define SUB_4 0x8000 // 			Gyroscope
 
-/* USER CODE END Private defines */
+  /* USER CODE END Private defines */
 
 #ifdef __cplusplus
 }
