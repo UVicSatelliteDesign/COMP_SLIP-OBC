@@ -14,7 +14,7 @@ extern volatile bool dirtyBit;	// the bool dirty bit originally set to false
 extern osMessageQueueId_t receivequeueHandle; // the message queue used for receiving info from the trasnciever
 extern osSemaphoreId_t myBinarySem01Handle;   // used to protect the dirty bit. it is a sempahore
 
-
+uint16_t sequenceNum; // Current sequence number
 
 
 
