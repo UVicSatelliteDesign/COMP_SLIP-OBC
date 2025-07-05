@@ -210,7 +210,7 @@ int main(void)
   xTaskCreate(obc_notifications, "OBC Notifications", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 
   xTaskCreate(ttc_notifications, "TTC Notifications", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
-
+  xTaskCreate(receive, "High Level Receive", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
