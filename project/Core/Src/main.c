@@ -21,6 +21,7 @@
 #include "string.h"
 #include "cmsis_os.h"
 #include "fatfs.h"
+#include "ttc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */

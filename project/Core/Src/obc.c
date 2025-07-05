@@ -1,4 +1,7 @@
 #include "obc.h"
+
+#include <math.h>
+
 #include "cmsis_os.h"
 
 void obc_notifications(void *vpParameters) {
@@ -13,3 +16,4 @@ void obc_notifications(void *vpParameters) {
         }
     }
 }
+
