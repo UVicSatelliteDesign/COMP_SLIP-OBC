@@ -35,17 +35,15 @@ void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen) {
     // Send payload
     writeToTransmitBuffer(payload, payloadLen);
 
-    // Increase sequence num
+    // Increase sequence number
     sequenceNum++;
 
     // Send sequence number (little-endian)
     writeToTransmitBuffer((uint8_t *)&sequenceNum, 2);
 }
 
-void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLen, uint32_t sequenceNum) {
-    uint16_t offset = 0;
-
-    while (offset < fullPayloadLen) {
+void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLen, uint32_t offset) {
+    if (offset < fullPayloadLen) {
         // Determine the size of this chunk's payload
         uint8_t chunkLen = (fullPayloadLen - offset > MAX_PAYLOAD_PER_PACKET)
                            ? MAX_PAYLOAD_PER_PACKET
@@ -58,12 +56,12 @@ void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLe
         writeToTransmitBuffer(&payload[offset], chunkLen);
 
         // Send offset (little-endian)
-        writeToTransmitBuffer((uint8_t *)&offset, 2);
+        writeToTransmitBuffer((uint8_t *)&offset, 3);
+
+        // Increase sequence number
+        sequenceNum++;
 
         // Send sequence number (little-endian)
-        writeToTransmitBuffer((uint8_t *)&sequenceNum, 4);
-
-        // Move to next chunk
-        offset += chunkLen;
+        writeToTransmitBuffer((uint8_t *)&sequenceNum, 2);
     }
 }
