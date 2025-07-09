@@ -63,6 +63,16 @@ void Error_Handler(void);
 #define TemperatureSensor_GPIO_Port GPIOC
 #define PressureSensor_Pin GPIO_PIN_3
 #define PressureSensor_GPIO_Port GPIOC
+#define CAM1_PD_Pin GPIO_PIN_0
+#define CAM1_PD_GPIO_Port GPIOA
+#define CAM1_RT_Pin GPIO_PIN_1
+#define CAM1_RT_GPIO_Port GPIOA
+#define CAM_SEL_Pin GPIO_PIN_2
+#define CAM_SEL_GPIO_Port GPIOA
+#define CAM2_PD_Pin GPIO_PIN_3
+#define CAM2_PD_GPIO_Port GPIOA
+#define CAM2_RT_Pin GPIO_PIN_5
+#define CAM2_RT_GPIO_Port GPIOA
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
 #define Transciever_exti_Pin GPIO_PIN_13
