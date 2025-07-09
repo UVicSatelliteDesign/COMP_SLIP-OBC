@@ -708,8 +708,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOG_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, CAM1_PD_Pin|CAM1_RT_Pin|CAM_SEL_Pin|CAM2_PD_Pin
-                          |CAM2_RT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, CAM1_PD_Pin|CAM_SEL_Pin|CAM2_PD_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, CAM1_RT_Pin|CAM2_RT_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD1_GPIO_Port, LD1_Pin, GPIO_PIN_RESET);
