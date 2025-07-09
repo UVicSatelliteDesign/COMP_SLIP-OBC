@@ -4,10 +4,13 @@
 #include <string.h>
 #include<stdlib.h>
 
-#define MAX_PACKET_SIZE 32
-#define HEADER_SIZE 7
+#define MAX_PACKET_SIZE 128
+#define HEADER_SIZE 6
 #define MAX_PAYLOAD_PER_PACKET (MAX_PACKET_SIZE - HEADER_SIZE)
 #define SHARED_MEMORY_ADDRESS ((uint8_t*)0x80000000)
+
+uint8_t packet_data_buffer[MAX_PACKET_SIZE];
+uint32_t packet_data_length;
 
 typedef enum {
     PING = 0b00000000,
@@ -28,18 +31,27 @@ typedef enum {
     ACK_REC_ERROR = 0b00001111,
 } PayloadType;
 
+void writeToDataBuffer(uint8_t* buffer, uint8_t* data, int length) {
+	for(int i = 0; i < length; i++) {
+		buffer[i] = data[i];
+	}
+}
+
 void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen) {
     // Send type
-    writeToTransmitBuffer(&type, 1);
+    writeToDataBuffer(&packet_data_buffer[0], &type, 1);
 
     // Send payload
-    writeToTransmitBuffer(payload, payloadLen);
+    writeToDataBuffer(&packet_data_buffer[1], payload, payloadLen);
 
     // Increase sequence number
     sequenceNum++;
 
     // Send sequence number (little-endian)
-    writeToTransmitBuffer((uint8_t *)&sequenceNum, 2);
+    writeToDataBuffer(&packet_data_buffer[payloadLen+1], (uint8_t *)&sequenceNum, 2);
+
+    // Set packet length
+    packet_data_length = payloadLen + 3;
 }
 
 void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLen, uint32_t offset) {
@@ -50,18 +62,21 @@ void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLe
                            : (fullPayloadLen - offset);
 
         // Send type
-        writeToTransmitBuffer(&type, 1);
+        writeToDataBuffer(&packet_data_buffer[0], &type, 1);
 
         // Send payload chunk
-        writeToTransmitBuffer(&payload[offset], chunkLen);
+        writeToDataBuffer(&packet_data_buffer[1], &payload[offset], chunkLen);
 
         // Send offset (little-endian)
-        writeToTransmitBuffer((uint8_t *)&offset, 3);
+        writeToDataBuffer(&packet_data_buffer[chunkLen+1], (uint8_t *)&offset, 3);
 
         // Increase sequence number
         sequenceNum++;
 
         // Send sequence number (little-endian)
-        writeToTransmitBuffer((uint8_t *)&sequenceNum, 2);
+        writeToDataBuffer(&packet_data_buffer[chunkLen+4], (uint8_t *)&sequenceNum, 2);
+
+        // Set packet length
+		packet_data_length = chunkLen + 6;
     }
 }

@@ -10,9 +10,8 @@ typedef uint8_t FIFOsize[128];                // new typedef used for defining F
 extern volatile bool dirtyBit;                // the bool dirty bit originally set to false
 extern osMessageQueueId_t receivequeueHandle; // the message queue used for receiving info from the trasnciever
 extern osSemaphoreId_t myBinarySem01Handle;   // used to protect the dirty bit. it is a sempahore
-
+void writeToDataBuffer(uint8_t *buffer, uint8_t *data, int length);
 void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen);
-
 void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLen, uint32_t sequenceNum);
 
 #endif
