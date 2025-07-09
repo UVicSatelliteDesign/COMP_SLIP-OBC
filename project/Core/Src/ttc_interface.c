@@ -5,7 +5,7 @@
 //Defines for Transmission
 #define TRANS_TIMEOUT 1 //maximum timeout for transmission
 #define MAX_ATTEMPTS 5 //maximum number of attempts
-#define MAX_PAYLOAD_SIZE 256 //The maximum allowable buffer size for the CC12x
+#define MAX_PAYLOAD_SIZE 128 //The maximum allowable buffer size for the CC12x
 
 //CC12x ports
 #define CC12_CSn_GPIO                      GPIOx //Chip select port
@@ -28,8 +28,10 @@ uint8_t ack = 0;
 //===============================================================================
 
 void transmit(){
-  //send command to transmit the buffer contents
-  CC12_SendCommand(CC12_TRANS_START);
+	// Write packet data to transmit buffer
+	writeToTransmitBuffer(packet_data_buffer, packet_data_length);
+	//send command to transmit the buffer contents
+	CC12_SendCommand(CC12_TRANS_START);
 }
 
 void writeToTransmitBuffer(uint8_t *data, uint16 length){
