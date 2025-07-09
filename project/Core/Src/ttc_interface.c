@@ -35,11 +35,11 @@ void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen) {
     // Send payload
     writeToTransmitBuffer(payload, payloadLen);
 
-    // Send offset (little-endian because of system memory layout)
-    writeToTransmitBuffer((uint8_t *)&offset, 2);
+    // Increase sequence num
+    sequenceNum++;
 
     // Send sequence number (little-endian)
-    writeToTransmitBuffer((uint8_t *)&sequenceNum, 4);
+    writeToTransmitBuffer((uint8_t *)&sequenceNum, 2);
 }
 
 void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLen, uint32_t sequenceNum) {
