@@ -11,7 +11,7 @@ void ttc_notifications(void *vpParameters);
 
 void vRetransmissionTimerCallback( TimerHandle_t xTimer );
 
-void receive();
+void receive(void *vpParameters);
 
 void Task_receiveLL(void *vpParamemeters);
 

@@ -4,6 +4,7 @@
 #include "cmsis_os.h"
 #include "semphr.h"
 #include "stdint.h"
+#include "timers.h"
 
 uint16_t last_received_seq_num;			 // last received seq num ack
 uint8_t ACK_RECV_TIMEOUT = 3000;		 // timeout before checking for an acknowledgement TODO: change to real value
@@ -144,8 +145,6 @@ void receive(void *vpParameters)
 	 * Offset -> 3 bytes
 	 * Seq num -> 2 bytes
 	 */
-	// Received a packet so we should be in nominal state
-	communication_status = COMM_NOMINAL;
 	// Read data from buffer
 	uint8_t data_buffer[128];
 	osStatus_t status = osMessageQueueGet(receivequeueHandle, &data_buffer, NULL, 0U); // wait for message
@@ -154,6 +153,9 @@ void receive(void *vpParameters)
 		xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
 		return; // Error
 	}
+	// Received a packet so we should be in nominal state
+	communication_status = COMM_NOMINAL;
+
 	uint8_t packet_length = data_buffer[0];
 	PayloadType packet_type = (PayloadType)data_buffer[1];
 
@@ -161,7 +163,7 @@ void receive(void *vpParameters)
 	{
 	case PayloadType.PING:
 		// Acknowledge ping
-		generatepacket(PayloadType.PING, Null, 0);
+		generatepacket(PayloadType.PING, NULL, 0);
 		handle_transmit();
 		break;
 	case PayloadType.NOMINAL:
@@ -188,10 +190,9 @@ void receive(void *vpParameters)
 		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		uint8_t camera = data_buffer[4];
 		// Contains an offset
-		uint32_t acked_offset =
-			(data_buffer[5] << 16) |
-			(data_buffer[6] << 8) |
-			(data_buffer[7]);
+		uint32_t acked_offset = (data_buffer[5] << 16) |
+								(data_buffer[6] << 8) |
+								(data_buffer[7]);
 		uint16_t seq_num = (data_buffer[8] << 8) | (data_buffer[9]);
 		// set as acknowledged
 		last_received_seq_num = acked_seq_num;
@@ -213,10 +214,10 @@ void receive(void *vpParameters)
 		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		last_received_seq_num = acked_seq_num;
 		break;
-		else :
-			// Error: should not be receiving other packet types
-			// Notify OBC of packet error
-			xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
+	default:
+		// Error: should not be receiving other packet types
+		// Notify OBC of packet error
+		xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
 		break;
 	}
 }
