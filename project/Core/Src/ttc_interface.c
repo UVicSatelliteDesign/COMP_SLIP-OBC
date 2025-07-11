@@ -46,6 +46,6 @@ bool ReadRegisterBurst(){
 	if (status != osOK) {
 	    return false;
 	}
-	return True;
+	return true;
 
 }
