@@ -15,7 +15,7 @@ extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --batt
 ////////////sensors handler definition start
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
 extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
-extern SPI_HandleTypeDef hspi3; // SPI handle for accelerometer --sensors
+extern SPI_HandleTypeDef hspi3; // SPI handle definition for accelerometer --sensors
 extern SPI_HandleTypeDef hspi4; // SPI handle definition for gyroscope
 ////////////sensors handler definition end
 // SD card variables
@@ -140,8 +140,8 @@ SensorsData sensor_backup = {0}; // Data is written to this by pointer when retr
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
     Hal_ADC_Start(&PressureSensor);
-    MX_SPI3_Init(); // Accelerometer SPI handle definition and initialisation
-    MX_SPI4_Init(); // Gyroscope SPI handle definition and initialisation
+    MX_SPI3_Init(); // Accelerometer SPI initialisation
+    MX_SPI4_Init(); // Gyroscope SPI initialisation
 }
 
 void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
