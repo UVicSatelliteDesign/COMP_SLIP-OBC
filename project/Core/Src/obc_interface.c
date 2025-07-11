@@ -12,10 +12,11 @@ extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
 extern ADC_HandleTypeDef hadc_current; // ADC handler for current
 extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --battery
 
-////////////sensors adc handler definition start
+////////////sensors handler definition start
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
 extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
-////////////sensors adc handler definition end
+extern SPI_HandleTypeDef hspi1; // SPI handle for accelerometer --sensors
+////////////sensors handler definition end
 // SD card variables
 FRESULT res; // FatFS result code
 uint32_t byteswritten; // File write count
@@ -138,6 +139,7 @@ SensorsData sensor_backup = {0}; // Data is written to this by pointer when retr
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
     Hal_ADC_Start(&PressureSensor);
+    MX_SPI1_Init(); // SPI initiation of accelerometer
 }
 
 void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
