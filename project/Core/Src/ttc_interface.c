@@ -29,7 +29,7 @@ uint8_t ack = 0;
 
 void transmit(){
 	// Write packet data to transmit buffer
-	writeToTransmitBuffer(packet_data_buffer, packet_data_length);
+	writeToTransmitBuffer(packet_data_buffer, packet_data_length+1);
 	//send command to transmit the buffer contents
 	CC12_SendCommand(CC12_TRANS_START);
 }
