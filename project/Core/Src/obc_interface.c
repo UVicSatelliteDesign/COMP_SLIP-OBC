@@ -4,11 +4,14 @@
 #include <string.h>
 #include <stdio.h>
 
-// I2C Addresses
-#define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high, shift left for HAL
+// I2C Addresses (left shift for HAL)
+#define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
 #define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
 #define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
 #define TEMP_ADDR (0x40 << 1) // 0x40 if ADD0 pin is pulled low, 0x41 if ADD0 is pulled high
+
+// I2C transmit timeout (ms)
+#define I2C_Timeout 1000
 
 #define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section, sensor flash save address
 #define FLASH_SAVE_ADDRESS  ((uint32_t)0x081E0000) // Example sector 7 start (adjust based on your chip)
@@ -246,6 +249,12 @@ float read_acceleration_x3(){
 
 // Altimeter (I2C)
 //
+void altimeter_reset(){
+	uint8_t command = 0b00011110; // Reset command for altimeter
+	HAL_I2C_Master_Transmit(&hi2cX /*TODO: replace with relevant I2C instance*/, ALTI_ADDR, command, 1, I2C_Timeout);
+}
+
+
 
 // Temperature (I2C)
 //
