@@ -15,8 +15,12 @@ extern osMessageQueueId_t receivequeueHandle; // the message queue used for rece
 extern osSemaphoreId_t myBinarySem01Handle;   // used to protect the dirty bit. it is a sempahore
 
 /*
-get_gps() polls gps data into a buffer and writes the buffer to flash.
-This function returns true if successful, and returns false otherwise
+get_gps:
+    saves an NMEA $GPRMC formatted gps sentence to flash memory.
+Parameters:
+    void
+Returns:
+    returns a true boolean if successful, and returns a false boolean otherwise
 */
 bool get_gps();
 
