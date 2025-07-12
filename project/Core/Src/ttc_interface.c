@@ -1,7 +1,24 @@
 #include "ttc_interface.h"
-
-
 #include "main.h"
+
+/**
+ * @brief Reads data from the RX FIFO of the CC1201 using SPI burst read mode.
+ *
+ * This function performs a burst read from the RX FIFO of the CC1201 transceiver.
+ * It first reads the NUM_RXBYTES register to determine how many bytes are available
+ * in the RX FIFO. If bytes are available, it performs a burst read using the SPI interface.
+ * The received data is then placed into a message queue for further processing.
+ *
+ * Steps:
+ * 1. Read the NUM_RXBYTES register (0xD7) to get the number of bytes in the RX FIFO.
+ * 2. If bytes are available (1 to 128), send a burst read command (0xFF) to read data.
+ * 3. Store the received data into a queue (e.g., RTOS message queue) for downstream use.
+ * *
+ * @return true if the operation completes successfully and the data is placed into the queue.
+ * @return false if writing to the queue fails.
+ */
+
+
 
 
 
@@ -18,6 +35,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
 
 }
+
 
 
 bool ReadRegisterBurst(){
