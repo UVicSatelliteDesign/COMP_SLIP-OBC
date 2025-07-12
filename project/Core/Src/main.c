@@ -302,8 +302,6 @@ void SystemClock_Config(void)
 }
 
 /**
-<<<<<<< HEAD
-=======
   * @brief ADC3 Initialization Function
   * @param None
   * @retval None
@@ -362,7 +360,6 @@ static void MX_ADC3_Init(void)
 }
 
 /**
->>>>>>> dev
   * @brief DCMI Initialization Function
   * @param None
   * @retval None
@@ -449,8 +446,6 @@ static void MX_ETH_Init(void)
 }
 
 /**
-<<<<<<< HEAD
-=======
   * @brief I2C2 Initialization Function
   * @param None
   * @retval None
@@ -547,7 +542,6 @@ static void MX_I2C4_Init(void)
 }
 
 /**
->>>>>>> dev
   * @brief SDMMC1 Initialization Function
   * @param None
   * @retval None
