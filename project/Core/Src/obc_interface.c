@@ -1,21 +1,24 @@
 #include "obc_interface.h"
-#include "stm32h7xx_hal.h"
-#include <math.h>
-#include <string.h>
-#include <stdio.h>
+#include "camera.h"
+#include "main.h"
 
-#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section, sensor flash save address
+// TODO: Move flash addresses to main.h and include each used address
+
 #define FLASH_SAVE_ADDRESS  ((uint32_t)0x081E0000) // Example sector 7 start (adjust based on your chip)
+#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0 // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
+// Battery
 extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
 extern ADC_HandleTypeDef hadc_current; // ADC handler for current
 extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --battery
 
-////////////sensors adc handler definition start
+// Sensors
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
 extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
-////////////sensors adc handler definition end
+
+SensorsData sensor_backup = {0}; // Data is written to this by pointer when retrieved from flash memory
+
 // SD card variables
 FRESULT res; // FatFS result code
 uint32_t byteswritten; // File write count
@@ -132,8 +135,6 @@ void load_battery_data_from_flash() {
 }
 
 //////////////////sensors functions start
-SensorsData sensor_backup = {0}; // Data is written to this by pointer when retrieved from flash memory
-
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
@@ -238,7 +239,6 @@ float read_acceleration_x3(){
     return 43;
 }
 /////////////sensors functions end
-
 
 // Mount SD card
 FRESULT mount_SD(){
@@ -346,10 +346,3 @@ FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
 FRESULT unmount_SD(){
 	return f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
 }
-
-
-
-
-
-
-
