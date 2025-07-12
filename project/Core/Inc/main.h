@@ -74,10 +74,21 @@ void low_power_task(void *vpParameters);
 #define TemperatureSensor_GPIO_Port GPIOC
 #define PressureSensor_Pin GPIO_PIN_3
 #define PressureSensor_GPIO_Port GPIOC
+#define CAM1_PD_Pin GPIO_PIN_0
+#define CAM1_PD_GPIO_Port GPIOA
+#define CAM1_RT_Pin GPIO_PIN_1
+#define CAM1_RT_GPIO_Port GPIOA
+#define CAM_SEL_Pin GPIO_PIN_2
+#define CAM_SEL_GPIO_Port GPIOA
+#define CAM2_PD_Pin GPIO_PIN_3
+#define CAM2_PD_GPIO_Port GPIOA
+#define CAM2_RT_Pin GPIO_PIN_5
+#define CAM2_RT_GPIO_Port GPIOA
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
-#define LD3_Pin GPIO_PIN_14
-#define LD3_GPIO_Port GPIOB
+#define Transciever_exti_Pin GPIO_PIN_13
+#define Transciever_exti_GPIO_Port GPIOF
+#define Transciever_exti_EXTI_IRQn EXTI15_10_IRQn
 #define STLINK_RX_Pin GPIO_PIN_8
 #define STLINK_RX_GPIO_Port GPIOD
 #define STLINK_TX_Pin GPIO_PIN_9
@@ -86,6 +97,8 @@ void low_power_task(void *vpParameters);
 #define USB_OTG_FS_PWR_EN_GPIO_Port GPIOD
 #define USB_OTG_FS_OVCR_Pin GPIO_PIN_7
 #define USB_OTG_FS_OVCR_GPIO_Port GPIOG
+#define GPS_UART_Pin GPIO_PIN_1
+#define GPS_UART_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 
