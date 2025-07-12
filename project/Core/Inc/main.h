@@ -57,8 +57,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
 #define TemperatureSensor_Pin GPIO_PIN_2
 #define TemperatureSensor_GPIO_Port GPIOC
 #define PressureSensor_Pin GPIO_PIN_3
@@ -73,8 +71,6 @@ void Error_Handler(void);
 #define CAM2_PD_GPIO_Port GPIOA
 #define CAM2_RT_Pin GPIO_PIN_5
 #define CAM2_RT_GPIO_Port GPIOA
-#define LD1_Pin GPIO_PIN_0
-#define LD1_GPIO_Port GPIOB
 #define Transciever_exti_Pin GPIO_PIN_13
 #define Transciever_exti_GPIO_Port GPIOF
 #define Transciever_exti_EXTI_IRQn EXTI15_10_IRQn
@@ -84,8 +80,6 @@ void Error_Handler(void);
 #define STLINK_TX_GPIO_Port GPIOD
 #define USB_OTG_FS_PWR_EN_Pin GPIO_PIN_10
 #define USB_OTG_FS_PWR_EN_GPIO_Port GPIOD
-#define USB_OTG_FS_OVCR_Pin GPIO_PIN_7
-#define USB_OTG_FS_OVCR_GPIO_Port GPIOG
 #define GPS_UART_Pin GPIO_PIN_1
 #define GPS_UART_GPIO_Port GPIOD
 
