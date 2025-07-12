@@ -1,64 +1,32 @@
 #include "obc.h"
-
-#include <math.h>
-
-#include "cmsis_os.h"
 #include "camera.h"
+#include "obc_interface.h"
+#include "cmsis_os.h"
 #include <string.h>
-
-
-osMessageQueueId_t imageQueueHandle;
-
-
+#include <stdlib.h>
 
 void obc_notifications(void *vpParameters) {
     uint32_t received_notification;
+    Camera_t camera;
 
-    // Create the image queue and storage task
-    imageQueueHandle = osMessageQueueNew(IMAGE_QUEUE_LENGTH, sizeof(uint8_t *), NULL);
-    xTaskCreate(image_storage, "ImageStore", 512, NULL, tskIDLE_PRIORITY + 2, NULL);
+    configure_camera1(&camera, NULL);
+    camera_init(&camera);
 
-
-    while (1) {
-        received_notification = ulTaskNotifyTake(pdFALSE, 0);
+    for (;;) {
+        received_notification = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         if (received_notification & REQUEST_CAMERA) {
-            // Trigger camera capture
+            if (capture_snapshot(&camera) == HAL_OK) {
+                // Save to SD card
+                store_image(camera.imageBuffer);
+
+                // Save to flash
+                save_image_to_flash(&camera, FLASH_SECTOR_2);
+
+                // Free image buffer
+                free(camera.imageBuffer);
+            } 
+            else log_error("Camera capture failed");
         }
     }
 }
-
-<<<<<<< HEAD
-/**
- * @todo create an RTOS object that stores, gives the signal that its done, when the RTOS object
- * is called, keep requesting.  
- * @todo read up on task notifications and queues 
- */
-
-/**
- * @brief  Function to store images in flash memory
- * @param  arg: argument passed to the thread  
- * @return None
- */
- void image_storage(void *arg) {
-    uint8_t *image_buffer;
-    for(;;) {
-        if(osMessageQueueGet(imageQueueHandle, &image_buffer, osWaitForever) == osOK) {
-            // Store the image in flash memory
-            store_image(image_buffer);
-        }
-    }
-}
-
-/**
- * @brief  Function to send images to the OBC
- * @param  image_buffer: pointer to the image buffer
- * @return None
- */
-void obc_send_image(uint8_t *image_buffer){
-    if (imageQueueHandle != NULL) {
-        osMessageQueuePut(imageQueueHandle, &image_buffer, 0, 0);
-    }
-}
-=======
->>>>>>> 7e173d740136134bb848edb303a15efe936b312f
