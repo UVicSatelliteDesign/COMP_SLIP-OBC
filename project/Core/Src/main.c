@@ -18,6 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+#include "stdio.h"
+
 #include "cmsis_os.h"
 #include "fatfs.h"
 
@@ -80,6 +83,8 @@ const osSemaphoreAttr_t myBinarySem01_attributes = {
   .cb_size = sizeof(myBinarySem01ControlBlock),
 };
 /* USER CODE BEGIN PV */
+
+SemaphoreHandle_t image_mutex;
 
 /* USER CODE END PV */
 
@@ -184,9 +189,18 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
 
-  xTaskCreate(obc_notifications, "OBC Notifications", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+  image_mutex = xSemaphoreCreateMutex();
 
-  xTaskCreate(ttc_notifications, "TTC Notifications", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  // OBC Tasks:
+
+  xTaskCreate(obc_notifications, "OBC Notifications", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+  xTaskCreate(data_task, "Data Task", 					configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  xTaskCreate(low_power_task, "Lower Power Task", 		configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 10, NULL); // Highest priority
+
+  // TTC Tasks:
+
+  xTaskCreate(ttc_notifications, "TTC Notifications", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+
 
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
