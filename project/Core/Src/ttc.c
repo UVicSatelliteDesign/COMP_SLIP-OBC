@@ -94,13 +94,15 @@ void Task_receiveLL(void *pvParameters)
 	}
 }
 
-void handle_transmit()
+void handle_transmit(int acknowlegement)
 {
 	/* Handle transmitting packet and retransmission */
 	if (communication_status)
 	{
 		transmit();
-		xTimerStart(retransmission_timer, 0); // Start retransmission timer
+		if(!acknowlegement) {
+			xTimerStart(retransmission_timer, 0); // Start retransmission timer
+		}
 	}
 }
 
@@ -131,7 +133,7 @@ void vRetransmissionTimerCallback(TimerHandle_t xTimer)
 		return;
 	}
 	vTimerSetTimerID(xTimer, (void *)expiry_count);
-	handle_transmit();
+	handle_transmit(0);
 }
 
 void receive(void *vpParameters)
@@ -150,8 +152,8 @@ void receive(void *vpParameters)
 	osStatus_t status = osMessageQueueGet(receivequeueHandle, &data_buffer, NULL, 0U); // wait for message
 	if (status != osOK)
 	{
-		xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
-		return; // Error
+		xTaskNotify(obc_notifications, ERROR & SUB_3, eSetValueWithOverwrite);
+		return; // Error: we can't read the received data
 	}
 	// Received a packet so we should be in nominal state
 	communication_status = COMM_NOMINAL;
@@ -164,19 +166,21 @@ void receive(void *vpParameters)
 	case PayloadType.PING:
 		// Acknowledge ping
 		generatepacket(PayloadType.PING, NULL, 0);
-		handle_transmit();
+		handle_transmit(1);
 		break;
 	case PayloadType.NOMINAL:
 		xTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
 		uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+		// Acknowledge nominal command
 		generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
-		handle_transmit();
+		handle_transmit(1);
 		break;
 	case PayloadType.LOW_POWER:
 		xTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
 		uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+		// Acknowledge low power command
 		generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
-		handle_transmit();
+		handle_transmit(1);
 		break;
 	case PayloadType.CAMERA_1_END:
 		// request for image, notify OBC
@@ -196,8 +200,9 @@ void receive(void *vpParameters)
 		uint16_t seq_num = (data_buffer[8] << 8) | (data_buffer[9]);
 		// set as acknowledged
 		last_received_seq_num = acked_seq_num;
+		// Send next chunk
 		packageAndSendChunks(PayloadType.CAMERA, /*cam data pointer*/, /*full data len*/, acked_seq_num, acked_offset);
-		handle_transmit();
+		handle_transmit(0);
 		break;
 	case PayloadType.ACK_REC_TELEMETRY:
 		// set as acknowledged
@@ -217,7 +222,7 @@ void receive(void *vpParameters)
 	default:
 		// Error: should not be receiving other packet types
 		// Notify OBC of packet error
-		xTaskNotify(obc_notifications, ERROR, eSetValueWithOverwrite);
+		xTaskNotify(obc_notifications, ERROR & SUB_4, eSetValueWithOverwrite);
 		break;
 	}
 }

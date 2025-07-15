@@ -9,6 +9,8 @@ extern TimerHandle_t retransmission_timer; // Timer handle, created in main
 
 void ttc_notifications(void *vpParameters);
 
+void handle_transmit(int acknowlegement);
+
 void vRetransmissionTimerCallback( TimerHandle_t xTimer );
 
 void receive(void *vpParameters);
