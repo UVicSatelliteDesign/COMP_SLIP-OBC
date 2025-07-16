@@ -39,14 +39,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
 
 bool ReadRegisterBurst(){
-	uint8_t numcmd[2], len[2];
+	uint8_t numcmd[3], len[2];
 	FIFOsize rx_buf; // Max RX FIFO size
 
 	uint8_t cmd = 0x3F | 0xC0;  // 0x3F: Location of RXFIFO; 0xC0: READ Burst command
 
 	// Step 1: Read NUM_RXBYTES register
-	numcmd[0] = 0xD7 | 0x80;  // Read command for 0xD7
-	numcmd[1] = 0x00;         // Dummy
+	numcmd[0] = 0x2F | 0x80;  // Read extended memory space
+	numcmd[1] = 0xD7;         // Command 
+	numcmd[2] = 0x00;	//Dummy
 
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);   //CS low
 	HAL_SPI_TransmitReceive(&hspi2, numcmd, len, 2, HAL_MAX_DELAY);  // recieve the number of bytes to read
