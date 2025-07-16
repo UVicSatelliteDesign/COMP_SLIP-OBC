@@ -52,9 +52,15 @@ float read_acceleration_x1(); // poll accelerometer
 float read_acceleration_x2();
 float read_acceleration_x3();
 
+//// Altimeter
+// For use by HL
+void altimeter_init();
+float altimeter_read();
+// Only if necessary
 void altimeter_reset();
-void altimeter_convert(uint8_t* adc_val);
-float read_altimeter();
+// For use by LL
+void altimeter_read_ADC(uint8_t* adc_pres_val, uint8_t* adc_temp_val);
+void altimeter_read_calibration();
 /////////////////sensors end
 
 // Function prototypes

@@ -25,6 +25,10 @@ extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --batt
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
 extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
 ////////////sensors adc handler definition end
+
+// Altimeter calibration constants
+uint16_t alti_calib[6] = {};
+
 // SD card variables
 FRESULT res; // FatFS result code
 uint32_t byteswritten; // File write count
@@ -247,25 +251,70 @@ float read_acceleration_x3(){
     return 43;
 }
 
-// Altimeter (I2C)
+//// Altimeter (I2C)
+// TODO: error handling
+// To be called by HL
+void altimeter_init(){
+	altimeter_read_calibration();
+}
+
+float altimeter_read(){
+	uint32_t alti_adc_pres = 0;
+	uint32_t alti_adc_temp = 0;
+	altimeter_convert(&alti_adc_pres, &alti_adc_temp);
+	// Convert ADC value to altitude (magic numbers come from datasheet)
+	int32_t dT = alti_adc_temp - alti_calib[4]*256;
+	int32_t temperature = 2000 + dT*alti_calib[5]/8388608;
+	int64_t offset = alti_calib[1]*65536 + alti_calib[3]*dT/128;
+	int64_t sens = alti_calib[0]*32768 + alti_calib[2]*dT/256;
+	int32_t pressure = (alti_adc_pres*sens/2097152 - offset)/32768;
+	// TODO: implement second order conversion for improved accuracy
+	// Calculate altitude from pressure (and temperature?)
+	// TODO: make this formula more accurate
+	float altitude = 44330*(1-pow(pressure/(float)101320,1/5.255));
+	return altitude;
+}
+
 void altimeter_reset(){
 	uint8_t command = 0b00011110; // Reset command for altimeter
 	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, command, 1, I2C_Timeout);
 }
 
-void altimeter_convert(uint8_t* adc_val){
+// To be used by LL
+void altimeter_read_ADC(uint8_t* adc_pres_val, uint8_t* adc_temp_val){
+	// Read pressure ADC value
 	uint8_t command = 0b01001000; // Initiate pressure conversion command
 	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
 	command = 0b00000000; // Read sequence
 	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_val, 3, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_pres_val, 3, I2C_Timeout);
+	// Read temperature ADC value
+	uint8_t command = 0b01011000; // Initiate temperature conversion command
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	command = 0b00000000; // Read sequence
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_temp_val, 3, I2C_Timeout);
 }
 
-float read_altimeter(){
-	uint8_t alti_adc_resp[3] = {};
-	altimeter_convert(&alti_adc_resp);
-	// TODO: convert ADC value to altitude
-	return 0.0;
+void altimeter_read_calibration(){
+	uint8_t command = 0b10100010; // Read coefficient 1
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[0], 2, I2C_Timeout);
+	uint8_t command = 0b10100100; // Read coefficient 2
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[1], 2, I2C_Timeout);
+	uint8_t command = 0b10100110; // Read coefficient 3
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[2], 2, I2C_Timeout);
+	uint8_t command = 0b10101000; // Read coefficient 4
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[3], 2, I2C_Timeout);
+	uint8_t command = 0b10101010; // Read coefficient 5
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[4], 2, I2C_Timeout);
+	uint8_t command = 0b10101100; // Read coefficient 6
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[5], 2, I2C_Timeout);
 }
 
 // Temperature (I2C)
