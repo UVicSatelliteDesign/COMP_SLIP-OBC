@@ -24,16 +24,16 @@ uint8_t ack = 0;
 void transmit()
 {
 	// Write packet length to NUM_TXBYTES
-	CC12_SendCommand(CC12_EXTENDED_REG | CC12_WRITE_BYTE);
-	CC12_SendCommand(CC12_NUM_TXBYTES);
-	CC12_SendCommand(packet_data_length);
+	uint8_t command[3] = {CC12_EXTENDED_REG | CC12_WRITE_BYTE, CC12_NUM_TXBYTES, packet_data_length};
+	CC12_SendCommand(command, 3);
 	// send command to transmit the buffer contents
-	CC12_SendCommand(CC12_TRANS_START);
+	uint8_t cmd = CC12_TRANS_START;
+	CC12_SendCommand(&cmd, 1);
 	// Write packet data to transmit buffer
 	writeToTransmitBuffer(packet_data_buffer, packet_data_length);
 }
 
-void writeToTransmitBuffer(uint8_t *data, uint16 length)
+void writeToTransmitBuffer(uint8_t *data, uint16_t length)
 {
 	// pull cs low to start spi communication
 	HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_RESET);
@@ -43,7 +43,8 @@ void writeToTransmitBuffer(uint8_t *data, uint16 length)
 		;
 
 	// send the burst command
-	CC12_SendCommand(CC12_TX_FIFO | CC12_BURST_TRANS);
+	int cmd = CC12_TX_FIFO | CC12_BURST_TRANS;
+	CC12_SendCommand(&cmd, 1);
 
 	// transmit the data packet
 	for (int i = 0; i < length; i++)
@@ -57,22 +58,16 @@ void writeToTransmitBuffer(uint8_t *data, uint16 length)
 	HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_SET);
 }
 
-void CC12_SendCommand(uint8_t command)
+void CC12_SendCommand(uint8_t *command, int length)
 {
-	// pull cs low to start spi communication
-	HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_RESET);
-
-	// wait for MISO to go low
-	while (HAL_GPIO_ReadPin(CC12_SPI_GPIO, CC12_SO_PIN))
-		;
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); // CS low
 
 	// transmit command over spi
-	HAL_SPI_Transmit(&hspi1, &command, 1, HAL_MAX_DELAY);
+	HAL_SPI_Transmit(&hspi1, command, length, HAL_MAX_DELAY);
 	while ((STATUS_REGISTER & 0x02) == 0)
 		;
 
-	// pull CS high to end spi
-	HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); // CS high
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
