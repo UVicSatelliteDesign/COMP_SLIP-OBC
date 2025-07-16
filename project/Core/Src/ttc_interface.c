@@ -35,12 +35,8 @@ void transmit()
 
 void writeToTransmitBuffer(uint8_t *data, uint16_t length)
 {
-	// pull cs low to start spi communication
-	HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_RESET);
-
-	// wait for MISO to go low
-	while (HAL_GPIO_ReadPin(CC12_SPI_GPIO, CC12_SO_PIN))
-		;
+	// pull CS low to start SPI communication
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); // CS low
 
 	// send the burst command
 	int cmd = CC12_TX_FIFO | CC12_BURST_TRANS;
@@ -50,12 +46,10 @@ void writeToTransmitBuffer(uint8_t *data, uint16_t length)
 	for (int i = 0; i < length; i++)
 	{
 		HAL_SPI_Transmit(&hspi1, *data, length, HAL_MAX_DELAY);
-		while ((STATUS_REGISTER & 0x02) == 0)
-			;	// wait for transmission to complete
 		data++; // go to next
 	}
 	// pull CS high to end SPI communication
-	HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); // CS high
 }
 
 void CC12_SendCommand(uint8_t *command, int length)
@@ -64,8 +58,6 @@ void CC12_SendCommand(uint8_t *command, int length)
 
 	// transmit command over spi
 	HAL_SPI_Transmit(&hspi1, command, length, HAL_MAX_DELAY);
-	while ((STATUS_REGISTER & 0x02) == 0)
-		;
 
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); // CS high
 }
