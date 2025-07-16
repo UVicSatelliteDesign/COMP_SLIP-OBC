@@ -50,7 +50,7 @@ bool ReadRegisterBurst(){
 	numcmd[2] = 0x00;	//Dummy
 
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);   //CS low
-	HAL_SPI_TransmitReceive(&hspi2, numcmd, len, 2, HAL_MAX_DELAY);  // recieve the number of bytes to read
+	HAL_SPI_TransmitReceive(&hspi2, numcmd, len, 3, HAL_MAX_DELAY);  // recieve the number of bytes to read
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);   // CS high
 
 	uint8_t bytes_to_read = len[1] & 0x7F; // mask overflow bit
