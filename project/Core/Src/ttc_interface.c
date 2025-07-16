@@ -1,4 +1,5 @@
 #include "ttc_interface.h"
+#include "main.h"
 
 //===============================================================================
 //============================**TRANSMIT**===============================
@@ -84,4 +85,14 @@ void CC12_SendCommand(uint8_t command)
 
 	// pull CS high to end spi
 	HAL_GPIO_WritePin(CC12_CSn_GPIO, CC12_CSn_PIN, GPIO_PIN_SET);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == Transciever_exti_Pin)
+	{
+		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+		xSemaphoreGiveFromISR(myBinarySem01Handle, &xHigherPriorityTaskWoken);
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
 }
