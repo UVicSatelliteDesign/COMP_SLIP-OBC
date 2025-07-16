@@ -1,6 +1,77 @@
 #include "ttc_interface.h"
 #include "main.h"
 
+//===============================================================================
+//============================**TRANSMIT**===============================
+// Defines for Transmission
+#define TRANS_TIMEOUT 1		 // maximum timeout for transmission
+#define MAX_ATTEMPTS 5		 // maximum number of attempts
+#define MAX_PAYLOAD_SIZE 128 // The maximum allowable buffer size for the CC12x
+
+// CC12x FIFO Transmit Registers
+#define CC12_BURST_TRANS 0x40 // burst transmission
+#define CC12_TX_FIFO 0x3F	  // Tx FIFO register
+#define CC12_TRANS_START 0x35 // starts transmission
+
+#define CC12_NUM_TXBYTES 0xD6  // Num Tx bytes
+#define CC12_EXTENDED_REG 0x27 // Extended register space address
+#define CC12_WRITE_BYTE 0x00   // Write single byte command
+
+// Acknowledgement Response
+uint8_t ack = 0;
+//===============================================================================
+
+void transmit()
+{
+	// Write packet length to NUM_TXBYTES
+	uint8_t command[3] = {CC12_EXTENDED_REG | CC12_WRITE_BYTE, CC12_NUM_TXBYTES, packet_data_length};
+	CC12_SendCommand(command, 3);
+	// send command to transmit the buffer contents
+	uint8_t cmd = CC12_TRANS_START;
+	CC12_SendCommand(&cmd, 1);
+	// Write packet data to transmit buffer
+	writeToTransmitBuffer(packet_data_buffer, packet_data_length);
+}
+
+void writeToTransmitBuffer(uint8_t *data, uint16_t length)
+{
+	// pull CS low to start SPI communication
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); // CS low
+
+	// send the burst command
+	int cmd = CC12_TX_FIFO | CC12_BURST_TRANS;
+	CC12_SendCommand(&cmd, 1);
+
+	// transmit the data packet
+	for (int i = 0; i < length; i++)
+	{
+		HAL_SPI_Transmit(&hspi1, *data, length, HAL_MAX_DELAY);
+		data++; // go to next
+	}
+	// pull CS high to end SPI communication
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); // CS high
+}
+
+void CC12_SendCommand(uint8_t *command, int length)
+{
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); // CS low
+
+	// transmit command over spi
+	HAL_SPI_Transmit(&hspi1, command, length, HAL_MAX_DELAY);
+
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); // CS high
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if (GPIO_Pin == Transciever_exti_Pin)
+	{
+		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+		xSemaphoreGiveFromISR(myBinarySem01Handle, &xHigherPriorityTaskWoken);
+		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
+}
+
 /**
  * @brief Reads data from the RX FIFO of the CC1201 using SPI burst read mode.
  *
@@ -18,53 +89,35 @@
  * @return false if writing to the queue fails.
  */
 
-
-
-
-
-
-
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
-	if (GPIO_Pin==Transciever_exti_Pin){
-		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(myBinarySem01Handle, &xHigherPriorityTaskWoken);
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
-
-
-
-}
-
-
-
-bool ReadRegisterBurst(){
+bool ReadRegisterBurst()
+{
 	uint8_t numcmd[3], len[2];
 	FIFOsize rx_buf; // Max RX FIFO size
 
-	uint8_t cmd = 0x3F | 0xC0;  // 0x3F: Location of RXFIFO; 0xC0: READ Burst command
+	uint8_t cmd = 0x3F | 0xC0; // 0x3F: Location of RXFIFO; 0xC0: READ Burst command
 
 	// Step 1: Read NUM_RXBYTES register
-	numcmd[0] = 0x2F | 0x80;  // Read extended memory space
-	numcmd[1] = 0xD7;         // Command 
-	numcmd[2] = 0x00;	//Dummy
+	numcmd[0] = 0x2F | 0x80; // Read extended memory space
+	numcmd[1] = 0xD7;		 // Command
+	numcmd[2] = 0x00;		 // Dummy
 
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);   //CS low
-	HAL_SPI_TransmitReceive(&hspi2, numcmd, len, 3, HAL_MAX_DELAY);  // recieve the number of bytes to read
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);   // CS high
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);			// CS low
+	HAL_SPI_TransmitReceive(&hspi2, numcmd, len, 3, HAL_MAX_DELAY); // recieve the number of bytes to read
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);			// CS high
 
 	uint8_t bytes_to_read = len[1] & 0x7F; // mask overflow bit
 
-	if (bytes_to_read > 0 && bytes_to_read <= 128) {
-	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
-	    HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);   // transmit the adress and dummy data
-	    HAL_SPI_Receive(&hspi2, rx_buf, bytes_to_read, HAL_MAX_DELAY); // recieve the data into a buffer
-	    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
+	if (bytes_to_read > 0 && bytes_to_read <= 128)
+	{
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+		HAL_SPI_Transmit(&hspi2, &cmd, 1, HAL_MAX_DELAY);			   // transmit the adress and dummy data
+		HAL_SPI_Receive(&hspi2, rx_buf, bytes_to_read, HAL_MAX_DELAY); // recieve the data into a buffer
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 	}
-	osStatus_t status = osMessageQueuePut(receivequeueHandle, &rx_buf, 0, 0);   //Write to queue
-	if (status != osOK) {
-	    return false;
+	osStatus_t status = osMessageQueuePut(receivequeueHandle, &rx_buf, 0, 0); // Write to queue
+	if (status != osOK)
+	{
+		return false;
 	}
 	return true;
-
 }
