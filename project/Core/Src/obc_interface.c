@@ -276,7 +276,7 @@ FRESULT setup_SD(){
 }
 
 // Store telemetry/errors/etc on SD card
-FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
+FRESULT store_data(uint8_t* data, uint8_t data_size, uint8_t type){
 	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
 	if (res != FR_OK){
         f_close(&SDFile);
@@ -304,7 +304,7 @@ FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
 		// Error handling
 		return res;
 	}
-	res = f_write(&SDFile, data, strlen((char *)data), (void *)&byteswritten);
+	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
 		// Error handling
@@ -321,7 +321,7 @@ FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
 }
 
 // Store images on SD card
-FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
+FRESULT store_image(uint8_t* data, uint8_t data_size){
 	uint8_t size = strlen("UVR-SLIP/Images/image.jpeg") + 10;
 	char path[size];
 	snprintf(path, size, "UVR-SLIP/Images/image%04d.jpeg", image_count);
@@ -331,7 +331,7 @@ FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
 		// Error handling
 		return res;
 	}
-	res = f_write(&SDFile, data, MAX_IMAGE_BUFFER_SIZE, (void *)&byteswritten);
+	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
 		// Error handling
