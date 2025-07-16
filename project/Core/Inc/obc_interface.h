@@ -51,6 +51,10 @@ float read_gyroscope_x3();
 float read_acceleration_x1(); // poll accelerometer
 float read_acceleration_x2();
 float read_acceleration_x3();
+
+void altimeter_reset();
+void altimeter_convert(uint8_t* adc_val);
+float read_altimeter();
 /////////////////sensors end
 
 // Function prototypes

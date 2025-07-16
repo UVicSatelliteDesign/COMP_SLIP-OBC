@@ -248,19 +248,33 @@ float read_acceleration_x3(){
 }
 
 // Altimeter (I2C)
-//
 void altimeter_reset(){
 	uint8_t command = 0b00011110; // Reset command for altimeter
-	HAL_I2C_Master_Transmit(&hi2cX /*TODO: replace with relevant I2C instance*/, ALTI_ADDR, command, 1, I2C_Timeout);
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, command, 1, I2C_Timeout);
 }
 
+void altimeter_convert(uint8_t* adc_val){
+	uint8_t command = 0b01001000; // Initiate pressure conversion command
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	command = 0b00000000; // Read sequence
+	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_val, 3, I2C_Timeout);
+}
 
+float read_altimeter(){
+	uint8_t alti_adc_resp[3] = {};
+	altimeter_convert(&alti_adc_resp);
+	// TODO: convert ADC value to altitude
+	return 0.0;
+}
 
 // Temperature (I2C)
 //
 
 /////////////sensors functions end
 
+
+//// SD card functions
 
 // Mount SD card
 FRESULT mount_SD(){
