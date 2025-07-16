@@ -10,7 +10,7 @@
 #define SHARED_MEMORY_ADDRESS ((uint8_t*)0x80000000)
 
 uint8_t packet_data_buffer[MAX_PACKET_SIZE];
-uint8_t packet_data_length;
+uint32_t packet_data_length;
 
 typedef enum {
     PING = 0b00000000,
@@ -39,22 +39,19 @@ void writeToDataBuffer(uint8_t* buffer, uint8_t* data, int length) {
 
 void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen) {
     // Send type
-    writeToDataBuffer(&packet_data_buffer[1], &type, 1);
+    writeToDataBuffer(&packet_data_buffer[0], &type, 1);
 
     // Send payload
-    writeToDataBuffer(&packet_data_buffer[2], payload, payloadLen);
+    writeToDataBuffer(&packet_data_buffer[1], payload, payloadLen);
 
     // Increase sequence number
     sequenceNum++;
 
     // Send sequence number (little-endian)
-    writeToDataBuffer(&packet_data_buffer[payloadLen+2], (uint8_t *)&sequenceNum, 2);
+    writeToDataBuffer(&packet_data_buffer[payloadLen+1], (uint8_t *)&sequenceNum, 2);
 
     // Set packet length
-    packet_data_length = payloadLen + 3; // type + payload + seqnum
-
-    // Set packet length (so TTC can read variable length packets)
-    writeToDataBuffer(&packet_data_buffer[0], &packet_data_length, 1);
+    packet_data_length = payloadLen + 3;
 }
 
 void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLen, uint32_t offset) {
@@ -65,24 +62,21 @@ void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLe
                            : (fullPayloadLen - offset);
 
         // Send type
-        writeToDataBuffer(&packet_data_buffer[1], &type, 1);
+        writeToDataBuffer(&packet_data_buffer[0], &type, 1);
 
         // Send payload chunk
-        writeToDataBuffer(&packet_data_buffer[2], &payload[offset], chunkLen);
+        writeToDataBuffer(&packet_data_buffer[1], &payload[offset], chunkLen);
 
         // Send offset (little-endian)
-        writeToDataBuffer(&packet_data_buffer[chunkLen+2], (uint8_t *)&offset, 3);
+        writeToDataBuffer(&packet_data_buffer[chunkLen+1], (uint8_t *)&offset, 3);
 
         // Increase sequence number
         sequenceNum++;
 
         // Send sequence number (little-endian)
-        writeToDataBuffer(&packet_data_buffer[chunkLen+5], (uint8_t *)&sequenceNum, 2);
+        writeToDataBuffer(&packet_data_buffer[chunkLen+4], (uint8_t *)&sequenceNum, 2);
 
         // Set packet length
-		packet_data_length = chunkLen + 6; // type + payload + offset + seqnum
-
-		// Set packet length (so TTC can read variable length packets)
-		writeToDataBuffer(&packet_data_buffer[0], &packet_data_length, 1);
+		packet_data_length = chunkLen + 6;
     }
 }
