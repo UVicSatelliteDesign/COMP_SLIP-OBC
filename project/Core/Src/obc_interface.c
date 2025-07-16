@@ -1,8 +1,8 @@
 #include "obc_interface.h"
-#include "stm32h7xx_hal.h"
-#include <math.h>
-#include <string.h>
-#include <stdio.h>
+#include "camera.h"
+#include "main.h"
+
+// TODO: Move flash addresses to main.h and include each used address
 
 // I2C Addresses (left shift for HAL)
 #define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
@@ -13,21 +13,23 @@
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
 
-#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section, sensor flash save address
 #define FLASH_SAVE_ADDRESS  ((uint32_t)0x081E0000) // Example sector 7 start (adjust based on your chip)
+#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0 // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
+// Battery
 extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
 extern ADC_HandleTypeDef hadc_current; // ADC handler for current
 extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --battery
 
-////////////sensors adc handler definition start
+// Sensors
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
 extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
-////////////sensors adc handler definition end
 
 // Altimeter calibration constants
 uint16_t alti_calib[6] = {};
+
+SensorsData sensor_backup = {0}; // Data is written to this by pointer when retrieved from flash memory
 
 // SD card variables
 FRESULT res; // FatFS result code
@@ -145,8 +147,6 @@ void load_battery_data_from_flash() {
 }
 
 //////////////////sensors functions start
-SensorsData sensor_backup = {0}; // Data is written to this by pointer when retrieved from flash memory
-
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
@@ -322,9 +322,7 @@ void altimeter_read_calibration(){
 
 /////////////sensors functions end
 
-
 //// SD card functions
-
 // Mount SD card
 FRESULT mount_SD(){
 	res = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
@@ -361,7 +359,7 @@ FRESULT setup_SD(){
 }
 
 // Store telemetry/errors/etc on SD card
-FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
+FRESULT store_data(uint8_t* data, uint8_t data_size, uint8_t type){
 	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
 	if (res != FR_OK){
         f_close(&SDFile);
@@ -389,7 +387,7 @@ FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
 		// Error handling
 		return res;
 	}
-	res = f_write(&SDFile, data, strlen((char *)data), (void *)&byteswritten);
+	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
 		// Error handling
@@ -406,7 +404,7 @@ FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
 }
 
 // Store images on SD card
-FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
+FRESULT store_image(uint8_t* data, uint8_t data_size){
 	uint8_t size = strlen("UVR-SLIP/Images/image.jpeg") + 10;
 	char path[size];
 	snprintf(path, size, "UVR-SLIP/Images/image%04d.jpeg", image_count);
@@ -416,7 +414,7 @@ FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
 		// Error handling
 		return res;
 	}
-	res = f_write(&SDFile, data, MAX_IMAGE_BUFFER_SIZE, (void *)&byteswritten);
+	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
 		// Error handling
@@ -431,10 +429,3 @@ FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
 FRESULT unmount_SD(){
 	return f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
 }
-
-
-
-
-
-
-
