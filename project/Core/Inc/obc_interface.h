@@ -71,8 +71,8 @@ float read_acceleration_x3();
 FRESULT mount_SD();
 FRESULT format_SD();
 FRESULT setup_SD();
-FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type);
-FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]);
+FRESULT store_data(uint8_t* data, uint8_t data_size, uint8_t type);
+FRESULT store_image(uint8_t* data, uint8_t data_size);
 FRESULT unmount_SD();
 
 #endif /* SRC_OBC_INTERFACE_H_ */
