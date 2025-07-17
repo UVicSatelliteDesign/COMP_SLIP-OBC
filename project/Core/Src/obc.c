@@ -5,6 +5,8 @@
 #include "time.h"
 
 int mode = NOMINAL_MODE; // Start the payload in nominal mode
+
+#define CAMERA_FLASH_SECTOR 1
 HAL_StatusTypeDef status;
 BatteryData battery_data;
 Camera_t* camera1;
@@ -43,7 +45,7 @@ void obc_notifications(void *vpParameters) {
         			camera = 1;
         			status = capture_snapshot(camera1);
         			if (status == HAL_OK) {
-        				save_image_to_flash(camera1, camera_sector); // TODO: Set camera sector
+        				save_image_to_flash(camera1, CAMERA_FLASH_SECTOR);
         				store_image(camera1->imageBuffer);
         			} else {
         				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
@@ -54,7 +56,7 @@ void obc_notifications(void *vpParameters) {
         			camera = 2;
         			status = capture_snapshot(camera2);
         			if (status == HAL_OK) {
-        			    save_image_to_flash(camera2, camera_sector); // TODO: Set camera sector
+        			    save_image_to_flash(camera2, CAMERA_FLASH_SECTOR);
         			    store_image(camera2->imageBuffer);
         			} else {
         				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
@@ -139,7 +141,7 @@ void image_task(void *vpParameters) {
 		camera = 1;
 		status = capture_snapshot(camera1);
 		if (status == HAL_OK) {
-			save_image_to_flash(camera1, camera_sector); // TODO: Set camera sector
+			save_image_to_flash(camera1, CAMERA_FLASH_SECTOR);
 			store_image(camera1->imageBuffer);
 		} else {
 			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
@@ -156,7 +158,7 @@ void image_task(void *vpParameters) {
 		camera = 2;
 		status = capture_snapshot(camera2);
 		if (status == HAL_OK) {
-			save_image_to_flash(camera2, camera_sector); // TODO: Set camera sector
+			save_image_to_flash(camera2, CAMERA_FLASH_SECTOR);
 			store_image(camera2->imageBuffer);
 		} else {
 			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
