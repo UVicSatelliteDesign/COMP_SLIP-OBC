@@ -57,24 +57,44 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
-#define TemperatureSensor_Pin GPIO_PIN_2
-#define TemperatureSensor_GPIO_Port GPIOC
-#define PressureSensor_Pin GPIO_PIN_3
-#define PressureSensor_GPIO_Port GPIOC
-#define LD1_Pin GPIO_PIN_0
-#define LD1_GPIO_Port GPIOB
+#define OBC_Temperature_Pin GPIO_PIN_2
+#define OBC_Temperature_GPIO_Port GPIOC
+#define CAM1_PD_Pin GPIO_PIN_0
+#define CAM1_PD_GPIO_Port GPIOA
+#define CAM1_RT_Pin GPIO_PIN_1
+#define CAM1_RT_GPIO_Port GPIOA
+#define CAM_SEL_Pin GPIO_PIN_2
+#define CAM_SEL_GPIO_Port GPIOA
+#define CAM2_PD_Pin GPIO_PIN_3
+#define CAM2_PD_GPIO_Port GPIOA
+#define CAM2_RT_Pin GPIO_PIN_5
+#define CAM2_RT_GPIO_Port GPIOA
+#define Transceiver_NSS_Pin GPIO_PIN_11
+#define Transceiver_NSS_GPIO_Port GPIOE
+#define Transceiver_SCK_Pin GPIO_PIN_12
+#define Transceiver_SCK_GPIO_Port GPIOE
+#define Transceiver_MISO_Pin GPIO_PIN_13
+#define Transceiver_MISO_GPIO_Port GPIOE
+#define Transceiver_MOSI_Pin GPIO_PIN_14
+#define Transceiver_MOSI_GPIO_Port GPIOE
+#define Memory_NSS_Pin GPIO_PIN_12
+#define Memory_NSS_GPIO_Port GPIOB
+#define Memory_SCK_Pin GPIO_PIN_13
+#define Memory_SCK_GPIO_Port GPIOB
+#define Memory_MISO_Pin GPIO_PIN_14
+#define Memory_MISO_GPIO_Port GPIOB
+#define Memory_MOSI_Pin GPIO_PIN_15
+#define Memory_MOSI_GPIO_Port GPIOB
 #define STLINK_RX_Pin GPIO_PIN_8
 #define STLINK_RX_GPIO_Port GPIOD
 #define STLINK_TX_Pin GPIO_PIN_9
 #define STLINK_TX_GPIO_Port GPIOD
-#define USB_OTG_FS_PWR_EN_Pin GPIO_PIN_10
-#define USB_OTG_FS_PWR_EN_GPIO_Port GPIOD
-#define USB_OTG_FS_OVCR_Pin GPIO_PIN_7
-#define USB_OTG_FS_OVCR_GPIO_Port GPIOG
-#define GPS_UART_Pin GPIO_PIN_1
-#define GPS_UART_GPIO_Port GPIOD
+#define GPS_RX_Pin GPIO_PIN_0
+#define GPS_RX_GPIO_Port GPIOD
+#define GPS_TX_Pin GPIO_PIN_1
+#define GPS_TX_GPIO_Port GPIOD
+#define Transceiver_exti_Pin GPIO_PIN_5
+#define Transceiver_exti_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 
