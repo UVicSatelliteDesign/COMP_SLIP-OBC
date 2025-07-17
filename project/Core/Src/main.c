@@ -198,6 +198,8 @@ int main(void)
   xTaskCreate(ttc_notifications, "TTC Notifications", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
 
 
+  xTaskCreate(Task_receiveLL, "TTC Receive", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
+
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
