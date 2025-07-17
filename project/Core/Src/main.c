@@ -18,6 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
+#include "stdio.h"
+
 #include "cmsis_os.h"
 #include "fatfs.h"
 
@@ -27,7 +30,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -73,13 +75,12 @@ const osMessageQueueAttr_t receivequeue_attributes = {
 };
 /* Definitions for myBinarySem01 */
 osSemaphoreId_t myBinarySem01Handle;
-osStaticSemaphoreDef_t myBinarySem01ControlBlock;
 const osSemaphoreAttr_t myBinarySem01_attributes = {
-  .name = "myBinarySem01",
-  .cb_mem = &myBinarySem01ControlBlock,
-  .cb_size = sizeof(myBinarySem01ControlBlock),
+  .name = "myBinarySem01"
 };
 /* USER CODE BEGIN PV */
+
+SemaphoreHandle_t image_mutex;
 
 /* USER CODE END PV */
 
@@ -184,9 +185,20 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
 
-  xTaskCreate(obc_notifications, "OBC Notifications", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+  image_mutex = xSemaphoreCreateMutex();
 
-  xTaskCreate(ttc_notifications, "TTC Notifications", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  // OBC Tasks:
+
+  xTaskCreate(obc_notifications, "OBC Notifications", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+  xTaskCreate(data_task, "Data Task", 					configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  xTaskCreate(low_power_task, "Lower Power Task", 		configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 10, NULL); // Highest priority
+
+  // TTC Tasks:
+
+  xTaskCreate(ttc_notifications, "TTC Notifications", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+
+
+  xTaskCreate(Task_receiveLL, "TTC Receive", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
 
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -714,6 +726,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -740,12 +753,44 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+
+  /*Configure GPIO pin : Transciever_exti_Pin */
+  GPIO_InitStruct.Pin = Transciever_exti_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Transciever_exti_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : USB_OTG_FS_PWR_EN_Pin */
+  GPIO_InitStruct.Pin = USB_OTG_FS_PWR_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(USB_OTG_FS_PWR_EN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : USB_OTG_FS_OVCR_Pin */
+  GPIO_InitStruct.Pin = USB_OTG_FS_OVCR_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(USB_OTG_FS_OVCR_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PG11 PG13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11|GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
   /*Configure GPIO pin : Transceiver_exti_Pin */
   GPIO_InitStruct.Pin = Transceiver_exti_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(Transceiver_exti_GPIO_Port, &GPIO_InitStruct);
+
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

@@ -28,9 +28,18 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
+#include "stm32h7xx_hal_spi.h"
+#include "ttc.h"
+#include "obc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "FreeRTOS.h"
+#include "task.h"
+#include "string.h"
+#include "stdio.h"
+#include "semphr.h"
 
 /* USER CODE END Includes */
 
@@ -54,9 +63,29 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+void obc_notifications(void *vpParameters);
+void ttc_notifications(void *vpParameters);
+void data_task(void *vpParameters);
+void low_power_task(void *vpParameters);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+
+#define B1_Pin GPIO_PIN_13
+#define B1_GPIO_Port GPIOC
+#define TemperatureSensor_Pin GPIO_PIN_2
+#define TemperatureSensor_GPIO_Port GPIOC
+#define PressureSensor_Pin GPIO_PIN_3
+#define PressureSensor_GPIO_Port GPIOC
+#define LD1_Pin GPIO_PIN_0
+#define LD1_GPIO_Port GPIOB
+#define Transciever_exti_Pin GPIO_PIN_13
+#define Transciever_exti_GPIO_Port GPIOF
+#define Transciever_exti_EXTI_IRQn EXTI15_10_IRQn
+#define LD3_Pin GPIO_PIN_14
+#define LD3_GPIO_Port GPIOB
+
 #define OBC_Temperature_Pin GPIO_PIN_2
 #define OBC_Temperature_GPIO_Port GPIOC
 #define CAM1_PD_Pin GPIO_PIN_0
@@ -85,6 +114,7 @@ void Error_Handler(void);
 #define Memory_MISO_GPIO_Port GPIOB
 #define Memory_MOSI_Pin GPIO_PIN_15
 #define Memory_MOSI_GPIO_Port GPIOB
+
 #define STLINK_RX_Pin GPIO_PIN_8
 #define STLINK_RX_GPIO_Port GPIOD
 #define STLINK_TX_Pin GPIO_PIN_9
@@ -97,6 +127,38 @@ void Error_Handler(void);
 #define Transceiver_exti_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
+
+/*
+ * Set mode from TTC: REQUEST & <MODE>
+ * Notify TTC of mode change: INFO & <MODE>
+ * Notify TTC of peripheral ready: INFO & <PERIPHERAL>
+ */
+
+// Message type
+
+#define REQUEST 0x0001
+#define INFO 0x0002
+#define WARNING 0x0004
+#define ERROR 0x0008
+
+// Mode
+
+#define NOMINAL 0x0010
+#define LOW_POWER 0x0020
+
+// Peripheral type
+
+#define CAMERA 0x0100
+#define SENSORS 0x0200
+#define GPS 0x0400
+#define MEMORY 0x0800
+
+// Peripheral subtype
+
+#define SUB_1 0x1000 // Camera 1,	Temperature,	Memory Read
+#define SUB_2 0x2000 // Camera 2,	Pressure,		Memory Write
+#define SUB_3 0x4000 // 			Acceleration
+#define SUB_4 0x8000 // 			Gyroscope
 
 /* USER CODE END Private defines */
 
