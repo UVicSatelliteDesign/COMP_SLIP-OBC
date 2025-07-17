@@ -21,5 +21,6 @@ typedef enum {
 
 FlashResult_t flash_write_data(FlashDataType_t type, const void* data, uint32_t size, uint32_t sector);
 FlashResult_t flash_read_data(FlashDataType_t type, void* data, uint32_t size, uint32_t sector, uint32_t expected_magic);
+FlashResult_t flash_clear_sector(uint32_t sector);
 
 #endif /* FLASH_INTERFACE_H */

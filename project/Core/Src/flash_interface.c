@@ -94,3 +94,27 @@ FlashResult_t flash_read_data(FlashDataType_t type, void* data, uint32_t size, u
 
     return FLASH_SUCCESS;
 }
+
+FlashResult_t flash_clear_sector(uint32_t sector) {
+    HAL_StatusTypeDef status = HAL_FLASH_Unlock();
+    if (status != HAL_OK) {
+        return FLASH_ERROR_UNLOCK;
+    }
+
+    FLASH_EraseInitTypeDef erase = {
+        .TypeErase = FLASH_TYPEERASE_SECTORS,
+        .Sector = sector,
+        .NbSectors = 1,
+        .VoltageRange = FLASH_VOLTAGE_RANGE_3
+    };
+
+    uint32_t pageError;
+    status = HAL_FLASHEx_Erase(&erase, &pageError);
+    if (status != HAL_OK) {
+        HAL_FLASH_Lock();
+        return FLASH_ERROR_ERASE;
+    }
+
+    HAL_FLASH_Lock();
+    return FLASH_SUCCESS;
+}
