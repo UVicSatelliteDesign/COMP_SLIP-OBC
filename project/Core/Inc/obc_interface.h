@@ -1,16 +1,15 @@
-#ifndef SRC_OBC_INTERFACE_H_
-#define SRC_OBC_INTERFACE_H_
+#ifndef SRC_OBC_INTERFACE_H
+#define SRC_OBC_INTERFACE_H
 
-#include "stm32h7xx_hal.h"
+#include "main.h"
 #include "fatfs.h"
-#include "camera.h"
-
-#define MAX_DATA_SIZE 100 // For telemetry, errors, warnings
 
 // For type argument of store_data
 #define T_DATA 0
 #define T_WARNING 1
 #define T_ERROR 2
+
+#define MAX_DATA_SIZE 100 // For telemetry, errors, warnings
 
 // Battery data structure
 typedef struct {
@@ -21,7 +20,22 @@ typedef struct {
     float power_usage;
     float total_energy_used;
     float estimated_life;
+    uint32_t magic;
 } BatteryData;
+
+// BMS prototypes
+void init_bms();
+float read_battery_voltage();
+float read_battery_current();
+float read_battery_temperature();
+float calculate_state_of_charge(float current, float dt);
+float calculate_state_of_charge(float current, float dt);
+float calculate_power_usage(float voltage, float current);
+float calculate_energy_usage(float power, float dt);
+float estimate_battery_life(float state_of_charge, float avg_power_draw);
+BatteryData get_battery_data(float dt);
+void save_battery_data_to_flash(BatteryData *data);
+void load_battery_data_from_flash();
 
 ////////////sensors start
 typedef struct { 		// struct containing sensor data values
@@ -63,16 +77,12 @@ uint32_t altimeter_read_temperature();
 uint8_t altimeter_read_calibration(); // Returns 0 if success, 1 if not
 /////////////////sensors end
 
-// Function prototypes
-void init_bms(void);
-BatteryData get_battery_data(float dt);
-
-// Functions for storing to SD card
+// Memory prototypes
 FRESULT mount_SD();
 FRESULT format_SD();
 FRESULT setup_SD();
-FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type);
-FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]);
+FRESULT store_data(uint8_t* data, uint8_t data_size, uint8_t type);
+FRESULT store_image(uint8_t* data, uint8_t data_size);
 FRESULT unmount_SD();
 
 #endif /* SRC_OBC_INTERFACE_H_ */
