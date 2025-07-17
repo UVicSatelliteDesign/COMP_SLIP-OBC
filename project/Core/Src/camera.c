@@ -30,6 +30,7 @@
 #include "camera.h"
 #include "camera_recovery.h"
 #include "camera_bsp.h"
+#include "flash_interface.h"
 
 /** @def SWITCH_CAMERA(camera, state)
  *  @brief Macro to switch camera state via GPIO
@@ -298,38 +299,11 @@ int32_t camera_init(Camera_t *camera) {
  */
 void save_image_to_flash(Camera_t *camera, uint32_t sector) {
     if (camera->imageBuffer == NULL){
-        // Handle error if image buffer is empty
         return;
     }
 
-    uint32_t sectorError;
+    flash_write_data(FLASH_TYPE_IMAGE, camera->imageBuffer, camera->actualImageSize, sector);
 
-    // unlock flash memory
-    HAL_FLASH_Unlock();
-
-    HAL_FLASHEx_Erase(&(FLASH_EraseInitTypeDef){
-        .TypeErase = FLASH_TYPEERASE_SECTORS,
-        .Sector = sector,  // Sector to erase (e.g., FLASH_SECTOR_2 or FLASH_SECTOR_3)
-        .NbSectors = 1,
-        .VoltageRange = FLASH_VOLTAGE_RANGE_3
-    }, &sectorError);
-
-    if (sectorError != 0xFFFFFFFF) {
-        // Handle error
-        HAL_FLASH_Lock();
-        return;
-    }
-
-    uint32_t flashAddress = FLASH_BASE + (sector * FLASH_SECTOR_SIZE);
-    for (uint32_t i = 0; i < camera->imageSize / 4; i++) {
-        HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, flashAddress + (i * 4),
-                          ((uint32_t *)camera->imageBuffer)[i]);
-    }
-
-    // lock flash memory
-    HAL_FLASH_Lock();
-
-    // empty image buffer to save RAM
     free(camera->imageBuffer);
     camera->imageBuffer = NULL;
 }
