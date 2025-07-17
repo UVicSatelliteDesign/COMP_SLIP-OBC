@@ -13,9 +13,11 @@
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
 
-#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section, sensor flash save address
+#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0 // alter to correct section, sensor flash save address
 #define FLASH_SAVE_ADDRESS  ((uint32_t)0x081E0000) // Example sector 7 start (adjust based on your chip)
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
+
+extern I2C_HandleTypeDef hi2c4;
 
 extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
 extern ADC_HandleTypeDef hadc_current; // ADC handler for current
@@ -150,7 +152,7 @@ SensorsData sensor_backup = {0}; // Data is written to this by pointer when retr
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
-    Hal_ADC_Start(&PressureSensor);
+    HAL_ADC_Start(&PressureSensor);
 }
 
 void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
@@ -252,16 +254,17 @@ float read_acceleration_x3(){
 }
 
 //// Altimeter (I2C)
-// TODO: error handling
 // To be called by HL
-void altimeter_init(){
-	altimeter_read_calibration();
+uint8_t altimeter_init(){
+	if (altimeter_read_calibration() != 0){
+		return 1;
+	}
+	return 0;
 }
 
 float altimeter_read(){
-	uint32_t alti_adc_pres = 0;
-	uint32_t alti_adc_temp = 0;
-	altimeter_convert(&alti_adc_pres, &alti_adc_temp);
+	uint32_t alti_adc_pres = altimeter_read_pressure();
+	uint32_t alti_adc_temp = altimeter_read_temperature();
 	// Convert ADC value to altitude (magic numbers come from datasheet)
 	int32_t dT = alti_adc_temp - alti_calib[4]*256;
 	int32_t temperature = 2000 + dT*alti_calib[5]/8388608;
@@ -275,46 +278,108 @@ float altimeter_read(){
 	return altitude;
 }
 
-void altimeter_reset(){
+uint8_t altimeter_reset(){
 	uint8_t command = 0b00011110; // Reset command for altimeter
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, command, 1, I2C_Timeout);
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	return 0;
 }
 
 // To be used by LL
-void altimeter_read_ADC(uint8_t* adc_pres_val, uint8_t* adc_temp_val){
+uint32_t altimeter_read_pressure(){
+	uint8_t adc_pres[3] = {};
 	// Read pressure ADC value
 	uint8_t command = 0b01001000; // Initiate pressure conversion command
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
 	command = 0b00000000; // Read sequence
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_pres_val, 3, I2C_Timeout);
-	// Read temperature ADC value
-	uint8_t command = 0b01011000; // Initiate temperature conversion command
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	command = 0b00000000; // Read sequence
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_temp_val, 3, I2C_Timeout);
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_pres, 3, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	// TODO: check if byte order is correct
+	return (adc_pres[0] | (adc_pres[1] << 8) | (adc_pres[2] << 16));
 }
 
-void altimeter_read_calibration(){
+uint32_t altimeter_read_temperature(){
+	uint8_t adc_temp[3] = {};
+	// Read temperature ADC value
+	uint8_t command = 0b01011000; // Initiate temperature conversion command
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFF;
+	}
+	command = 0b00000000; // Read sequence
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_temp, 3, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	// TODO: check if byte order is correct
+	return (adc_temp[0] | (adc_temp[1] << 8) | (adc_temp[2] << 16));
+}
+
+uint8_t altimeter_read_calibration(){
+	uint8_t temp[2] = {};
 	uint8_t command = 0b10100010; // Read coefficient 1
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[0], 2, I2C_Timeout);
-	uint8_t command = 0b10100100; // Read coefficient 2
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[1], 2, I2C_Timeout);
-	uint8_t command = 0b10100110; // Read coefficient 3
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[2], 2, I2C_Timeout);
-	uint8_t command = 0b10101000; // Read coefficient 4
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[3], 2, I2C_Timeout);
-	uint8_t command = 0b10101010; // Read coefficient 5
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[4], 2, I2C_Timeout);
-	uint8_t command = 0b10101100; // Read coefficient 6
-	HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout);
-	HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, &alti_calib[5], 2, I2C_Timeout);
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[0] = temp[0] | (temp[1] << 8);
+	command = 0b10100100; // Read coefficient 2
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[1] = temp[0] | (temp[1] << 8);
+	command = 0b10100110; // Read coefficient 3
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[2] = temp[0] | (temp[1] << 8);
+	command = 0b10101000; // Read coefficient 4
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[3] = temp[0] | (temp[1] << 8);
+	command = 0b10101010; // Read coefficient 5
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[4] = temp[0] | (temp[1] << 8);
+	command = 0b10101100; // Read coefficient 6
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[5] = temp[0] | (temp[1] << 8);
+	return 0;
 }
 
 // Temperature (I2C)

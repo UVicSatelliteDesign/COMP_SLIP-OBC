@@ -54,13 +54,13 @@ float read_acceleration_x3();
 
 //// Altimeter
 // For use by HL
-void altimeter_init();
+uint8_t altimeter_init(); // Returns 0 if success, 1 if not
 float altimeter_read();
-// Only if necessary
-void altimeter_reset();
+uint8_t altimeter_reset(); // Only if necessary, returns 0 if success, 1 if not
 // For use by LL
-void altimeter_read_ADC(uint8_t* adc_pres_val, uint8_t* adc_temp_val);
-void altimeter_read_calibration();
+uint32_t altimeter_read_pressure();
+uint32_t altimeter_read_temperature();
+uint8_t altimeter_read_calibration(); // Returns 0 if success, 1 if not
 /////////////////sensors end
 
 // Function prototypes
