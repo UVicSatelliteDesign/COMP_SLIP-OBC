@@ -6,6 +6,8 @@
 
 #define LOW_POWER_THRESHOLD 10 // TODO: Replace with actual value
 
+#define CAMERA_FLASH_SECTOR 1
+
 // 1000 = 1 second
 #define NOMINAL_INTERVAL 5000 // 5 seconds
 #define LOW_POWER_INTERVAL 20000 // 20 seconds

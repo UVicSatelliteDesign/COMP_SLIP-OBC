@@ -5,8 +5,6 @@
 #include "time.h"
 
 int mode = NOMINAL_MODE; // Start the payload in nominal mode
-
-#define CAMERA_FLASH_SECTOR 1
 HAL_StatusTypeDef status;
 BatteryData battery_data;
 Camera_t* camera1;
