@@ -24,9 +24,9 @@ get_gps:
 Parameters:
     void
 Returns:
-    returns a true boolean if successful, and returns a false boolean otherwise
+    returns gps data as a buffer
 */
-bool get_gps();
+uint8_t get_gps();
 
 void transmit();
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
