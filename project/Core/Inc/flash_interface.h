@@ -15,6 +15,7 @@
 #define FLASH_SECTOR_BATTERY    7
 
 // Flash sector addresses (based on STM32H7xx flash layout)
+// todo: NEED TO CONFIRM FROM DATASHEET
 #define FLASH_SECTOR_1_ADDRESS  0x08020000
 #define FLASH_SECTOR_5_ADDRESS  0x080A0000
 #define FLASH_SECTOR_6_ADDRESS  0x080C0000
