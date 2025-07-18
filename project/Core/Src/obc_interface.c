@@ -1,6 +1,7 @@
 #include "obc_interface.h"
 #include "camera.h"
 #include "main.h"
+#include "flash_interface.h"
 
 // TODO: Move flash addresses to main.h and include each used address
 
@@ -107,43 +108,11 @@ BatteryData get_battery_data(float dt) {
 }
 
 void save_battery_data_to_flash(BatteryData *data) {
-	HAL_FLASH_Unlock();
-
-	    // 1. Setup flash erase configuration
-	    FLASH_EraseInitTypeDef erase;
-	    uint32_t pageError;
-
-	    erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
-	    erase.Sector = FLASH_SECTOR_7;                   // Make sure this is correct for your chip!
-	    erase.NbSectors = 1;
-	    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
-
-	    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK) {
-	        // Handle erase error
-	        HAL_FLASH_Lock();
-	        return;
-	    }
-
-	    // 2. Write the data in 64-bit chunks
-	    uint64_t *src = (uint64_t *)data;
-	    uint32_t numWords = sizeof(BatteryData) / 8;
-
-	    for (uint32_t i = 0; i < numWords; i++) {
-	        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SAVE_ADDRESS + (i * 8), src[i]) != HAL_OK) {
-	            // Handle write error
-	            HAL_FLASH_Lock();
-	            return;
-	        }
-	    }
-
-	    HAL_FLASH_Lock();
+    flash_write(data, sizeof(BatteryData), FLASH_SECTOR_BATTERY);
 }
 
 void load_battery_data_from_flash() {
-    BatteryData *flash_data = (BatteryData *)FLASH_SAVE_ADDRESS;
-    if (flash_data->magic == FLASH_MAGIC) {
-        memcpy(&battery_backup, flash_data, sizeof(BatteryData));
-    } else {
+    if (!flash_read(&battery_backup, sizeof(BatteryData), FLASH_SECTOR_BATTERY)) {
         memset(&battery_backup, 0, sizeof(BatteryData));
     }
 }
@@ -155,44 +124,12 @@ void init_sensors() {
     HAL_ADC_Start(&PressureSensor);
 }
 
-void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
-    HAL_FLASH_Unlock();
-
-    // 1. Setup flash erase configuration
-    FLASH_EraseInitTypeDef erase;
-    uint32_t pageError;
-
-    erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
-    erase.Sector = FLASH_SENSOR_ADDRESS;                   // Make sure this is correct for your chip!
-    erase.NbSectors = 1;
-    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
-
-    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK) {
-        // Handle erase error
-        HAL_FLASH_Lock();
-        return;
-    }
-
-    // 2. Write the data in 64-bit chunks
-    uint64_t *src = (uint64_t *)data;
-    uint32_t numWords = sizeof(SensorsData) / 8;
-
-    for (uint32_t i = 0; i < numWords; i++) {
-        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SENSOR_ADDRESS + (i * 8), src[i]) != HAL_OK) {
-            // Handle write error
-            HAL_FLASH_Lock();
-            return;
-        }
-    }
-
-    HAL_FLASH_Lock();
+void save_sensor_data_to_flash(SensorsData *data) {
+    flash_write(data, sizeof(SensorsData), FLASH_SECTOR_BATTERY);
 }
 
-void load_sensor_data_from_flash(){ // retrieves flash data and uses a pointer to write it to the sensor_backup struct
-    SensorsData *flash_data = (SensorsData *)FLASH_SENSOR_ADDRESS;
-    if (flash_data->magic == FLASH_MAGIC) {
-        memcpy(&sensor_backup, flash_data, sizeof(SensorsData));
-    } else {
+void load_sensor_data_from_flash() {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_BATTERY)) {
         memset(&sensor_backup, 0, sizeof(SensorsData));
     }
 }
