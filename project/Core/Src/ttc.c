@@ -6,6 +6,8 @@
 #include "stdint.h"
 #include "timers.h"
 
+#define MAX_PACKET_SIZE 128
+
 uint16_t last_received_seq_num;			 // last received seq num ack
 uint8_t ACK_RECV_TIMEOUT = 3000;		 // timeout before checking for an acknowledgement TODO: change to real value
 int communication_status = COMM_NOMINAL; // Nominal=1, Lost=0
@@ -148,7 +150,7 @@ void receive(void *vpParameters)
 	 * Seq num -> 2 bytes
 	 */
 	// Read data from buffer
-	uint8_t data_buffer[128];
+	uint8_t data_buffer[MAX_PACKET_SIZE];
 	osStatus_t status = osMessageQueueGet(receivequeueHandle, &data_buffer, NULL, 0U); // wait for message
 	if (status != osOK)
 	{
