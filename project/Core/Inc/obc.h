@@ -4,6 +4,8 @@
 #define NOMINAL_MODE 0
 #define LOW_POWER_MODE 1
 
+#define CAMERA_FLASH_SECTOR 1
+
 #define LOW_POWER_THRESHOLD 10 // TODO: Replace with actual value
 
 // 1000 = 1 second

@@ -3,6 +3,7 @@
 
 #include "main.h"
 #include "fatfs.h"
+#include "camera.h"
 
 // For type argument of store_data
 #define T_DATA 0
@@ -65,6 +66,17 @@ float read_gyroscope_x3();
 float read_acceleration_x1(); // poll accelerometer
 float read_acceleration_x2();
 float read_acceleration_x3();
+/////////////////sensors end
+
+//// Altimeter
+// For use by HL
+uint8_t altimeter_init(); // Returns 0 if success, 1 if not
+float altimeter_read();
+uint8_t altimeter_reset(); // Only if necessary, returns 0 if success, 1 if not
+// For use by LL
+uint32_t altimeter_read_pressure();
+uint32_t altimeter_read_temperature();
+uint8_t altimeter_read_calibration(); // Returns 0 if success, 1 if not
 /////////////////sensors end
 
 // Memory prototypes
