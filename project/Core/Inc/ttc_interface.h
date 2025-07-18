@@ -20,7 +20,7 @@ void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLe
 
 /*
 get_gps:
-    saves an NMEA $GPRMC formatted gps sentence to flash memory.
+    returns a NMEA $GPRMC formatted gps sentence to main as a buffer.
 Parameters:
     void
 Returns:
