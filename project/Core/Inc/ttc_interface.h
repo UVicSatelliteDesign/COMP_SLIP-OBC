@@ -17,8 +17,20 @@ void writeToDataBuffer(uint8_t *buffer, uint8_t *data, int length);
 void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen);
 void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLen, uint32_t sequenceNum);
 
+
+/*
+get_gps:
+    returns a NMEA $GPRMC formatted gps sentence to main as a buffer.
+Parameters:
+    void
+Returns:
+    returns gps data as a buffer
+*/
+uint8_t get_gps();
+
 void transmit();
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
+
 
 bool ReadRegisterBurst();
 
