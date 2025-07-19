@@ -196,12 +196,15 @@ int main(void)
 
   xTaskCreate(obc_notifications, "OBC Notifications", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
   xTaskCreate(data_task, "Data Task", 					configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  xTaskCreate(image_task, "Image Task",					configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL)
   xTaskCreate(low_power_task, "Lower Power Task", 		configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 10, NULL); // Highest priority
 
   // TTC Tasks:
 
   xTaskCreate(ttc_notifications, "TTC Notifications", 	configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
 
+
+  xTaskCreate(Task_receiveLL, "TTC Receive", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 8, NULL);
 
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */

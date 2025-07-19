@@ -3,15 +3,18 @@
 #include "camera.h"
 #include "main.h"
 #include "time.h"
+#include "flash_interface.h"
 
 int mode = NOMINAL_MODE; // Start the payload in nominal mode
+
 HAL_StatusTypeDef status;
-BatteryData battery_data;
 Camera_t camera1;
 Camera_t camera2;
+float initial_altitude; // Altitude at launch
 
-extern SensorsData sensor_backup;
-extern BatteryData battery_backup;
+BatteryData battery_data; // Struct for reading from battery
+extern SensorsData sensor_backup; // Struct for reading from flash
+extern BatteryData battery_backup; // Struct for reading from flash
 
 extern SemaphoreHandle_t image_mutex;
 
@@ -26,6 +29,12 @@ void obc_notifications(void *vpParameters) {
 
     camera_init(&camera1);
     camera_init(&camera2);
+    altimeter_init();
+    init_sensors();
+    init_bms();
+
+    initial_altitude = altimeter_read();
+
 
     for (;;) {
     	// Check for a notification from the TTC
@@ -40,25 +49,35 @@ void obc_notifications(void *vpParameters) {
 
         	} else {
         		// Take a picture
-        		if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) {
+        		if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) { // Camera mutex
 
-					if (received_notification & SUB_1) {
+					if (received_notification & SUB_1) { // Camera 1
 						freeImageBuffer(&camera1);
-						status = capture_snapshot(&camera1);
+
+						status = capture_snapshot(&camera1); // Take picture
 						if (status == HAL_OK) {
 							save_image_to_flash(&camera1, CAMERA_FLASH_SECTOR);
 							store_image(camera1.imageBuffer);
-						} else {
+
+							// Notify TTC
+							xTaskNotify(ttc_notifications, INFO & CAMERA & SUB_1, eSetValueWithOverwrite);
+
+						} else { // Error occurred
 							xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
 							store_data((uint8_t*)"Camera 1 error", T_ERROR);
 						}
-					} else if (received_notification & SUB_2) {
+					} else if (received_notification & SUB_2) { // Camera 2
 						freeImageBuffer(&camera2);
-						status = capture_snapshot(&camera2);
+
+						status = capture_snapshot(&camera2); // Take picture
 						if (status == HAL_OK) {
 							save_image_to_flash(&camera2, CAMERA_FLASH_SECTOR);
 							store_image(camera2.imageBuffer);
-						} else {
+
+							// Notify TTC
+							xTaskNotify(ttc_notifications, INFO & CAMERA & SUB_2, eSetValueWithOverwrite);
+
+						} else { // Error occurred
 							xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
 							store_data((uint8_t*)"Camera 2 error", T_ERROR);
 						}
@@ -66,25 +85,6 @@ void obc_notifications(void *vpParameters) {
 					xSemaphoreGive(image_mutex);
         		}
         	}
-        }
-
-        // New GPS data in flash
-        if (received_notification & INFO & GPS) {
-
-        	float altimeter_data;
-
-        	load_sensor_data_from_flash();
-        	load_battery_data_from_flash();
-        	flash_read_data(FLASH_TYPE_ALTIMETER, altimeter_data, sizeof(float), sector, expected_magic) // TODO: sector and magic
-
-        	// Save telemetry to memory
-        	store_data((uint8_t*)&sensor_data, T_DATA);
-        	store_data((uint8_t*)&battery_data, T_DATA);
-        	store_data((uint8_t)*&altimeter_data, T_DATA);
-        }
-
-        if (received_notification & ERROR & GPS) {
-        	store_data((uint8_t*)"GPS error", T_ERROR);
         }
 
         if (received_notification & REQUEST & LOW_POWER) {
@@ -104,12 +104,27 @@ void data_task(void *vpParameters) {
 	float altimeter_data;
 	SensorsData sensor_data;
 	for (;;) {
+
+		// Collect data
 		sensor_data = read_sensors();
 		altimeter_data = altimeter_read();
+
+		// Clear flash
+		flash_clear(FLASH_SECTOR_BATTERY);
+		flash_clear(FLASH_SECTOR_ALTIMETER);
+
+		// Save data to flash
 		save_battery_data_to_flash(&battery_data); // Continuously updated in low_power_task
 		save_sensor_data_to_flash(&sensor_data);
-		flash_write_data(FLASH_TYPE_ALTIMETER, &altiemeter_data, sizeof(float), sector) // TODO: Add sector
-		xTaskNotify(ttc_notifications, REQUEST & GPS, eSetValueWithOverwrite); // Request GPS data
+		flash_write(&altimeter_data, sizeof(float), FLASH_SECTOR_ALTIMETER);
+
+		// Tell TTC that there is data to be transmitted
+		xTaskNotify(ttc_notifications, INFO & SENSORS, eSetValueWithOverwrite);
+
+		// Store data in memory
+		store_data((uint8_t*)&sensor_backup, T_DATA);
+		store_data((uint8_t*)&battery_data, T_DATA);
+		store_data((uint8_t*)&altimeter_data, T_DATA);
 
 		if (mode == NOMINAL) {
 			vTaskDelay(pdMS_TO_TICKS(NOMINAL_INTERVAL)); // Wait nominal time
@@ -123,30 +138,35 @@ void data_task(void *vpParameters) {
 void low_power_task(void *vpParameters) {
 	int current_time = 0;
 	int previous_time = 0;
+	int above_altitude = 0;
 	for (;;) {
 		current_time = HAL_GetTick();
-		battery_data = get_battery_data(current_time-previous_time); // Use the amount of time since the last call
+		battery_data = get_battery_data(current_time - previous_time); // Use the amount of time since the last call
 		previous_time = HAL_GetTick();
-		if (mode != LOW_POWER_MODE && battery_data.state_of_charge < LOW_POWER_THRESHOLD) { // If power drops too low switch to low power
-		set_mode(LOW_POWER_MODE);
-
-		// TODO: if (on ground) {
-		// set_mode(LOW_POWER_MODE);
+		if (mode != LOW_POWER_MODE && battery_data.state_of_charge < LOW_POWER_THRESHOLD) {
+			set_mode(LOW_POWER_MODE); // If power drops too low switch to low power
+		}
+		if (!above_altitude && altimeter_read() > initial_altitude + 30) { // Leave room for error and elevation change
+			above_altitude = 1; // Make sure the payload has launched before checking altitude for low power
+		}
+		if ( mode != LOW_POWER_MODE && above_altitude && altimeter_read() < initial_altitude + 20) { // Leave room for elevation change
+			set_mode(LOW_POWER_MODE); // Low power if close to the ground and already completed its launch
 		}
 	}
 }
 
 // Take an image at an interval defined by IMAGE_INTERVAL
 void image_task(void *vpParameters) {
-	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) {
+	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) { // Mutex for camera 1
 		if (mode == NOMINAL) {
 
 			freeImageBuffer(&camera1);
-			status = capture_snapshot(&camera1);
+			status = capture_snapshot(&camera1); // Take picture
+
 			if (status == HAL_OK) {
-				save_image_to_flash(&camera1, CAMERA_FLASH_SECTOR);
 				store_image(camera1.imageBuffer);
-			} else {
+
+			} else { // Error occurred
 				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
 				store_data((uint8_t*)"Camera 1 error", T_ERROR);
 			}
@@ -156,23 +176,23 @@ void image_task(void *vpParameters) {
 
 
 
-	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) {
+	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) { // Mutex for camera 2
 		if (mode == NOMINAL) {
 
 			freeImageBuffer(&camera2);
-			status = capture_snapshot(&camera2);
+			status = capture_snapshot(&camera2); // Take picture
+
 			if (status == HAL_OK) {
-				save_image_to_flash(&camera2, CAMERA_FLASH_SECTOR);
 				store_image(camera2.imageBuffer);
-			} else {
+
+			} else { // Error occurred
 				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
 				store_data((uint8_t*)"Camera 2 error", T_ERROR);
 			}
 			xSemaphoreGive(image_mutex);
 		}
 	}
-
-	vTaskDelay(pdMS_TO_TICKS(IMAGE_INTERVAL));
+	vTaskDelay(pdMS_TO_TICKS(IMAGE_INTERVAL)); // Wait IMAGE_INTERVAL ticks
 }
 
 // Change mode and notify TTC
