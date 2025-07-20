@@ -1,0 +1,9 @@
+../Core/Src/camera.c:67:9:configure_camera1	4
+../Core/Src/camera.c:144:9:configure_camera2	3
+../Core/Src/camera.c:211:9:camera_init	17
+../Core/Src/camera.c:400:6:save_image_to_flash	4
+../Core/Src/camera.c:453:19:capture_snapshot	16
+../Core/Src/camera.c:556:5:test_camera_write	4
+../Core/Src/camera.c:600:6:HAL_DCMI_FrameEventCallback	1
+../Core/Src/camera.c:611:6:freeImageBuffer	1
+../Core/Src/camera.c:625:10:getImageSize	9

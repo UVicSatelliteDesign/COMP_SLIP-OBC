@@ -1,0 +1,4 @@
+../Core/Src/camera_recovery.c:32:9:OV5640_Write_Reg_Recovery	3
+../Core/Src/camera_recovery.c:65:9:OV5640_Init_Recovery	3
+../Core/Src/camera_recovery.c:96:9:OV5640_ReadID_Recovery	3
+../Core/Src/camera_recovery.c:126:9:OV5640_RegisterBusIO_Recovery	3

@@ -1,0 +1,9 @@
+../Core/Src/camera_bsp.c:28:9:BSP_I2C2_Init	2
+../Core/Src/camera_bsp.c:45:9:BSP_I2C2_DeInit	2
+../Core/Src/camera_bsp.c:69:9:BSP_I2C2_ReadReg	2
+../Core/Src/camera_bsp.c:87:9:BSP_I2C2_WriteReg	2
+../Core/Src/camera_bsp.c:103:9:BSP_I2C4_Init	2
+../Core/Src/camera_bsp.c:120:9:BSP_I2C4_DeInit	2
+../Core/Src/camera_bsp.c:144:9:BSP_I2C4_ReadReg	2
+../Core/Src/camera_bsp.c:162:9:BSP_I2C4_WriteReg	2
+../Core/Src/camera_bsp.c:176:9:BSP_GetTick	1
