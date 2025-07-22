@@ -32,4 +32,4 @@ Parameters:
 Return:
     returns a true boolean for success and a false boolean for failure 
 */
-bool log_data();
+bool log_data(int data_specifier);
