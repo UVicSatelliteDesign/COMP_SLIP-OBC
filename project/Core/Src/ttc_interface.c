@@ -22,8 +22,8 @@ Returns:
 
 */
 bool get_gps(){ // this is formatted for polling
-    HAL_UART_Receive (&huart4, gps_rx_buffer, NMEA_sentence_size, interrupt_timeout_length);
-    if(flash_write(*gps_rx_buffer, NMEA_sentence_size, GPS_FLASH_ADDRESS) == true){
+    HAL_UART_Receive (&huart3, gps_rx_buffer, NMEA_sentence_size, interrupt_timeout_length);
+    if(flash_write(gps_rx_buffer, NMEA_sentence_size, FLASH_SECTOR_GPS) == true){
         return true;
     }
     return false;
