@@ -10,6 +10,9 @@
 
 // Flash sector definitions
 #define FLASH_SECTOR_CAMERA     1
+#define FLASH_SECTOR_2          2  // Camera overflow
+#define FLASH_SECTOR_3          3  // Camera overflow
+#define FLASH_SECTOR_SENSORS    4
 #define FLASH_SECTOR_ALTIMETER  5
 #define FLASH_SECTOR_GPS        6
 #define FLASH_SECTOR_BATTERY    7
@@ -17,6 +20,9 @@
 // Flash sector addresses (based on STM32H7xx flash layout)
 // todo: NEED TO CONFIRM FROM DATASHEET
 #define FLASH_SECTOR_1_ADDRESS  0x08020000
+#define FLASH_SECTOR_2_ADDRESS  0x08040000
+#define FLASH_SECTOR_3_ADDRESS  0x08060000
+#define FLASH_SECTOR_4_ADDRESS  0x08080000
 #define FLASH_SECTOR_5_ADDRESS  0x080A0000
 #define FLASH_SECTOR_6_ADDRESS  0x080C0000
 #define FLASH_SECTOR_7_ADDRESS  0x080E0000

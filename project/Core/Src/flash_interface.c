@@ -9,6 +9,12 @@ static uint32_t get_sector_address(uint8_t flash_sector_flag) {
     switch (flash_sector_flag) {
         case FLASH_SECTOR_CAMERA:
             return FLASH_SECTOR_1_ADDRESS;
+        case FLASH_SECTOR_2:
+            return FLASH_SECTOR_2_ADDRESS;
+        case FLASH_SECTOR_3:
+            return FLASH_SECTOR_3_ADDRESS;
+        case FLASH_SECTOR_SENSORS:
+            return FLASH_SECTOR_4_ADDRESS;
         case FLASH_SECTOR_ALTIMETER:
             return FLASH_SECTOR_5_ADDRESS;
         case FLASH_SECTOR_GPS:
@@ -24,6 +30,12 @@ static uint32_t get_hal_sector(uint8_t flash_sector_flag) {
     switch (flash_sector_flag) {
         case FLASH_SECTOR_CAMERA:
             return FLASH_SECTOR_1;
+        case FLASH_SECTOR_2:
+            return FLASH_SECTOR_2;
+        case FLASH_SECTOR_3:
+            return FLASH_SECTOR_3;
+        case FLASH_SECTOR_SENSORS:
+            return FLASH_SECTOR_4;
         case FLASH_SECTOR_ALTIMETER:
             return FLASH_SECTOR_5;
         case FLASH_SECTOR_GPS:
@@ -45,11 +57,11 @@ bool flash_read(void* memory_address, int memory_size, uint8_t flash_sector_flag
         return false;
     }
     
-    uint32_t *flash_data = (uint32_t *)sector_address;
-    uint32_t *dest = (uint32_t *)memory_address;
+    uint8_t *flash_data = (uint8_t *)sector_address;
+    uint8_t *dest = (uint8_t *)memory_address;
     
-    if (flash_data[0] == 0xDEADBEEF) {
-        memcpy(dest, flash_data, memory_size);
+    if (*(uint32_t*)flash_data == 0xDEADBEEF) {
+        memcpy(dest, flash_data + 4, memory_size);
         return true;
     } else {
         memset(dest, 0, memory_size);
@@ -84,11 +96,17 @@ bool flash_write(void* memory_address, int memory_size, uint8_t flash_sector_fla
         return false;
     }
     
+    // Write magic number first
+    if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, sector_address, 0xDEADBEEF) != HAL_OK) {
+        HAL_FLASH_Lock();
+        return false;
+    }
+    
     uint64_t *src = (uint64_t *)memory_address;
     uint32_t numWords = (memory_size + 7) / 8;
     
     for (uint32_t i = 0; i < numWords; i++) {
-        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, sector_address + (i * 8), src[i]) != HAL_OK) {
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, sector_address + 4 + (i * 8), src[i]) != HAL_OK) {
             HAL_FLASH_Lock();
             return false;
         }

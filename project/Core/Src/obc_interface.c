@@ -108,7 +108,9 @@ BatteryData get_battery_data(float dt) {
 }
 
 void save_battery_data_to_flash(BatteryData *data) {
-    flash_write(data, sizeof(BatteryData), FLASH_SECTOR_BATTERY);
+    if (!flash_write(data, sizeof(BatteryData), FLASH_SECTOR_BATTERY)) {
+        // TODO: Handle flash write error
+    }
 }
 
 void load_battery_data_from_flash() {
@@ -125,11 +127,13 @@ void init_sensors() {
 }
 
 void save_sensor_data_to_flash(SensorsData *data) {
-    flash_write(data, sizeof(SensorsData), FLASH_SECTOR_BATTERY);
+    if (!flash_write(data, sizeof(SensorsData), FLASH_SECTOR_SENSORS)) {
+        // TODO: Handle flash write error
+    }
 }
 
 void load_sensor_data_from_flash() {
-    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_BATTERY)) {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS)) {
         memset(&sensor_backup, 0, sizeof(SensorsData));
     }
 }
