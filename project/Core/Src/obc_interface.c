@@ -82,12 +82,6 @@ float calculate_power_usage(float voltage, float current) {
     return voltage * current;
 }
 
-float calculate_energy_usage(float power, float dt) {
-    static float total_energy = 0;
-    total_energy += (power * dt) / 3600.0f;
-    return total_energy;
-}
-
 float estimate_battery_life(float state_of_charge, float avg_power_draw) {
     float battery_capacity_Wh = 50.0f;
     float remaining_energy = (state_of_charge / 100.0f) * battery_capacity_Wh;
@@ -101,20 +95,18 @@ BatteryData get_battery_data(float dt) {
     data.temperature = read_battery_temperature();
     data.state_of_charge = calculate_state_of_charge(data.current, dt);
     data.power_usage = calculate_power_usage(data.voltage, data.current);
-    data.total_energy_used = calculate_energy_usage(data.power_usage, dt);
     data.estimated_life = estimate_battery_life(data.state_of_charge, data.power_usage);
-    data.magic = FLASH_MAGIC;
     return data;
 }
 
 void save_battery_data_to_flash(BatteryData *data) {
-    if (!flash_write(data, sizeof(BatteryData), FLASH_SECTOR_BATTERY)) {
+    if (!flash_write(data, sizeof(BatteryData), FLASH_SECTOR_BATTERY, BATTERY_DATA_OFFSET)) {
         // TODO: Handle flash write error
     }
 }
 
 void load_battery_data_from_flash() {
-    if (!flash_read(&battery_backup, sizeof(BatteryData), FLASH_SECTOR_BATTERY)) {
+    if (!flash_read(&battery_backup, sizeof(BatteryData), FLASH_SECTOR_BATTERY, BATTERY_DATA_OFFSET)) {
         memset(&battery_backup, 0, sizeof(BatteryData));
     }
 }
@@ -127,20 +119,19 @@ void init_sensors() {
 }
 
 void save_sensor_data_to_flash(SensorsData *data) {
-    if (!flash_write(data, sizeof(SensorsData), FLASH_SECTOR_SENSORS)) {
+    if (!flash_write(data, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         // TODO: Handle flash write error
     }
 }
 
 void load_sensor_data_from_flash() {
-    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS)) {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         memset(&sensor_backup, 0, sizeof(SensorsData));
     }
 }
 
-
-
-float read_temperature(){ // temperature hardware wrapper
+//// Temperature sensors
+float read_OBC_temperature(){ // temperature hardware wrapper
     // //dummy value degree celsius
     // return 10;
     HAL_ADC_PollForConversion(&TemperatureSensor, 100);
@@ -148,26 +139,19 @@ float read_temperature(){ // temperature hardware wrapper
     return raw;
 }
 
-float read_pressure(){ // pressure hardware wrapper
-    // //dummy value atmospheres
-    // return 20;
-    HAL_ADC_PollForConversion(&PressureSensor, 100);
-    uint32_t raw = HAL_ADC_GetValue(&PressureSensor);
-    return raw;
-}
-
 //writes current sensor values to flash/global struct and returns struct with final values
 SensorsData read_sensors(){ 
     SensorsData data; // initialise empty struct and/or write over flash
-    data.temperature = read_temperature(); // store temperature and pressure to struct
-    data.pressure = read_pressure();
+    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    data.temperature_ttc = read_TTC_temperature();
+    data.temperature_bms = read_BMS_temperature();
     data.gyroscope_axis_1 = read_gyroscope_x1();
     data.gyroscope_axis_2 = read_gyroscope_x2();
     data.gyroscope_axis_3 = read_gyroscope_x3();
     data.acceleration_axis_1 = read_acceleration_x1();
     data.acceleration_axis_2 = read_acceleration_x2();
     data.acceleration_axis_3 = read_acceleration_x3();
-    data.magic = FLASH_MAGIC;
+    data.altitude = altimeter_read();
     save_sensor_data_to_flash(&data);
     return data; // return filled struct
 }
