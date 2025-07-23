@@ -220,14 +220,13 @@ SensorsData read_sensors(){
     SensorsData data; // initialise empty struct and/or write over flash
     data.temperature = read_temperature(); // store temperature and pressure to struct
     data.pressure = read_pressure();
+	data.altimeter = altimeter_read();
     data.gyroscope_axis_1 = read_gyroscope_x1();
     data.gyroscope_axis_2 = read_gyroscope_x2();
     data.gyroscope_axis_3 = read_gyroscope_x3();
     data.acceleration_axis_1 = read_acceleration_x1();
     data.acceleration_axis_2 = read_acceleration_x2();
     data.acceleration_axis_3 = read_acceleration_x3();
-    data.magic = FLASH_MAGIC;
-    save_sensor_data_to_flash(&data);
     return data; // return filled struct
 }
 
