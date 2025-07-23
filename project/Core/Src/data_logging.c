@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "flash_interface.h"
 #include "data_logging.h"
+#include "obc_interface.h"
 
 bool log_data(int data_specifier){
     switch(data_specifier) {
@@ -17,6 +18,9 @@ bool log_data(int data_specifier){
         case SENSORS:
             if(flash_read(DATA_LOGGING_BUFFER_MEMORY_ADDRESS, FLASH_MEMORY_SIZE_SENSORS, FLASH_ADDRESS_SENSORS)){
                 //print buffer to serial
+                SensorsData *SensorsDataPtr = (SensorsData *) DATA_LOGGING_BUFFER_MEMORY_ADDRESS;
+                SensorsData data = *SensorsDataPtr;
+                printf("%f %f %f %f %f %f %f %f", data.temperature, data.pressure, data.gyroscope_axis_1, data.gyroscope_axis_2, data.gyroscope_axis_3, data.acceleration_axis_1, data.acceleration_axis_2, data.acceleration_axis_3);
                 return true;
             }
             return false;

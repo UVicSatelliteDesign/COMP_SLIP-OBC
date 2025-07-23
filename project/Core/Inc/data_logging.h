@@ -29,6 +29,8 @@ log_data:
     sends sensor data over serial to a receiver file (TODO: name receiver file once written)
 Parameters:
     int data_specifier: specifies {CAMERA, SENSORS, ALTIMETER, GPS, BATTERY} i.e. {0, 1, 2, 3, 4}
+Transmission:
+    SensorsData structs are transmitted as a sentence of 8 floats separated by spaces
 Return:
     returns a true boolean for success and a false boolean for failure 
 */
