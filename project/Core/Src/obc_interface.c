@@ -242,7 +242,8 @@ float read_gyroscope_x3(){
     return 33;
 }
 
-// Accelerometer (I2C)
+//// Accelerometer (I2C)
+// To be called by HL
 float read_acceleration_x1(){
     return 41;
 }
@@ -252,6 +253,27 @@ float read_acceleration_x2(){
 float read_acceleration_x3(){
     return 43;
 }
+
+// To be used by low level
+uint8_t accelerometer_init(){
+	// Set PC1 to 0 in CNTL1 to allow writing to other settings (bit 7)
+	// Set GSEL<1:0> to 11 for +-64g range
+	// Set PC1 to 1 in CNTL1 to enable accelerometer
+
+
+
+	uint8_t command = 0bxxxxxxx0; // Write to control register to set operational mode
+	if (HAL_I2C_Master_Transmit(&hi2c4, ACCEL_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	command = 0bxxxxxxxx; // Data to be written to register
+	if (HAL_I2C_Master_Transmit(&hi2c4, ACCEL_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	return 0;
+}
+
+uint8_t read_x
 
 //// Altimeter (I2C)
 // To be called by HL
