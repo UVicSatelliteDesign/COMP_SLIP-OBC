@@ -1,5 +1,7 @@
 #include "ttc.h"
 #include "ttc_interface.h"
+#include "obc_interface.h"
+#include "flash_interface.h"
 #include "main.h"
 #include "cmsis_os.h"
 #include "semphr.h"
@@ -12,60 +14,78 @@ uint16_t last_received_seq_num;			 // last received seq num ack
 uint8_t ACK_RECV_TIMEOUT = 3000;		 // timeout before checking for an acknowledgement TODO: change to real value
 int communication_status = COMM_NOMINAL; // Nominal=1, Lost=0
 
-void ttc_notifications(void *vpParameters)
-{
-	uint32_t received_notification;
+void ttc_notifications(void *vpParameters) {
+    uint32_t received_notification = 0;
+    
+    for (;;) {
+        // Non-blocking check for notifications with a 0ms timeout
+        received_notification = ulTaskNotifyTake(pdFALSE, 0);
 
-	for (;;)
-	{
-		// Non-blocking check for notifications with a 0ms timeout
-		received_notification = ulTaskNotifyTake(pdFALSE, 0);
+        if (received_notification & INFO & CAMERA) {
+            // Call transmit function with pointer to camera data in flash
+			if (received_notification & SUB_1) {
+				packageAndSendChunks(1, FLASH_SECTOR_CAMERA, /*Cam data length*/, 0);
+        		handle_transmit(0);
+			} else if (received_notification & SUB_2) {
+				packageAndSendChunks(2, FLASH_SECTOR_CAMERA, /*cam data length*/, 0);
+				handle_transmit(0);
+			}
+        	
+        }
 
-		if (received_notification & INFO & CAMERA)
-		{
-			// Call transmit function with pointer to camera data in flash
-			generatepacket(/*CAMERA_1/2_MF*/, /*Pointer to cam data*/, /*Cam data length*/);
-		}
+        if (received_notification & ERROR & CAMERA) {
+        	// Tell ground station there's an error
+			if (received_notification & SUB_1) {
+				generatepacket(ERROR_PER, (uint32_t) (CAMERA & SUB_1), 4);
+				handle_transmit(0);
+			} else if (received_notification & SUB_2) {
+				generatepacket(ERROR_PER, (uint32_t) (CAMERA & SUB_2), 4);
+				handle_transmit(0);
+			}
+        }
 
-		if (received_notification & ERROR & CAMERA)
-		{
-			// Tell ground station there's an error
-			generatepacket(ERROR_PER, /*Error message*/, /*Error msg length*/);
-		}
+        if (received_notification & WARNING & LOW_POWER) {
+        	// Can't take photos in LOW POWER mode
+        	// Tell ground station low power, no picture
+        	// Call transmit
+        	generatepacket(ERROR_LP, NULL, 0);
+        	handle_transmit(0);
+        }
 
-		if (received_notification & WARNING & IDLE)
-		{
-			// Can't transmit in IDLE mode
-			// Do nothing
-		}
-
-		if (received_notification & WARNING & LOW_POWER)
-		{
-			// Can't take photos in LOW POWER mode
-			// Tell ground station low power, no picture
-			// Call transmit
-			generatepacket(ERROR_LP, /*low power*/, /*msg len*/);
-		}
-
-		if (received_notification & REQUEST & GPS)
-		{
-			// Call interface function to read GPS
-			int gps_result = gps_hl();
+        if (received_notification & REQUEST & GPS) {
+			// Clear GPS sector
+			flash_clear(FLASH_SECTOR_GPS);
+			// Read GPS - writes to flash
+        	bool gps_result = get_gps();
 
 			// Send task notification to the OBC
-			if (gps_result == 0)
-			{
-				ulTaskNotify(obc_notifications, READY & GPS, eSetValueWithOverwrite);
-				// transmit all data from flash
-				generatepacket(TELEMETRY, &TELEM_FLASH_MEM, TELEM_DATA_LEN);
+			if(gps_result == true) {
+				xTaskNotify(obc_notifications, INFO & GPS, eSetValueWithOverwrite);
+			} else {
+				xTaskNotify(obc_notifications, ERROR & GPS, eSetValueWithOverwrite);
+				generatepacket(ERROR_PER, (uint32_t)(GPS), 4);
+				handle_transmit(0);
 			}
-			else
-			{
-				ulTaskNotify(obc_notifications, ERROR & GPS, eSetValueWithOverwrite);
+			// Transmit all telemetry data from flash
+			int telem_length = sizeof(BatteryData) + sizeof(SensorsData) + 11;
+			uint8_t telem_data[telem_length];
+			if(!flash_read(telem_data, sizeof(BatteryData), FLASH_SECTOR_BATTERY, BATTERY_DATA_OFFSET)) {
+				// Error when reading
+				xTaskNotify(obc_notifications, ERROR & MEMORY, eSetValueWithOverwrite);
 			}
-		}
-		received_notification = 0;
-	}
+			if(!flash_read(&telem_data[sizeof(BatteryData)], sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
+				// Error when reading
+				xTaskNotify(obc_notifications, ERROR & MEMORY, eSetValueWithOverwrite);
+			}
+			if(!flash_read(&telem_data[sizeof(BatteryData) + sizeof(SensorsData)], 11, FLASH_SECTOR_GPS, 0)) {
+				// Error when reading
+				xTaskNotify(obc_notifications, ERROR & MEMORY, eSetValueWithOverwrite);
+			}
+			generatepacket(TELEMETRY, telem_data, telem_length);
+			handle_transmit(0);
+        }
+        received_notification = 0;
+    }
 }
 
 /*
@@ -116,7 +136,7 @@ void vRetransmissionTimerCallback(TimerHandle_t xTimer)
 	expiry_count++;
 
 	// Compare last received seq num
-	if (sequenceNum == last_acked_seq_num)
+	if (sequenceNum == last_received_seq_num)
 	{
 		// Packet acknowledged yay!
 		expiry_count = 0;
@@ -125,7 +145,7 @@ void vRetransmissionTimerCallback(TimerHandle_t xTimer)
 		return;
 	}
 	// If not acked, check if we have more attempts or not
-	if (expiry_count == MAX_ATTEMPTS)
+	if (expiry_count == MAX_TRANS_ATTEMPTS)
 	{
 		// Enter lost state
 		communication_status = COMM_LOST;
@@ -165,58 +185,58 @@ void receive(void *vpParameters)
 
 	switch (packet_type)
 	{
-	case PayloadType.PING:
+	case PING:
 		// Acknowledge ping
-		generatepacket(PayloadType.PING, NULL, 0);
+		generatepacket(PING, NULL, 0);
 		handle_transmit(1);
 		break;
-	case PayloadType.NOMINAL:
+	case NOMINAL:
 		xTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
 		uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		// Acknowledge nominal command
-		generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
+		generatepacket(ACK_REC_STATUS, seq_num, 2);
 		handle_transmit(1);
 		break;
-	case PayloadType.LOW_POWER:
+	case LOW_POWER:
 		xTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
 		uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		// Acknowledge low power command
-		generatepacket(PayloadType.ACK_REC_STATUS, seq_num, 2);
+		generatepacket(ACK_REC_STATUS, seq_num, 2);
 		handle_transmit(1);
 		break;
-	case PayloadType.CAMERA_1_END:
+	case CAMERA_1_END:
 		// request for image, notify OBC
 		xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_1, eSetValueWithOverwrite);
 		break;
-	case PayloadType.CAMERA_2_END:
+	case CAMERA_2_END:
 		// request for image, notify OBC
 		xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_2, eSetValueWithOverwrite);
 		break;
-	case PayloadType.ACK_REC_CAMER:
+	case ACK_REC_CAMER:
 		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		uint8_t camera = data_buffer[4];
 		// Contains an offset
-		uint32_t acked_offset = (data_buffer[5] << 16) |
+		int acked_offset = (data_buffer[5] << 16) |
 								(data_buffer[6] << 8) |
 								(data_buffer[7]);
 		uint16_t seq_num = (data_buffer[8] << 8) | (data_buffer[9]);
 		// set as acknowledged
 		last_received_seq_num = acked_seq_num;
 		// Send next chunk
-		packageAndSendChunks(PayloadType.CAMERA, /*cam data pointer*/, /*full data len*/, acked_seq_num, acked_offset);
+		packageAndSendChunks(camera, FLASH_SECTOR_CAMERA, /*full data len*/, acked_offset);
 		handle_transmit(0);
 		break;
-	case PayloadType.ACK_REC_TELEMETRY:
+	case ACK_REC_TELEMETRY:
 		// set as acknowledged
 		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		last_received_seq_num = acked_seq_num;
 		break;
-	case PayloadType.ACK_REC_ERROR:
+	case ACK_REC_ERROR:
 		// set as acknowledged
 		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		last_received_seq_num = acked_seq_num;
 		break;
-	case PayloadType.ERROR_DUP:
+	case ERROR_DUP:
 		// last packet was received twice by GS
 		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		last_received_seq_num = acked_seq_num;

@@ -44,7 +44,6 @@ bool get_gps(){ // this is formatted for polling
 //============================**TRANSMIT**===============================
 // Defines for Transmission
 #define TRANS_TIMEOUT 1		 // maximum timeout for transmission
-#define MAX_ATTEMPTS 5		 // maximum number of attempts
 #define MAX_PAYLOAD_SIZE 128 // The maximum allowable buffer size for the CC12x
 
 // CC12x FIFO Transmit Registers
@@ -85,7 +84,7 @@ void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen)
 	packet_data_length = payloadLen + 3;
 }
 
-void packageAndSendChunks(int camera, uint8_t *payload, uint16_t fullPayloadLen, int offset)
+void packageAndSendChunks(int camera, int flash_sector, uint16_t fullPayloadLen, int offset)
 {
 	if (offset < fullPayloadLen)
 	{
@@ -112,7 +111,9 @@ void packageAndSendChunks(int camera, uint8_t *payload, uint16_t fullPayloadLen,
 		writeToDataBuffer(&packet_data_buffer[0], &type, 1);
 
 		// Send payload chunk
-		writeToDataBuffer(&packet_data_buffer[1], &payload[offset], chunkLen);
+		uint8_t payload[chunkLen];
+		flash_read(payload, chunkLen, flash_sector, offset);
+		writeToDataBuffer(&packet_data_buffer[1], payload, chunkLen);
 
 		// Send offset (little-endian)
 		writeToDataBuffer(&packet_data_buffer[chunkLen + 1], (uint8_t *)&offset, 3);
