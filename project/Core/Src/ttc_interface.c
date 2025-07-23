@@ -59,26 +59,6 @@ bool get_gps(){ // this is formatted for polling
 uint8_t packet_data_buffer[MAX_PACKET_SIZE];
 uint8_t packet_data_length;
 
-typedef enum
-{
-	PING = 0b00000000,
-	NOMINAL = 0b00000001,
-	LOW_POWER = 0b00000010,
-	TELEMETRY = 0b00000011,
-	CAMERA_1_END = 0b00000100,
-	CAMERA_1_MF = 0b00000101,
-	CAMERA_2_END = 0b00000110,
-	CAMERA_2_MF = 0b00000111,
-	REQ_RETRANSMISSION = 0b00001000,
-	ERROR_CRC = 0b00001001,
-	ERROR_DUP = 0b00001010,
-	ERROR_LP = 0b00001011,
-	ACK_REC_CAMER = 0b00001100,
-	ACK_REC_TELEMETRY = 0b00001101,
-	ACK_REC_STATUS = 0b00001110,
-	ACK_REC_ERROR = 0b00001111,
-} PayloadType;
-
 void writeToDataBuffer(uint8_t *buffer, uint8_t *data, int length)
 {
 	for (int i = 0; i < length; i++)
@@ -105,7 +85,7 @@ void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen)
 	packet_data_length = payloadLen + 3;
 }
 
-void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLen, uint32_t offset)
+void packageAndSendChunks(int camera, uint8_t *payload, uint16_t fullPayloadLen, int offset)
 {
 	if (offset < fullPayloadLen)
 	{
@@ -115,6 +95,20 @@ void packageAndSendChunks(uint8_t type, uint8_t *payload, uint16_t fullPayloadLe
 							   : (fullPayloadLen - offset);
 
 		// Send type
+		uint8_t type;
+		if (camera == 1) {
+			if (offset + chunkLen < fullPayloadLen) {
+				type = CAMERA_1_MF;
+			} else {
+				type = CAMERA_1_END;
+			}
+		} else {
+			if (offset + chunkLen < fullPayloadLen) {
+				type = CAMERA_2_MF;
+			} else {
+				type = CAMERA_2_END;
+			}
+		}
 		writeToDataBuffer(&packet_data_buffer[0], &type, 1);
 
 		// Send payload chunk
