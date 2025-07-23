@@ -18,7 +18,6 @@ typedef struct {
     float temperature;
     float state_of_charge;
     float power_usage;
-    float total_energy_used;
     float estimated_life;
     uint32_t magic;
 } BatteryData;
@@ -47,6 +46,7 @@ typedef struct { 		// struct containing sensor data values
     float acceleration_axis_1;  // accelerometer x axis
     float acceleration_axis_2;  // accelerometer y axis
     float acceleration_axis_3;  // accelerometer z axis
+    float altitude;				// altimeter altitude
     uint32_t magic;             // flash data validation value
 } SensorsData;
 

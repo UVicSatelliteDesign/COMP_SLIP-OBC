@@ -81,12 +81,6 @@ float calculate_power_usage(float voltage, float current) {
     return voltage * current;
 }
 
-float calculate_energy_usage(float power, float dt) {
-    static float total_energy = 0;
-    total_energy += (power * dt) / 3600.0f;
-    return total_energy;
-}
-
 float estimate_battery_life(float state_of_charge, float avg_power_draw) {
     float battery_capacity_Wh = 50.0f;
     float remaining_energy = (state_of_charge / 100.0f) * battery_capacity_Wh;
@@ -100,7 +94,6 @@ BatteryData get_battery_data(float dt) {
     data.temperature = read_battery_temperature();
     data.state_of_charge = calculate_state_of_charge(data.current, dt);
     data.power_usage = calculate_power_usage(data.voltage, data.current);
-    data.total_energy_used = calculate_energy_usage(data.power_usage, dt);
     data.estimated_life = estimate_battery_life(data.state_of_charge, data.power_usage);
     data.magic = FLASH_MAGIC;
     return data;
@@ -226,6 +219,7 @@ SensorsData read_sensors(){
     data.acceleration_axis_1 = read_acceleration_x1();
     data.acceleration_axis_2 = read_acceleration_x2();
     data.acceleration_axis_3 = read_acceleration_x3();
+    data.altitude = altimeter_read();
     data.magic = FLASH_MAGIC;
     save_sensor_data_to_flash(&data);
     return data; // return filled struct
