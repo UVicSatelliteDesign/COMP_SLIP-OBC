@@ -9,37 +9,38 @@
 #include <stdio.h>
 
 // Flash sector definitions
-#define FLASH_SECTOR_CAMERA     1U
-#define FLASH_SECTOR_2          2U  // Camera overflow
-#define FLASH_SECTOR_3          3U  // Camera overflow
-#define FLASH_SECTOR_4          4U  // UNUSED
-#define FLASH_SECTOR_ALTIMETER  5U
-#define FLASH_SECTOR_GPS        6U
-#define FLASH_SECTOR_BATTERY    7U  // Shares sector 7 with sensor data
-#define FLASH_SECTOR_SENSORS    7U  // Consolidated into sector 7 with battery data
+#define FLASH_SECTOR_CAMERA     1
+#define FLASH_SECTOR_2          2  // Camera overflow
+#define FLASH_SECTOR_3          3  // Camera overflow
+#define FLASH_SECTOR_SENSORS    4
+#define FLASH_SECTOR_ALTIMETER  5
+#define FLASH_SECTOR_GPS        6
+#define FLASH_SECTOR_BATTERY    7
 
-// Note: Flash sector size and base addresses are provided by STM32 HAL
-// FLASH_SECTOR_SIZE (128KB) and FLASH_BANK1_BASE are defined in stm32h743xx.h
+// Flash sector addresses (based on STM32H7xx flash layout)
+// todo: NEED TO CONFIRM FROM DATASHEET
+#define FLASH_SECTOR_1_ADDRESS  0x08020000
+#define FLASH_SECTOR_2_ADDRESS  0x08040000
+#define FLASH_SECTOR_3_ADDRESS  0x08060000
+#define FLASH_SECTOR_4_ADDRESS  0x08080000
+#define FLASH_SECTOR_5_ADDRESS  0x080A0000
+#define FLASH_SECTOR_6_ADDRESS  0x080C0000
+#define FLASH_SECTOR_7_ADDRESS  0x080E0000
 
-// Sector 7 memory layout offsets - Both battery and sensor data are stored in sector 7
-// Layout: [Battery Data + Magic][Padding][Sensor Data + Magic][Remaining Space]
-#define BATTERY_DATA_OFFSET     0U      // Battery data starts at sector beginning
-#define SENSOR_DATA_OFFSET      64U     // Sensor data starts after battery data + padding
+// Flash sector size (128KB for STM32H7xx)
+#define FLASH_SECTOR_SIZE       0x20000
 
 /*
 flash_write: 
     writes a section of memory into a specified location in flash memory, returns success or failure
-    NOTE: Sector must be cleared (erased) before writing. Call flash_clear first or ensure 
-    the calling code handles sector clearing before writing.
 Parameters:
     memory_address: a pointer to the start address of the source data in memory
     memory_size: the amount of memory to copy to flash
-    flash_sector_flag: the flash sector number (1, 2, 3, 4, 5, 6, or 7)
-    offset_address: OPTIONAL offset within the sector (0 = sector start, non-zero = specific offset)
+    flash_sector_flag: the flash sector number (1, 5, 6, or 7)
 Return:
     returns a true boolean for success and a false boolean for failure 
 */
-bool flash_write(void* memory_address, int memory_size, uint8_t flash_sector_flag, uint32_t offset_address);
+bool flash_write(void* memory_address, int memory_size, uint8_t flash_sector_flag);
 
 /*
 flash_read:
@@ -47,19 +48,17 @@ flash_read:
 Parameters:
     memory_address: a pointer to the start address of the destination in memory
     memory_size: the amount of memory to copy from flash
-    flash_sector_flag: the flash sector number (1, 2, 3, 4, 5, 6, or 7)
-    offset_address: OPTIONAL offset within the sector (0 = sector start, non-zero = specific offset)
+    flash_sector_flag: the flash sector number (1, 5, 6, or 7)
 Return:
     returns a true boolean for success and a false boolean for failure   
 */
-bool flash_read(void* memory_address, int memory_size, uint8_t flash_sector_flag, uint32_t offset_address);
+bool flash_read(void* memory_address, int memory_size, uint8_t flash_sector_flag);
 
 /*
 flash_clear:
     erases the entire flash sector, setting all bits to 1 (0xFF)
-    Must be called before flash_write to prepare the sector for new data.
 Parameters:
-    flash_sector_flag: the flash sector number (1, 2, 3, 4, 5, 6, or 7)
+    flash_sector_flag: the flash sector number (1, 5, 6, or 7)
 Return:
     returns a true boolean for success and a false boolean for failure   
 */
