@@ -24,12 +24,6 @@ bool log_data(int data_specifier){
                 return true;
             }
             return false;
-        case ALTIMETER:
-            if(flash_read(DATA_LOGGING_BUFFER_MEMORY_ADDRESS, FLASH_MEMORY_SIZE_ALTIMETER, FLASH_ADDRESS_ALTIMETER)){
-                //print buffer to serial
-                return true;
-            }
-            return false;
         case GPS:
             if(flash_read(DATA_LOGGING_BUFFER_MEMORY_ADDRESS, FLASH_MEMORY_SIZE_GPS, FLASH_ADDRESS_GPS)){
                 //print buffer to serial
