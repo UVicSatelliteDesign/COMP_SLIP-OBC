@@ -139,10 +139,10 @@ float read_OBC_temperature(){ // temperature hardware wrapper
     return raw;
 }
 
-//writes current sensor values to flash/global struct and returns struct with final values
+
 SensorsData read_sensors(){ 
-    SensorsData data; // initialise empty struct and/or write over flash
-    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    SensorsData data; 
+    data.temperature_obc = read_OBC_temperature(); 
     data.temperature_ttc = read_TTC_temperature();
     data.temperature_bms = read_BMS_temperature();
     data.gyroscope_axis_1 = read_gyroscope_x1();
@@ -152,8 +152,7 @@ SensorsData read_sensors(){
     data.acceleration_axis_2 = read_acceleration_x2();
     data.acceleration_axis_3 = read_acceleration_x3();
     data.altitude = altimeter_read();
-    save_sensor_data_to_flash(&data);
-    return data; // return filled struct
+    return data; 
 }
 
 // Gyroscope (I2C)
