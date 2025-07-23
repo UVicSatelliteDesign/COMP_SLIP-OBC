@@ -95,7 +95,6 @@ BatteryData get_battery_data(float dt) {
     data.state_of_charge = calculate_state_of_charge(data.current, dt);
     data.power_usage = calculate_power_usage(data.voltage, data.current);
     data.estimated_life = estimate_battery_life(data.state_of_charge, data.power_usage);
-    data.magic = FLASH_MAGIC;
     return data;
 }
 
@@ -190,9 +189,8 @@ void load_sensor_data_from_flash(){ // retrieves flash data and uses a pointer t
     }
 }
 
-
-
-float read_temperature(){ // temperature hardware wrapper
+//// Temperature sensors
+float read_OBC_temperature(){ // temperature hardware wrapper
     // //dummy value degree celsius
     // return 10;
     HAL_ADC_PollForConversion(&TemperatureSensor, 100);
@@ -200,19 +198,12 @@ float read_temperature(){ // temperature hardware wrapper
     return raw;
 }
 
-float read_pressure(){ // pressure hardware wrapper
-    // //dummy value atmospheres
-    // return 20;
-    HAL_ADC_PollForConversion(&PressureSensor, 100);
-    uint32_t raw = HAL_ADC_GetValue(&PressureSensor);
-    return raw;
-}
-
 //writes current sensor values to flash/global struct and returns struct with final values
 SensorsData read_sensors(){ 
     SensorsData data; // initialise empty struct and/or write over flash
-    data.temperature = read_temperature(); // store temperature and pressure to struct
-    data.pressure = read_pressure();
+    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    data.temperature_ttc = read_TTC_temperature();
+    data.temperature_bms = read_BMS_temperature();
     data.gyroscope_axis_1 = read_gyroscope_x1();
     data.gyroscope_axis_2 = read_gyroscope_x2();
     data.gyroscope_axis_3 = read_gyroscope_x3();
@@ -220,7 +211,6 @@ SensorsData read_sensors(){
     data.acceleration_axis_2 = read_acceleration_x2();
     data.acceleration_axis_3 = read_acceleration_x3();
     data.altitude = altimeter_read();
-    data.magic = FLASH_MAGIC;
     save_sensor_data_to_flash(&data);
     return data; // return filled struct
 }
