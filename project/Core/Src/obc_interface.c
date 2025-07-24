@@ -21,7 +21,8 @@
 #define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0 // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
-extern I2C_HandleTypeDef hi2c4;
+extern I2C_HandleTypeDef hi2c2; // I2C handler for camera 1, BMS ADC sensors, BMS and TTC temperature sensors
+extern I2C_HandleTypeDef hi2c4; // I2C handler for camera 2, accelerometer, altimeter, gyroscope
 
 // Battery
 extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
@@ -30,8 +31,6 @@ extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --batt
 
 // Sensors
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
-extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
-extern I2C_HandleTypeDef hi2c2; // I2C handler for sensors
 
 // Altimeter calibration constants
 uint16_t alti_calib[6] = {};
