@@ -8,7 +8,8 @@
 #define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
 #define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
 #define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
-#define TEMP_ADDR (0x40 << 1) // 0x40 if ADD0 pin is pulled low, 0x41 if ADD0 is pulled high
+#define TEMP_ADDR_TTC (0x40 << 1) // 0x40 if ADD0 pin is pulled low, 0x41 if ADD0 is pulled high
+#define TEMP_ADDR_BMS (0x17 << 1) // 0x50 if ADDR pin is pulled low, 0x51 if ADDR is pulled high
 
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
@@ -27,6 +28,7 @@ extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --batt
 // Sensors
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
 extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
+extern I2C_HandleTypeDef hi2c2; // I2C handler for sensors
 
 // Altimeter calibration constants
 uint16_t alti_calib[6] = {};
@@ -190,11 +192,43 @@ void load_sensor_data_from_flash(){ // retrieves flash data and uses a pointer t
 }
 
 //// Temperature sensors
+float read_TTC_temperature() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_TTC, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}   
+
+float read_BMS_temperature() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}   
+
 float read_OBC_temperature(){ // temperature hardware wrapper
     // //dummy value degree celsius
     // return 10;
     HAL_ADC_PollForConversion(&TemperatureSensor, 100);
     uint32_t raw = HAL_ADC_GetValue(&TemperatureSensor);
+    return raw;
+}
+
+float read_pressure(){ // pressure hardware wrapper
+    // //dummy value atmospheres
+    // return 20;
+    HAL_ADC_PollForConversion(&PressureSensor, 100);
+    uint32_t raw = HAL_ADC_GetValue(&PressureSensor);
     return raw;
 }
 
