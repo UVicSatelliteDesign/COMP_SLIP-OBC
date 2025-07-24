@@ -5,11 +5,14 @@
 // TODO: Move flash addresses to main.h and include each used address
 
 // I2C Addresses (left shift for HAL)
-#define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
+#define ALTI_ADDR (0x76 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
 #define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
 #define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
-#define TEMP_ADDR_TTC (0x40 << 1) // 0x40 if ADD0 pin is pulled low, 0x41 if ADD0 is pulled high
-#define TEMP_ADDR_BMS (0x17 << 1) // 0x50 if ADDR pin is pulled low, 0x51 if ADDR is pulled high
+#define TEMP_ADDR_TTC_1 (0x4A << 1)
+#define TEMP_ADDR_TTC_2 (0x4B << 1)
+#define TEMP_ADDR_BMS_1 (0x48 << 1)
+#define TEMP_ADDR_BMS_2 (0x49 << 1)
+#define BMS_ADC_ADDR (0x10 << 1)
 
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
