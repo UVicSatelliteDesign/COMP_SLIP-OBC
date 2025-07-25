@@ -88,9 +88,28 @@ float read_gyroscope_x3();
 
 //// Accelerometer
 // For use by HL
+/**
+ * @brief Sets accelerometer range to +/- 64g
+ * @return 0 if success, 1 if not
+ */
 uint8_t accelerometer_init();
-float read_acceleration_x(); // poll accelerometer
+
+/**
+ * @brief Reads x-axis acceleration
+ * @return x-axis acceleration in g's
+ */
+float read_acceleration_x();
+
+/**
+ * @brief Reads y-axis acceleration
+ * @return y-axis acceleration in g's
+ */
 float read_acceleration_y();
+
+/**
+ * @brief Reads z-axis acceleration
+ * @return z-axis acceleration in g's
+ */
 float read_acceleration_z();
 
 //// Altimeter
