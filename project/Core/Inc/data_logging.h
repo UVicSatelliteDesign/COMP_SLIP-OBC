@@ -4,8 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "flash_interface.h"
-
-#define FLASH_MEMORY_SIZE_CAMERA     
+   
 #define FLASH_MEMORY_SIZE_SENSORS     
 #define FLASH_MEMORY_SIZE_GPS      //size in bytes  
 #define FLASH_MEMORY_SIZE_BATTERY    
@@ -18,19 +17,23 @@
 
 #define DATA_LOGGING_BUFFER_MEMORY_ADDRESS
 
-#define CAMERA 0
-#define SENSORS 1
-#define GPS 2
-#define BATTERY 3
+#define SENSORS 0
+#define GPS 1
+#define BATTERY 2
 /*
 log_data: 
-    sends sensor data over serial to a receiver file (TODO: name receiver file once written)
+    sends sensor data over serial to a ttc receiver file
 Parameters:
-    int data_specifier: specifies {CAMERA, SENSORS, ALTIMETER, GPS, BATTERY} i.e. {0, 1, 2, 3, 4}
-Transmission:
-    SensorsData structs are transmitted as a sentence of 10 floats delineated by ', '
-    Transmission order:
-        {OBC temperature, TTC temperature, BMS temperature, gyroscope axis 1, gyroscope axis 2, gyroscope axis 3, acceleration axis 1, acceleration axis 2, acceleration axis 3, altitude}
+    int data_specifier: specifies {SENSORS, GPS, BATTERY}
+Cases:
+    SENSORS
+        Sensor data is printed to serial as a sentence of 10 floats delineated by ', '
+        Print order: {OBC temperature, TTC temperature, BMS temperature, gyroscope axis 1, gyroscope axis 2, gyroscope axis 3, acceleration axis 1, acceleration axis 2, acceleration axis 3, altitude}
+    GPS
+        GPS data is printed to serial as hex one uint8_t at a time, incrementing through the memory by byte
+    BATTERY
+        Battery data is printed to serial as a sentence of 6 floats delineated by ', ' 
+        Print order: {voltage, current, temperature, state_of_charge, power_usage, estimated_life}
 Return:
     returns a true boolean for success and a false boolean for failure 
 */
