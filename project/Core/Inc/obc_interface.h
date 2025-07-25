@@ -92,17 +92,40 @@ uint8_t accelerometer_init();
 float read_acceleration_x(); // poll accelerometer
 float read_acceleration_y();
 float read_acceleration_z();
-// For use by LL
 
 //// Altimeter
 // For use by HL
-uint8_t altimeter_init(); // Returns 0 if success, 1 if not
+/**
+ * @brief Reads altimeter calibration constants
+ * @return 0 if success, 1 if not
+ */
+uint8_t altimeter_init();
+
+/**
+ * @brief Calculates altitude from pressure
+ * @return Altitude in meters
+ */
 float altimeter_read();
-uint8_t altimeter_reset(); // Only if necessary, returns 0 if success, 1 if not
+
+/**
+ * @brief Resets altimeter (may not be necessary)
+ * @return 0 if success, 1 if not
+ */
+uint8_t altimeter_reset();
+
 // For use by LL
+/**
+ * @brief Reads pressure from altimeter
+ * @return ADC value for pressure
+ */
 uint32_t altimeter_read_pressure();
+
+/**
+ * @brief Reads temperature value from altimeter
+ * @return ADC value for temperature
+ */
 uint32_t altimeter_read_temperature();
-uint8_t altimeter_read_calibration(); // Returns 0 if success, 1 if not
+
 /////////////////sensors end
 
 // Memory prototypes
