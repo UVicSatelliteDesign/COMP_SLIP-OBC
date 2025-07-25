@@ -9,9 +9,9 @@
 #define FLASH_MEMORY_SIZE_GPS      //size in bytes  
 #define FLASH_MEMORY_SIZE_BATTERY    
          
-#define FLASH_ADDRESS_SENSORS            
-#define FLASH_ADDRESS_GPS                 
-#define FLASH_ADDRESS_BATTERY         
+#define FLASH_ADDRESS_SENSORS   FLASH_SECTOR_SENSORS
+#define FLASH_ADDRESS_GPS       FLASH_SECTOR_GPS          
+#define FLASH_ADDRESS_BATTERY   FLASH_SECTOR_BATTERY
 
 #define DATA_LOGGING_BUFFER_MEMORY_ADDRESS
 

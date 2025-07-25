@@ -10,7 +10,7 @@
 bool log_data(int data_specifier){
     switch(data_specifier) {
         case SENSORS:
-            if(flash_read(DATA_LOGGING_BUFFER_MEMORY_ADDRESS, FLASH_MEMORY_SIZE_SENSORS, FLASH_ADDRESS_SENSORS)){
+            if(flash_read(DATA_LOGGING_BUFFER_MEMORY_ADDRESS, FLASH_MEMORY_SIZE_SENSORS, FLASH_ADDRESS_SENSORS, SENSOR_DATA_OFFSET)){
                 SensorsData *SensorsDataPtr = (SensorsData *) DATA_LOGGING_BUFFER_MEMORY_ADDRESS;
                 SensorsData data = *SensorsDataPtr;
                 //printf modified to send to serial
