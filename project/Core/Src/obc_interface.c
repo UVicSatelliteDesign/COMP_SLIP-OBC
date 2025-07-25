@@ -190,23 +190,6 @@ float read_OBC_temperature(){ // temperature hardware wrapper
     return raw;
 }
 
-//writes current sensor values to flash/global struct and returns struct with final values
-SensorsData read_sensors(){ 
-    SensorsData data; // initialise empty struct and/or write over flash
-    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
-    data.temperature_ttc = read_TTC_temperature_1();
-    data.temperature_bms = read_BMS_temperature_1();
-    data.gyroscope_axis_1 = read_gyroscope_x1();
-    data.gyroscope_axis_2 = read_gyroscope_x2();
-    data.gyroscope_axis_3 = read_gyroscope_x3();
-    data.acceleration_axis_1 = read_acceleration_x1();
-    data.acceleration_axis_2 = read_acceleration_x2();
-    data.acceleration_axis_3 = read_acceleration_x3();
-    data.altitude = altimeter_read();
-    save_sensor_data_to_flash(&data);
-    return data; // return filled struct
-}
-
 // Gyroscope (I2C)
 float read_gyroscope_x1(){
     return 31;
@@ -230,26 +213,33 @@ float read_acceleration_x3(){
     return 43;
 }
 
-// To be used by low level
 uint8_t accelerometer_init(){
-	// Set PC1 to 0 in CNTL1 to allow writing to other settings (bit 7)
-	// Set GSEL<1:0> to 11 for +-64g range
-	// Set PC1 to 1 in CNTL1 to enable accelerometer
-
-
-
-	uint8_t command = 0bxxxxxxx0; // Write to control register to set operational mode
-	if (HAL_I2C_Master_Transmit(&hi2c4, ACCEL_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+	uint8_t cntl1_addr = (0xB1 << 1);
+	uint8_t cntl1 = 0;
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &cntl1, 1, I2C_Timeout) != HAL_OK){
 		return 1;
 	}
-	command = 0bxxxxxxxx; // Data to be written to register
-	if (HAL_I2C_Master_Transmit(&hi2c4, ACCEL_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+	// Set PC1 to 0 in CNTL1 to allow writing to other settings (bit 7)
+	// Set GSEL<1:0> to 11 for +-64g range
+	uint8_t command = 0b00011000 | cntl1; // Data to be written to register
+	if (HAL_I2C_Mem_Write(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &command, 1, I2C_Timeout) != HAL_OK){
 		return 1;
 	}
 	return 0;
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &cntl1, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// Set PC1 to 1 in CNTL1 to enable accelerometer
+	command = 0b10000000 | cntl1; // Data to be written to register
+	if (HAL_I2C_Mem_Write(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
 }
 
-uint8_t read_x
+// To be used by low level
+uint8_t x_acceleration_read(){
+
+}
 
 //// Altimeter (I2C)
 // To be called by HL
@@ -380,8 +370,23 @@ uint8_t altimeter_read_calibration(){
 	return 0;
 }
 
-// Temperature (I2C)
-//
+
+//writes current sensor values to flash/global struct and returns struct with final values
+SensorsData read_sensors(){
+    SensorsData data; // initialise empty struct and/or write over flash
+    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    data.temperature_ttc = read_TTC_temperature_1();
+    data.temperature_bms = read_BMS_temperature_1();
+    data.gyroscope_axis_1 = read_gyroscope_x1();
+    data.gyroscope_axis_2 = read_gyroscope_x2();
+    data.gyroscope_axis_3 = read_gyroscope_x3();
+    data.acceleration_axis_1 = read_acceleration_x1();
+    data.acceleration_axis_2 = read_acceleration_x2();
+    data.acceleration_axis_3 = read_acceleration_x3();
+    data.altitude = altimeter_read();
+    save_sensor_data_to_flash(&data);
+    return data; // return filled struct
+}
 
 /////////////sensors functions end
 

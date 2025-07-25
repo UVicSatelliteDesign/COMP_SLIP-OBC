@@ -65,19 +65,25 @@ BatteryData get_battery_data(float dt);
 void save_battery_data_to_flash(BatteryData *data);
 void load_battery_data_from_flash();
 
+//// Temperature sensors
 float read_OBC_temperature(); // poll temperature sensor
 float read_TTC_temperature_1();
 float read_TTC_temperature_2();
 float read_BMS_temperature_1();
 float read_BMS_temperature_2();
 
+//// Gyroscope
 float read_gyroscope_x1(); // poll gyroscope
 float read_gyroscope_x2();
 float read_gyroscope_x3();
 
+//// Accelerometer
+// For use by HL
+uint8_t accelerometer_init();
 float read_acceleration_x1(); // poll accelerometer
 float read_acceleration_x2();
 float read_acceleration_x3();
+// For use by LL
 
 //// Altimeter
 // For use by HL
