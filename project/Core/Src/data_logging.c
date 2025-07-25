@@ -20,7 +20,11 @@ bool log_data(int data_specifier){
             return false;
         case GPS:
             if(flash_read(DATA_LOGGING_BUFFER_MEMORY_ADDRESS, FLASH_MEMORY_SIZE_GPS, FLASH_ADDRESS_GPS)){
-                //print buffer to serial
+                uint8_t *GPSPtr = (uint8_t *) DATA_LOGGING_BUFFER_MEMORY_ADDRESS;
+                for(int i = 0; i < FLASH_MEMORY_SIZE_GPS; i++){
+                    printf("%02x", GPSPtr);
+                    GPSPtr++;
+                }
                 return true;
             }
             return false;

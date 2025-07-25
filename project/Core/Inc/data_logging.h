@@ -6,9 +6,8 @@
 #include "flash_interface.h"
 
 #define FLASH_MEMORY_SIZE_CAMERA     
-#define FLASH_MEMORY_SIZE_SENSORS    
-#define FLASH_MEMORY_SIZE_ALTIMETER  
-#define FLASH_MEMORY_SIZE_GPS        
+#define FLASH_MEMORY_SIZE_SENSORS     
+#define FLASH_MEMORY_SIZE_GPS      //size in bytes  
 #define FLASH_MEMORY_SIZE_BATTERY    
 
 #define FLASH_ADDRESS_CAMERA           
@@ -21,9 +20,8 @@
 
 #define CAMERA 0
 #define SENSORS 1
-#define ALTIMETER 2
-#define GPS 3
-#define BATTERY 4
+#define GPS 2
+#define BATTERY 3
 /*
 log_data: 
     sends sensor data over serial to a receiver file (TODO: name receiver file once written)
