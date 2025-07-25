@@ -1,6 +1,7 @@
 #include "obc_interface.h"
 #include "camera.h"
 #include "main.h"
+#include "flash_interface.h"
 
 // TODO: Move flash addresses to main.h and include each used address
 
@@ -188,6 +189,23 @@ float read_OBC_temperature(){ // temperature hardware wrapper
     HAL_ADC_PollForConversion(&TemperatureSensor, 100);
     uint32_t raw = HAL_ADC_GetValue(&TemperatureSensor);
     return raw;
+}
+
+//writes current sensor values to flash/global struct and returns struct with final values
+SensorsData read_sensors(){ 
+    SensorsData data; // initialise empty struct and/or write over flash
+    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    data.temperature_ttc = read_TTC_temperature();
+    data.temperature_bms = read_BMS_temperature();
+    data.gyroscope_axis_1 = read_gyroscope_x1();
+    data.gyroscope_axis_2 = read_gyroscope_x2();
+    data.gyroscope_axis_3 = read_gyroscope_x3();
+    data.acceleration_axis_1 = read_acceleration_x1();
+    data.acceleration_axis_2 = read_acceleration_x2();
+    data.acceleration_axis_3 = read_acceleration_x3();
+    data.altitude = altimeter_read();
+    save_sensor_data_to_flash(&data);
+    return data; // return filled struct
 }
 
 // Gyroscope (I2C)
