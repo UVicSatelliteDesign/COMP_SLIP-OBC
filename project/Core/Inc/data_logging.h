@@ -8,10 +8,8 @@
 #define FLASH_MEMORY_SIZE_SENSORS     
 #define FLASH_MEMORY_SIZE_GPS      //size in bytes  
 #define FLASH_MEMORY_SIZE_BATTERY    
-
-#define FLASH_ADDRESS_CAMERA           
-#define FLASH_ADDRESS_SENSORS         
-#define FLASH_ADDRESS_ALTIMETER     
+         
+#define FLASH_ADDRESS_SENSORS            
 #define FLASH_ADDRESS_GPS                 
 #define FLASH_ADDRESS_BATTERY         
 
