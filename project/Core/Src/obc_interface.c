@@ -5,10 +5,14 @@
 // TODO: Move flash addresses to main.h and include each used address
 
 // I2C Addresses (left shift for HAL)
-#define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
+#define ALTI_ADDR (0x76 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
 #define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
 #define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
-#define TEMP_ADDR (0x40 << 1) // 0x40 if ADD0 pin is pulled low, 0x41 if ADD0 is pulled high
+#define TEMP_ADDR_TTC_1 (0x4A << 1)
+#define TEMP_ADDR_TTC_2 (0x4B << 1)
+#define TEMP_ADDR_BMS_1 (0x48 << 1)
+#define TEMP_ADDR_BMS_2 (0x49 << 1)
+#define BMS_ADC_ADDR (0x10 << 1)
 
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
@@ -17,7 +21,8 @@
 #define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0 // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
-extern I2C_HandleTypeDef hi2c4;
+extern I2C_HandleTypeDef hi2c2; // I2C handler for camera 1, BMS ADC sensors, BMS and TTC temperature sensors
+extern I2C_HandleTypeDef hi2c4; // I2C handler for camera 2, accelerometer, altimeter, gyroscope
 
 // Battery
 extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
@@ -26,7 +31,6 @@ extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --batt
 
 // Sensors
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
-extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
 
 // Altimeter calibration constants
 uint16_t alti_calib[6] = {};
@@ -81,12 +85,6 @@ float calculate_power_usage(float voltage, float current) {
     return voltage * current;
 }
 
-float calculate_energy_usage(float power, float dt) {
-    static float total_energy = 0;
-    total_energy += (power * dt) / 3600.0f;
-    return total_energy;
-}
-
 float estimate_battery_life(float state_of_charge, float avg_power_draw) {
     float battery_capacity_Wh = 50.0f;
     float remaining_energy = (state_of_charge / 100.0f) * battery_capacity_Wh;
@@ -100,50 +98,18 @@ BatteryData get_battery_data(float dt) {
     data.temperature = read_battery_temperature();
     data.state_of_charge = calculate_state_of_charge(data.current, dt);
     data.power_usage = calculate_power_usage(data.voltage, data.current);
-    data.total_energy_used = calculate_energy_usage(data.power_usage, dt);
     data.estimated_life = estimate_battery_life(data.state_of_charge, data.power_usage);
-    data.magic = FLASH_MAGIC;
     return data;
 }
 
 void save_battery_data_to_flash(BatteryData *data) {
-	HAL_FLASH_Unlock();
-
-	    // 1. Setup flash erase configuration
-	    FLASH_EraseInitTypeDef erase;
-	    uint32_t pageError;
-
-	    erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
-	    erase.Sector = FLASH_SECTOR_7;                   // Make sure this is correct for your chip!
-	    erase.NbSectors = 1;
-	    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
-
-	    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK) {
-	        // Handle erase error
-	        HAL_FLASH_Lock();
-	        return;
-	    }
-
-	    // 2. Write the data in 64-bit chunks
-	    uint64_t *src = (uint64_t *)data;
-	    uint32_t numWords = sizeof(BatteryData) / 8;
-
-	    for (uint32_t i = 0; i < numWords; i++) {
-	        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SAVE_ADDRESS + (i * 8), src[i]) != HAL_OK) {
-	            // Handle write error
-	            HAL_FLASH_Lock();
-	            return;
-	        }
-	    }
-
-	    HAL_FLASH_Lock();
+    if (!flash_write(data, sizeof(BatteryData), FLASH_SECTOR_BATTERY, BATTERY_DATA_OFFSET)) {
+        // TODO: Handle flash write error
+    }
 }
 
 void load_battery_data_from_flash() {
-    BatteryData *flash_data = (BatteryData *)FLASH_SAVE_ADDRESS;
-    if (flash_data->magic == FLASH_MAGIC) {
-        memcpy(&battery_backup, flash_data, sizeof(BatteryData));
-    } else {
+    if (!flash_read(&battery_backup, sizeof(BatteryData), FLASH_SECTOR_BATTERY, BATTERY_DATA_OFFSET)) {
         memset(&battery_backup, 0, sizeof(BatteryData));
     }
 }
@@ -155,51 +121,68 @@ void init_sensors() {
     HAL_ADC_Start(&PressureSensor);
 }
 
-void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
-    HAL_FLASH_Unlock();
-
-    // 1. Setup flash erase configuration
-    FLASH_EraseInitTypeDef erase;
-    uint32_t pageError;
-
-    erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
-    erase.Sector = FLASH_SENSOR_ADDRESS;                   // Make sure this is correct for your chip!
-    erase.NbSectors = 1;
-    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
-
-    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK) {
-        // Handle erase error
-        HAL_FLASH_Lock();
-        return;
+void save_sensor_data_to_flash(SensorsData *data) {
+    if (!flash_write(data, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
+        // TODO: Handle flash write error
     }
-
-    // 2. Write the data in 64-bit chunks
-    uint64_t *src = (uint64_t *)data;
-    uint32_t numWords = sizeof(SensorsData) / 8;
-
-    for (uint32_t i = 0; i < numWords; i++) {
-        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SENSOR_ADDRESS + (i * 8), src[i]) != HAL_OK) {
-            // Handle write error
-            HAL_FLASH_Lock();
-            return;
-        }
-    }
-
-    HAL_FLASH_Lock();
 }
 
-void load_sensor_data_from_flash(){ // retrieves flash data and uses a pointer to write it to the sensor_backup struct
-    SensorsData *flash_data = (SensorsData *)FLASH_SENSOR_ADDRESS;
-    if (flash_data->magic == FLASH_MAGIC) {
-        memcpy(&sensor_backup, flash_data, sizeof(SensorsData));
-    } else {
+void load_sensor_data_from_flash() {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         memset(&sensor_backup, 0, sizeof(SensorsData));
     }
 }
 
+//// Temperature sensors
+float read_TTC_temperature_1() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
 
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_TTC_1, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
 
-float read_temperature(){ // temperature hardware wrapper
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}
+
+float read_TTC_temperature_2() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_TTC_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}   
+
+float read_BMS_temperature_1() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_1, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}   
+
+float read_BMS_temperature_2() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}
+
+float read_OBC_temperature(){ // temperature hardware wrapper
     // //dummy value degree celsius
     // return 10;
     HAL_ADC_PollForConversion(&TemperatureSensor, 100);
@@ -207,26 +190,19 @@ float read_temperature(){ // temperature hardware wrapper
     return raw;
 }
 
-float read_pressure(){ // pressure hardware wrapper
-    // //dummy value atmospheres
-    // return 20;
-    HAL_ADC_PollForConversion(&PressureSensor, 100);
-    uint32_t raw = HAL_ADC_GetValue(&PressureSensor);
-    return raw;
-}
-
 //writes current sensor values to flash/global struct and returns struct with final values
 SensorsData read_sensors(){ 
     SensorsData data; // initialise empty struct and/or write over flash
-    data.temperature = read_temperature(); // store temperature and pressure to struct
-    data.pressure = read_pressure();
+    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    data.temperature_ttc = read_TTC_temperature_1();
+    data.temperature_bms = read_BMS_temperature_1();
     data.gyroscope_axis_1 = read_gyroscope_x1();
     data.gyroscope_axis_2 = read_gyroscope_x2();
     data.gyroscope_axis_3 = read_gyroscope_x3();
     data.acceleration_axis_1 = read_acceleration_x1();
     data.acceleration_axis_2 = read_acceleration_x2();
     data.acceleration_axis_3 = read_acceleration_x3();
-    data.magic = FLASH_MAGIC;
+    data.altitude = altimeter_read();
     save_sensor_data_to_flash(&data);
     return data; // return filled struct
 }

@@ -18,9 +18,7 @@ typedef struct {
     float temperature;
     float state_of_charge;
     float power_usage;
-    float total_energy_used;
     float estimated_life;
-    uint32_t magic;
 } BatteryData;
 
 // BMS prototypes
@@ -39,15 +37,16 @@ void load_battery_data_from_flash();
 
 ////////////sensors start
 typedef struct { 		// struct containing sensor data values
-    float temperature;        	// temperature, celsius
-    float pressure;             	// pressure, unit tbd
+    float temperature_obc;      // temperature, celsius
+    float temperature_ttc;
+    float temperature_bms;
     float gyroscope_axis_1;     // gyroscope x axis
     float gyroscope_axis_2;     // gyroscope y axis
     float gyroscope_axis_3;     // gyroscope z axis
     float acceleration_axis_1;  // accelerometer x axis
     float acceleration_axis_2;  // accelerometer y axis
     float acceleration_axis_3;  // accelerometer z axis
-    uint32_t magic;             // flash data validation value
+    float altitude;				// altimeter altitude
 } SensorsData;
 
 void init_sensors(); // initialises pins
@@ -55,8 +54,22 @@ void save_sensor_data_to_flash(SensorsData *data); // handles saving to flash
 void load_sensor_data_from_flash(); // retrieves flash data and uses a pointer to write to the sensor_backup struct
 SensorsData read_sensors(); // polls sensors, calls save_sensor_data_to_flash, returns sensor data object
 
-float read_temperature(); // poll temperature sensor
-float read_pressure();	// poll pressure sensor
+void init_bms();
+float read_battery_voltage();
+float read_battery_current();
+float read_battery_temperature();
+float calculate_state_of_charge(float current, float dt);
+float calculate_power_usage(float voltage, float current);
+float estimate_battery_life(float state_of_charge, float avg_power_draw);
+BatteryData get_battery_data(float dt);
+void save_battery_data_to_flash(BatteryData *data);
+void load_battery_data_from_flash();
+
+float read_OBC_temperature(); // poll temperature sensor
+float read_TTC_temperature_1();
+float read_TTC_temperature_2();
+float read_BMS_temperature_1();
+float read_BMS_temperature_2();
 
 float read_gyroscope_x1(); // poll gyroscope
 float read_gyroscope_x2();
