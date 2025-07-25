@@ -5,9 +5,11 @@
 #include "fatfs.h"
 
 // For type argument of store_data
-#define T_DATA 0
-#define T_WARNING 1
-#define T_ERROR 2
+enum Type {
+	T_DATA,
+	T_WARNING,
+	T_ERROR
+};
 
 #define MAX_DATA_SIZE 100 // For telemetry, errors, warnings
 
@@ -148,11 +150,45 @@ uint32_t altimeter_read_temperature();
 /////////////////sensors end
 
 // Memory prototypes
+/**
+ * @brief Mounts SD card
+ * @return FR_OK if success
+ */
 FRESULT mount_SD();
+
+/**
+ * @brief Formats SD card with FatFS file system
+ * @return FR_OK if success
+ */
 FRESULT format_SD();
+
+/**
+ * @brief Creates directories on SD card
+ * @return FR_OK if success
+ */
 FRESULT setup_SD();
-FRESULT store_data(uint8_t* data, uint8_t data_size, uint8_t type);
+
+/**
+ * @brief Stores telemetry, errors, etc (text) on SD card
+ * @param data The data to be written
+ * @param data_size The size of the data (e.g. string length)
+ * @param type Type of data (T_DATA, T_WARNING, or T_ERROR)
+ * @return FR_OK if success
+ */
+FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type);
+
+/**
+ * @brief Stores images in JPEG format on SD card
+ * @param data The image data to be written
+ * @param data_size The size of the data
+ * @return FR_OK if success
+ */
 FRESULT store_image(uint8_t* data, uint8_t data_size);
+
+/**
+ * @brief Unmounts SD card
+ * @return FR_OK if success
+ */
 FRESULT unmount_SD();
 
 #endif /* SRC_OBC_INTERFACE_H_ */

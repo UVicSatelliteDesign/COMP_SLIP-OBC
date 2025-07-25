@@ -454,7 +454,7 @@ FRESULT setup_SD(){
 }
 
 // Store telemetry/errors/etc on SD card
-FRESULT store_data(uint8_t* data, uint8_t data_size, uint8_t type){
+FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
 	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
 	if (res != FR_OK){
         f_close(&SDFile);
