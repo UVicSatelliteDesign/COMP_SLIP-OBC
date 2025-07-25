@@ -26,12 +26,13 @@ Parameters:
 Cases:
     SENSORS
         Sensor data is printed to serial as a sentence of 10 floats delineated by ', '
-        Print order: {OBC temperature, TTC temperature, BMS temperature, gyroscope axis 1, gyroscope axis 2, gyroscope axis 3, acceleration axis 1, acceleration axis 2, acceleration axis 3, altitude}
+        Print order: {one byte specifying data type, OBC temperature, TTC temperature, BMS temperature, gyroscope axis 1, gyroscope axis 2, gyroscope axis 3, acceleration axis 1, acceleration axis 2, acceleration axis 3, altitude}
     GPS
-        GPS data is printed to serial as hex one uint8_t at a time, incrementing through the memory by byte
+        GPS data is printed from memory to serial as hex, incrementing through the memory by byte
+        Print order: {one byte specifying data type, NMEA $GPRMC Sentence}
     BATTERY
         Battery data is printed to serial as a sentence of 6 floats delineated by ', ' 
-        Print order: {voltage, current, temperature, state_of_charge, power_usage, estimated_life}
+        Print order: {one byte specifying data type, voltage, current, temperature, state_of_charge, power_usage, estimated_life}
 Return:
     returns a true boolean for success and a false boolean for failure 
 */
