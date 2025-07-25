@@ -24,10 +24,15 @@ void ttc_notifications(void *vpParameters) {
         if (received_notification & INFO & CAMERA) {
             // Call transmit function with pointer to camera data in flash
 			if (received_notification & SUB_1) {
-				packageAndSendChunks(1, FLASH_SECTOR_CAMERA, /* total image data length */, 0);
+				uint16_t image_data_len;
+				// The flash_read is necessary because for persistent storage in sector 6 w/ gps
+				flash_read(&image_data_len, sizeof(uint16_t), FLASH_SECTOR_IMAGE_DATA_LEN, IMAGE_DATA_LEN_OFFSET);
+				packageAndSendChunks(1, FLASH_SECTOR_CAMERA, image_data_len, 0);
         		handle_transmit(0);
 			} else if (received_notification & SUB_2) {
-				packageAndSendChunks(2, FLASH_SECTOR_CAMERA, /* total image data length */, 0);
+				uint16_t image_data_len;
+				flash_read(&image_data_len, sizeof(uint16_t), FLASH_SECTOR_IMAGE_DATA_LEN, IMAGE_DATA_LEN_OFFSET);
+				packageAndSendChunks(2, FLASH_SECTOR_CAMERA, image_data_len, 0);
 				handle_transmit(0);
 			}
         	
@@ -232,7 +237,9 @@ void receive(void *vpParameters)
 		// set as acknowledged
 		last_received_seq_num = acked_seq_num;
 		// Send next chunk
-		packageAndSendChunks(camera, FLASH_SECTOR_CAMERA, /* total image data len */, acked_offset);
+		uint16_t image_data_len;
+		flash_read(&image_data_len, sizeof(uint16_t), FLASH_SECTOR_GPS, IMAGE_DATA_LEN_OFFSET);
+		packageAndSendChunks(camera, FLASH_SECTOR_CAMERA, image_data_len, acked_offset);
 		handle_transmit(0);
 		break;
 	case ACK_REC_TELEMETRY:
