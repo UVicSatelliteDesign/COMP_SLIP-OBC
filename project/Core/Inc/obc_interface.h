@@ -43,9 +43,9 @@ typedef struct { 		// struct containing sensor data values
     float gyroscope_axis_1;     // gyroscope x axis
     float gyroscope_axis_2;     // gyroscope y axis
     float gyroscope_axis_3;     // gyroscope z axis
-    float acceleration_axis_1;  // accelerometer x axis
-    float acceleration_axis_2;  // accelerometer y axis
-    float acceleration_axis_3;  // accelerometer z axis
+    float acceleration_x;  // accelerometer x axis
+    float acceleration_y;  // accelerometer y axis
+    float acceleration_z;  // accelerometer z axis
     float altitude;				// altimeter altitude
 } SensorsData;
 
@@ -89,9 +89,9 @@ float read_gyroscope_x3();
 //// Accelerometer
 // For use by HL
 uint8_t accelerometer_init();
-float read_acceleration_x1(); // poll accelerometer
-float read_acceleration_x2();
-float read_acceleration_x3();
+float read_acceleration_x(); // poll accelerometer
+float read_acceleration_y();
+float read_acceleration_z();
 // For use by LL
 
 //// Altimeter

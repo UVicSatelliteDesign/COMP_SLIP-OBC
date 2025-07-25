@@ -191,23 +191,6 @@ float read_OBC_temperature(){ // temperature hardware wrapper
     return raw;
 }
 
-//writes current sensor values to flash/global struct and returns struct with final values
-SensorsData read_sensors(){ 
-    SensorsData data; // initialise empty struct and/or write over flash
-    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
-    data.temperature_ttc = read_TTC_temperature();
-    data.temperature_bms = read_BMS_temperature();
-    data.gyroscope_axis_1 = read_gyroscope_x1();
-    data.gyroscope_axis_2 = read_gyroscope_x2();
-    data.gyroscope_axis_3 = read_gyroscope_x3();
-    data.acceleration_axis_1 = read_acceleration_x1();
-    data.acceleration_axis_2 = read_acceleration_x2();
-    data.acceleration_axis_3 = read_acceleration_x3();
-    data.altitude = altimeter_read();
-    save_sensor_data_to_flash(&data);
-    return data; // return filled struct
-}
-
 // Gyroscope (I2C)
 float read_gyroscope_x1(){
     return 31;
@@ -221,16 +204,6 @@ float read_gyroscope_x3(){
 
 //// Accelerometer (I2C)
 // To be called by HL
-float read_acceleration_x1(){
-    return 41;
-}
-float read_acceleration_x2(){
-    return 42;
-}
-float read_acceleration_x3(){
-    return 43;
-}
-
 uint8_t accelerometer_init(){
 	uint8_t cntl1_addr = (0xB1 << 1);
 	uint8_t cntl1 = 0;
@@ -252,11 +225,55 @@ uint8_t accelerometer_init(){
 	if (HAL_I2C_Mem_Write(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &command, 1, I2C_Timeout) != HAL_OK){
 		return 1;
 	}
+	return 0;
 }
 
-// To be used by low level
-uint8_t x_acceleration_read(){
+float read_acceleration_x(){
+	uint8_t x_LSB_addr = (0x08 << 1);
+	uint8_t x_MSB_addr = (0x09 << 1);
+	uint8_t x_LSB = 0;
+	uint8_t x_MSB = 0;
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, x_LSB_addr, I2C_MEMADD_SIZE_8BIT, &x_LSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, x_MSB_addr, I2C_MEMADD_SIZE_8BIT, &x_MSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	int16_t x = (x_MSB << 8) | x_LSB;
+	// Return value in g's
+    return x/32768.0*64;
+}
 
+float read_acceleration_y(){
+	uint8_t y_LSB_addr = (0x0A << 1);
+	uint8_t y_MSB_addr = (0x0B << 1);
+	uint8_t y_LSB = 0;
+	uint8_t y_MSB = 0;
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, y_LSB_addr, I2C_MEMADD_SIZE_8BIT, &y_LSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, y_MSB_addr, I2C_MEMADD_SIZE_8BIT, &y_MSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	int16_t y = (y_MSB << 8) | y_LSB;
+	// Return value in g's
+	return y/32768.0*64;
+}
+
+float read_acceleration_z(){
+	uint8_t z_LSB_addr = (0x0C << 1);
+	uint8_t z_MSB_addr = (0x0D << 1);
+	uint8_t z_LSB = 0;
+	uint8_t z_MSB = 0;
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, z_LSB_addr, I2C_MEMADD_SIZE_8BIT, &z_LSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, z_MSB_addr, I2C_MEMADD_SIZE_8BIT, &z_MSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	int16_t z = (z_MSB << 8) | z_LSB;
+	// Return value in g's
+	return z/32768.0*64;
 }
 
 //// Altimeter (I2C)
@@ -398,9 +415,9 @@ SensorsData read_sensors(){
     data.gyroscope_axis_1 = read_gyroscope_x1();
     data.gyroscope_axis_2 = read_gyroscope_x2();
     data.gyroscope_axis_3 = read_gyroscope_x3();
-    data.acceleration_axis_1 = read_acceleration_x1();
-    data.acceleration_axis_2 = read_acceleration_x2();
-    data.acceleration_axis_3 = read_acceleration_x3();
+    data.acceleration_x = read_acceleration_x();
+    data.acceleration_y = read_acceleration_y();
+    data.acceleration_z = read_acceleration_z();
     data.altitude = altimeter_read();
     save_sensor_data_to_flash(&data);
     return data; // return filled struct
