@@ -24,10 +24,10 @@ void ttc_notifications(void *vpParameters) {
         if (received_notification & INFO & CAMERA) {
             // Call transmit function with pointer to camera data in flash
 			if (received_notification & SUB_1) {
-				packageAndSendChunks(1, FLASH_SECTOR_CAMERA, /*Cam data length*/, 0);
+				packageAndSendChunks(1, FLASH_SECTOR_CAMERA, /* total image data length */, 0);
         		handle_transmit(0);
 			} else if (received_notification & SUB_2) {
-				packageAndSendChunks(2, FLASH_SECTOR_CAMERA, /*cam data length*/, 0);
+				packageAndSendChunks(2, FLASH_SECTOR_CAMERA, /* total image data length */, 0);
 				handle_transmit(0);
 			}
         	
@@ -72,14 +72,23 @@ void ttc_notifications(void *vpParameters) {
 			if(!flash_read(telem_data, sizeof(BatteryData), FLASH_SECTOR_BATTERY, BATTERY_DATA_OFFSET)) {
 				// Error when reading
 				xTaskNotify(obc_notifications, ERROR & MEMORY, eSetValueWithOverwrite);
+				for(int i = 0; i < sizeof(BatteryData); i++) {
+					telem_data[i] = 0xFF;
+				}
 			}
 			if(!flash_read(&telem_data[sizeof(BatteryData)], sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
 				// Error when reading
 				xTaskNotify(obc_notifications, ERROR & MEMORY, eSetValueWithOverwrite);
+				for(int i = 0; i < sizeof(SensorsData); i++) {
+					telem_data[i+sizeof(BatteryData)] = 0xFF;
+				}
 			}
 			if(!flash_read(&telem_data[sizeof(BatteryData) + sizeof(SensorsData)], 11, FLASH_SECTOR_GPS, 0)) {
 				// Error when reading
 				xTaskNotify(obc_notifications, ERROR & MEMORY, eSetValueWithOverwrite);
+				for(int i = 0; i < 11; i++) {
+					telem_data[i+sizeof(BatteryData)+sizeof(SensorsData)] = 0xFF;
+				}
 			}
 			generatepacket(TELEMETRY, telem_data, telem_length);
 			handle_transmit(0);
@@ -223,7 +232,7 @@ void receive(void *vpParameters)
 		// set as acknowledged
 		last_received_seq_num = acked_seq_num;
 		// Send next chunk
-		packageAndSendChunks(camera, FLASH_SECTOR_CAMERA, /*full data len*/, acked_offset);
+		packageAndSendChunks(camera, FLASH_SECTOR_CAMERA, /* total image data len */, acked_offset);
 		handle_transmit(0);
 		break;
 	case ACK_REC_TELEMETRY:
