@@ -16,7 +16,6 @@
 typedef struct {
     float voltage;
     float current;
-    float temperature;
     float state_of_charge;
     float power_usage;
     float total_energy_used;
