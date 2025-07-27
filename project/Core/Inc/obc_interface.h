@@ -50,9 +50,18 @@ typedef struct { 		// struct containing sensor data values
 } SensorsData;
 
 void init_sensors(); // initialises pins
-void save_sensor_data_to_flash(SensorsData *data); // handles saving to flash
-void load_sensor_data_from_flash(); // retrieves flash data and uses a pointer to write to the sensor_backup struct
-SensorsData read_sensors(); // polls sensors, calls save_sensor_data_to_flash, returns sensor data object
+void save_sensor_data_to_flash(SensorsData *data); // flash storage macro
+void load_sensor_data_from_flash(); // flash retrieval macro
+
+/*
+read_sensors:
+    macro polling sensor data to a SensorsData struct
+Parameters:
+    null
+Return:
+    returns a SensorsData struct  
+*/
+SensorsData read_sensors(); 
 
 void init_bms();
 float read_battery_voltage();

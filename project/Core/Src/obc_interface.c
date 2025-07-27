@@ -1,6 +1,7 @@
 #include "obc_interface.h"
 #include "camera.h"
 #include "main.h"
+#include "flash_interface.h"
 
 // TODO: Move flash addresses to main.h and include each used address
 
@@ -124,6 +125,7 @@ void init_sensors() {
 void save_sensor_data_to_flash(SensorsData *data) {
     if (!flash_write(data, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         // TODO: Handle flash write error
+
     }
 }
 
@@ -176,6 +178,14 @@ float read_BMS_temperature_2() {
 
     if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
         return 100000.0f;
+
+    }
+}
+
+void load_sensor_data_from_flash() {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
+        memset(&sensor_backup, 0, sizeof(SensorsData));
+
     }
 
     temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
@@ -190,12 +200,14 @@ float read_OBC_temperature(){ // temperature hardware wrapper
     return raw;
 }
 
-//writes current sensor values to flash/global struct and returns struct with final values
+
 SensorsData read_sensors(){ 
+
     SensorsData data; // initialise empty struct and/or write over flash
     data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
     data.temperature_ttc = read_TTC_temperature_1();
     data.temperature_bms = read_BMS_temperature_1();
+
     data.gyroscope_axis_1 = read_gyroscope_x1();
     data.gyroscope_axis_2 = read_gyroscope_x2();
     data.gyroscope_axis_3 = read_gyroscope_x3();
@@ -203,8 +215,7 @@ SensorsData read_sensors(){
     data.acceleration_axis_2 = read_acceleration_x2();
     data.acceleration_axis_3 = read_acceleration_x3();
     data.altitude = altimeter_read();
-    save_sensor_data_to_flash(&data);
-    return data; // return filled struct
+    return data; 
 }
 
 // Gyroscope (I2C)
