@@ -11,12 +11,6 @@ this will contain functions implementing data logging over serial
 functions will be documented in .h file
 */
 
-int FLASH_MEMORY_SIZE_SENSORS;  
-int FLASH_MEMORY_SIZE_GPS;      //size in bytes  
-int FLASH_MEMORY_SIZE_BATTERY;  
-
-
-
 bool log_data(DataLogType_t data_specifier){
     uint8_t *BufferPtr = malloc(128000);
     if(BufferPtr == NULL){

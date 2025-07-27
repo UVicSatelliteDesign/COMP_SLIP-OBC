@@ -11,6 +11,13 @@ typedef enum{
     battery = 2
 }DataLogType_t;
 
+///////////////////////////////
+int FLASH_MEMORY_SIZE_SENSORS;  
+int FLASH_MEMORY_SIZE_GPS;      //size in bytes  
+int FLASH_MEMORY_SIZE_BATTERY;  
+/////////////^^^These size variables need declaration/////////////////
+
+
 /*
 log_data: 
     logs data over serial to a ttc receiver file
