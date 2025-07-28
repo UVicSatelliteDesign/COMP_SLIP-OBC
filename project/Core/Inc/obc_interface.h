@@ -63,7 +63,22 @@ Return:
 */
 SensorsData read_sensors(); 
 
+void init_bms();
+float read_battery_voltage();
+float read_battery_current();
+float read_battery_temperature();
+float calculate_state_of_charge(float current, float dt);
+float calculate_power_usage(float voltage, float current);
+float estimate_battery_life(float state_of_charge, float avg_power_draw);
+BatteryData get_battery_data(float dt);
+void save_battery_data_to_flash(BatteryData *data);
+void load_battery_data_from_flash();
+
 float read_OBC_temperature(); // poll temperature sensor
+float read_TTC_temperature_1();
+float read_TTC_temperature_2();
+float read_BMS_temperature_1();
+float read_BMS_temperature_2();
 
 float read_gyroscope_x1(); // poll gyroscope
 float read_gyroscope_x2();
