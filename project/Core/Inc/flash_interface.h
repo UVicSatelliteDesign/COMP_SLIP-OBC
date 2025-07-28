@@ -14,12 +14,17 @@
 #define FLASH_SECTOR_3          3U  // Camera overflow
 #define FLASH_SECTOR_4          4U  // UNUSED
 #define FLASH_SECTOR_ALTIMETER  5U
-#define FLASH_SECTOR_GPS        6U
+#define FLASH_SECTOR_GPS        6U  // Shares sector 6 with iamge data length
+#define FLASH_SECTOR_IMAGE_DATA_LEN 6U // Consolidated into sector 6 with gps data
 #define FLASH_SECTOR_BATTERY    7U  // Shares sector 7 with sensor data
 #define FLASH_SECTOR_SENSORS    7U  // Consolidated into sector 7 with battery data
 
 // Note: Flash sector size and base addresses are provided by STM32 HAL
 // FLASH_SECTOR_SIZE (128KB) and FLASH_BANK1_BASE are defined in stm32h743xx.h
+
+// Sector 6 memory layout offsets - GPS data and image data length
+// Layout: [GPS Data][Padding][Image Data Length][Remaining Space]
+#define IMAGE_DATA_LEN_OFFSET   64U     // Image data length stored after GPS data + padding
 
 // Sector 7 memory layout offsets - Both battery and sensor data are stored in sector 7
 // Layout: [Battery Data + Magic][Padding][Sensor Data + Magic][Remaining Space]
