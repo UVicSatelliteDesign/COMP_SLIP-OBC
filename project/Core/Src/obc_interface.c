@@ -119,7 +119,6 @@ void load_battery_data_from_flash() {
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
-    HAL_ADC_Start(&PressureSensor);
 }
 
 void save_sensor_data_to_flash(SensorsData *data) {
