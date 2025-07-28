@@ -57,6 +57,7 @@ void obc_notifications(void *vpParameters) {
 						status = capture_snapshot(&camera1); // Take picture
 						if (status == HAL_OK) {
 							save_image_to_flash(&camera1, CAMERA_FLASH_SECTOR);
+							flash_write(camera1.actualImageSize, sizeof(uint16_t), FLASH_SECTOR_IMAGE_DATA_LEN, IMAGE_DATA_LEN_OFFSET);
 							store_image(camera1.imageBuffer);
 
 							// Notify TTC
@@ -72,6 +73,7 @@ void obc_notifications(void *vpParameters) {
 						status = capture_snapshot(&camera2); // Take picture
 						if (status == HAL_OK) {
 							save_image_to_flash(&camera2, CAMERA_FLASH_SECTOR);
+							flash_write(camera2.actualImageSize, sizeof(uint16_t), FLASH_SECTOR_IMAGE_DATA_LEN, IMAGE_DATA_LEN_OFFSET);
 							store_image(camera2.imageBuffer);
 
 							// Notify TTC
@@ -116,7 +118,7 @@ void data_task(void *vpParameters) {
 		// Save data to flash
 		save_battery_data_to_flash(&battery_data); // Continuously updated in low_power_task
 		save_sensor_data_to_flash(&sensor_data);
-		flash_write(&altimeter_data, sizeof(float), FLASH_SECTOR_ALTIMETER);
+		flash_write(&altimeter_data, sizeof(float), FLASH_SECTOR_ALTIMETER, 0);
 
 		// Tell TTC that there is data to be transmitted
 		xTaskNotify(ttc_notifications, INFO & SENSORS, eSetValueWithOverwrite);
@@ -151,6 +153,10 @@ void low_power_task(void *vpParameters) {
 		}
 		if ( mode != LOW_POWER_MODE && above_altitude && altimeter_read() < initial_altitude + 20) { // Leave room for elevation change
 			set_mode(LOW_POWER_MODE); // Low power if close to the ground and already completed its launch
+		}
+
+		if (read_TTC_temperature() > TTC_TEMPERATURE_THRESHOLD) {
+			set_mode(LOW_POWER_MODE); // If TTC temperature gets too hot, go into low power
 		}
 	}
 }
