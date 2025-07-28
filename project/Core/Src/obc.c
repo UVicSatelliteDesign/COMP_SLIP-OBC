@@ -52,6 +52,10 @@ void obc_notifications(void *vpParameters) {
         		if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) { // Camera mutex
 
 					if (received_notification & SUB_1) { // Camera 1
+
+						// Switch to camera 1
+						SWITCH_CAMERA(camera1, 1);
+						SWITCH_CAMERA(camera2, 0);
 						freeImageBuffer(&camera1);
 
 						status = capture_snapshot(&camera1); // Take picture
@@ -68,6 +72,10 @@ void obc_notifications(void *vpParameters) {
 							store_data((uint8_t*)"Camera 1 error", T_ERROR);
 						}
 					} else if (received_notification & SUB_2) { // Camera 2
+
+						// Switch to camera 2
+						SWITCH_CAMERA(camera1, 0);
+						SWITCH_CAMERA(camera2, 1);
 						freeImageBuffer(&camera2);
 
 						status = capture_snapshot(&camera2); // Take picture
@@ -166,6 +174,10 @@ void image_task(void *vpParameters) {
 	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) { // Mutex for camera 1
 		if (mode == NOMINAL) {
 
+			// Switch to camera 1
+			SWITCH_CAMERA(camera1, 1);
+			SWITCH_CAMERA(camera2, 0);
+
 			freeImageBuffer(&camera1);
 			status = capture_snapshot(&camera1); // Take picture
 
@@ -184,6 +196,10 @@ void image_task(void *vpParameters) {
 
 	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) { // Mutex for camera 2
 		if (mode == NOMINAL) {
+
+			// Switch to camera 2
+			SWITCH_CAMERA(camera1, 2);
+			SWITCH_CAMERA(camera2, 1);
 
 			freeImageBuffer(&camera2);
 			status = capture_snapshot(&camera2); // Take picture
