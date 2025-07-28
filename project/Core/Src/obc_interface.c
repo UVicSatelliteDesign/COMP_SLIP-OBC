@@ -207,21 +207,23 @@ float read_gyroscope_x3(){
 uint8_t accelerometer_init(){
 	uint8_t cntl1_addr = (0xB1 << 1);
 	uint8_t cntl1 = 0;
+	// Read CNTL1 register
 	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &cntl1, 1, I2C_Timeout) != HAL_OK){
 		return 1;
 	}
 	// Set PC1 to 0 in CNTL1 to allow writing to other settings (bit 7)
-	// Set GSEL<1:0> to 11 for +-64g range
-	uint8_t command = 0b00011000 | cntl1; // Data to be written to register
+	// Set GSEL<1:0> to 11 for +-64g range (bits 3 and 4)
+	uint8_t command = 0b00011000 | cntl1; // Data to be written to register (OR with current to not overwrite reserved bits)
 	if (HAL_I2C_Mem_Write(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &command, 1, I2C_Timeout) != HAL_OK){
 		return 1;
 	}
 	return 0;
+	// Read CNTL1 register
 	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &cntl1, 1, I2C_Timeout) != HAL_OK){
 		return 1;
 	}
-	// Set PC1 to 1 in CNTL1 to enable accelerometer
-	command = 0b10000000 | cntl1; // Data to be written to register
+	// Set PC1 to 1 in CNTL1 to enable accelerometer (bit 7)
+	command = 0b10000000 | cntl1; // Data to be written to register (OR with current to not overwrite reserved bits)
 	if (HAL_I2C_Mem_Write(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &command, 1, I2C_Timeout) != HAL_OK){
 		return 1;
 	}
@@ -233,12 +235,14 @@ float read_acceleration_x(){
 	uint8_t x_MSB_addr = (0x09 << 1);
 	uint8_t x_LSB = 0;
 	uint8_t x_MSB = 0;
+	// Read x acceleration registers (LSB and MSB)
 	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, x_LSB_addr, I2C_MEMADD_SIZE_8BIT, &x_LSB, 1, I2C_Timeout) != HAL_OK){
 		return 0xFFFFFFFF;
 	}
 	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, x_MSB_addr, I2C_MEMADD_SIZE_8BIT, &x_MSB, 1, I2C_Timeout) != HAL_OK){
 		return 0xFFFFFFFF;
 	}
+	// Combine LSB and MSB
 	int16_t x = (x_MSB << 8) | x_LSB;
 	// Return value in g's
     return x/32768.0*64;
@@ -249,12 +253,14 @@ float read_acceleration_y(){
 	uint8_t y_MSB_addr = (0x0B << 1);
 	uint8_t y_LSB = 0;
 	uint8_t y_MSB = 0;
+	// Read y acceleration registers (LSB and MSB)
 	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, y_LSB_addr, I2C_MEMADD_SIZE_8BIT, &y_LSB, 1, I2C_Timeout) != HAL_OK){
 		return 0xFFFFFFFF;
 	}
 	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, y_MSB_addr, I2C_MEMADD_SIZE_8BIT, &y_MSB, 1, I2C_Timeout) != HAL_OK){
 		return 0xFFFFFFFF;
 	}
+	// Combine LSB and MSB
 	int16_t y = (y_MSB << 8) | y_LSB;
 	// Return value in g's
 	return y/32768.0*64;
@@ -265,12 +271,14 @@ float read_acceleration_z(){
 	uint8_t z_MSB_addr = (0x0D << 1);
 	uint8_t z_LSB = 0;
 	uint8_t z_MSB = 0;
+	// Read z acceleration registers (LSB and MSB)
 	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, z_LSB_addr, I2C_MEMADD_SIZE_8BIT, &z_LSB, 1, I2C_Timeout) != HAL_OK){
 		return 0xFFFFFFFF;
 	}
 	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, z_MSB_addr, I2C_MEMADD_SIZE_8BIT, &z_MSB, 1, I2C_Timeout) != HAL_OK){
 		return 0xFFFFFFFF;
 	}
+	// Combine LSB and MSB
 	int16_t z = (z_MSB << 8) | z_LSB;
 	// Return value in g's
 	return z/32768.0*64;
