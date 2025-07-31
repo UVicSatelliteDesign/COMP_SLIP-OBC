@@ -23,8 +23,13 @@
 
 #include "cmsis_os.h"
 #include "fatfs.h"
+
+#include "string.h"
+#include "retarget.h"
+
 #include "ttc.h"
 #include <timers.h>
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -84,6 +89,7 @@ int retransmission_timer_id = 0;
 /* USER CODE BEGIN PV */
 
 SemaphoreHandle_t image_mutex;
+char buf[100];
 
 /* USER CODE END PV */
 
@@ -152,6 +158,7 @@ int main(void)
   MX_SPI2_Init();
   MX_SPI4_Init();
   /* USER CODE BEGIN 2 */
+  RetargetInit(&huart3);
 
   /* USER CODE END 2 */
 
@@ -221,6 +228,9 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+      printf("\r\nYour name: ");
+      scanf("%s", buf);
+      printf("\r\nHello, %s!\r\n", buf);
   }
   /* USER CODE END 3 */
 }
