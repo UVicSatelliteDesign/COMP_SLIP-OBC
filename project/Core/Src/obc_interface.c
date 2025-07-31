@@ -6,10 +6,14 @@
 // TODO: Move flash addresses to main.h and include each used address
 
 // I2C Addresses (left shift for HAL)
-#define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
+#define ALTI_ADDR (0x76 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
 #define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
 #define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
-#define TEMP_ADDR (0x40 << 1) // 0x40 if ADD0 pin is pulled low, 0x41 if ADD0 is pulled high
+#define TEMP_ADDR_TTC_1 (0x4A << 1)
+#define TEMP_ADDR_TTC_2 (0x4B << 1)
+#define TEMP_ADDR_BMS_1 (0x48 << 1)
+#define TEMP_ADDR_BMS_2 (0x49 << 1)
+#define BMS_ADC_ADDR (0x10 << 1)
 
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
@@ -18,7 +22,8 @@
 #define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0 // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
-extern I2C_HandleTypeDef hi2c4;
+extern I2C_HandleTypeDef hi2c2; // I2C handler for camera 1, BMS ADC sensors, BMS and TTC temperature sensors
+extern I2C_HandleTypeDef hi2c4; // I2C handler for camera 2, accelerometer, altimeter, gyroscope
 
 // Battery
 extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
@@ -27,7 +32,6 @@ extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --batt
 
 // Sensors
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
-extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
 
 // Altimeter calibration constants
 uint16_t alti_calib[6] = {};
@@ -115,12 +119,12 @@ void load_battery_data_from_flash() {
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
-    HAL_ADC_Start(&PressureSensor);
 }
 
 void save_sensor_data_to_flash(SensorsData *data) {
     if (!flash_write(data, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         // TODO: Handle flash write error
+
     }
 }
 
@@ -131,6 +135,62 @@ void load_sensor_data_from_flash() {
 }
 
 //// Temperature sensors
+float read_TTC_temperature_1() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_TTC_1, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}
+
+float read_TTC_temperature_2() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_TTC_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}   
+
+float read_BMS_temperature_1() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_1, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}   
+
+float read_BMS_temperature_2() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+
+    }
+}
+
+void load_sensor_data_from_flash() {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
+        memset(&sensor_backup, 0, sizeof(SensorsData));
+
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}
+
 float read_OBC_temperature(){ // temperature hardware wrapper
     // //dummy value degree celsius
     // return 10;
@@ -141,10 +201,12 @@ float read_OBC_temperature(){ // temperature hardware wrapper
 
 
 SensorsData read_sensors(){ 
-    SensorsData data; 
-    data.temperature_obc = read_OBC_temperature(); 
-    data.temperature_ttc = read_TTC_temperature();
-    data.temperature_bms = read_BMS_temperature();
+
+    SensorsData data; // initialise empty struct and/or write over flash
+    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    data.temperature_ttc = read_TTC_temperature_1();
+    data.temperature_bms = read_BMS_temperature_1();
+
     data.gyroscope_axis_1 = read_gyroscope_x1();
     data.gyroscope_axis_2 = read_gyroscope_x2();
     data.gyroscope_axis_3 = read_gyroscope_x3();
