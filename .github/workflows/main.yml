@@ -8,9 +8,9 @@ on:
   
 env:
   ##path to STM32 folder
-  path: "~/actions-runner/_work/test_repo/test_repo"
+  path: "~/actions-runner/_work/COMP_SLIP-OBC/COMP_SLIP-OBC/project/"
   ## name of STM32 folder
-  elf: "test_repo"
+  elf: "COMP_SLIP-OBC"
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -33,7 +33,7 @@ jobs:
           cd ${{env.path}}
           echo $(pwd)
           git pull origin main
-          cd ${{env.path}}/Release   
+          cd ${{env.path}}/Debug   
           arm-none-eabi-objcopy -O binary ${{env.elf}}.elf ${{env.elf}}.bin
           echo Binary file ready
           st-flash write ${{env.elf}}.bin 0x8000000
