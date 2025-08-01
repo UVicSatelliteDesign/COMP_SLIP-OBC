@@ -12,9 +12,9 @@ typedef enum{
 }DataLogType_t;
 
 ///////////////////////////////
-int FLASH_MEMORY_SIZE_SENSORS;  
-int FLASH_MEMORY_SIZE_GPS;      //size in bytes  
-int FLASH_MEMORY_SIZE_BATTERY;  
+int FLASH_MEMORY_SIZE_SENSORS = sizeof(SensorsData);  
+int FLASH_MEMORY_SIZE_GPS = 79;      //size in bytes: 79 characters at 1byte/char
+int FLASH_MEMORY_SIZE_BATTERY = sizeof(BatteryData);  
 /////////////^^^These size variables need declaration/////////////////
 
 
