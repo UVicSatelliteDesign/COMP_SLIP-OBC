@@ -34,7 +34,7 @@ jobs:
           echo $(pwd)
           cd ${{env.path}}
           echo $(pwd)
-          git pull --no-rebase origin main
+          git pull origin main
           cd ${{env.path}}/Debug   
           arm-none-eabi-objcopy -O binary ${{env.elf}}.elf ${{env.elf}}.bin
           echo Binary file ready
