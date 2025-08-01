@@ -9,6 +9,7 @@ on:
 env:
   ##path to STM32 folder
   path: "~/actions-runner/_work/COMP_SLIP-OBC/COMP_SLIP-OBC/project/"
+  venv-path: "~/venv/venv/bin"
   ## name of STM32 folder
   elf: "COMP_SLIP-OBC"
 
@@ -26,6 +27,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run HIL Test in Background
         run: |
+          source $${{env.venv-path}}/activate
           python3 hil_test.py &
       - name: Print modified file
         run: |
