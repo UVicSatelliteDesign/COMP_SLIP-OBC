@@ -14,8 +14,8 @@ typedef uint8_t FIFOsize[128]; // new typedef used for defining FIFO size as men
 typedef enum
 {
 	PING = 0b00000000,
-	NOMINAL = 0b00000001,
-	LOW_POWER = 0b00000010,
+	REQ_NOMINAL = 0b00000001,
+	REQ_LOW_POWER = 0b00000010,
 	TELEMETRY = 0b00000011,
 	CAMERA_1_END = 0b00000100,
 	CAMERA_1_MF = 0b00000101,
