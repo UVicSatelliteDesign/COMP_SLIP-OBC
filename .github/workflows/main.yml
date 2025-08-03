@@ -16,25 +16,24 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
     runs-on: self-hosted
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
+        with:
+          clean: true
+          fetch-depth: 0
+
       - name: Run HIL Test in Background
         run: |
           source ${{env.venv-path}}/activate
           python3 hil_test.py &
+
       - name: Print modified file
         run: |
           echo $(pwd)
           cd ${{env.path}}
           echo $(pwd)
-          git pull origin main
           cd ${{env.path}}/Debug   
           arm-none-eabi-objcopy -O binary ${{env.elf}}.elf ${{env.elf}}.bin
           echo Binary file ready
