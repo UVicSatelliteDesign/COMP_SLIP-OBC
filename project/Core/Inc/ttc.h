@@ -13,7 +13,6 @@ extern TimerHandle_t retransmission_timer; // Timer handle, created in main
  * Task that receives notifications from OBC tasks and handles them; 
  * transmits error, telemetry, and image data packets.
  */
-void ttc_notifications(void *vpParameters);
 
 /**
  * handle_transmit:
@@ -41,8 +40,5 @@ void vRetransmissionTimerCallback( TimerHandle_t xTimer );
  * Task which parses data received from the TTC and starts
  * appropriate actions.
  */
-void receive(void *vpParameters);
-
-void Task_receiveLL(void *vpParamemeters);
 
 #endif // TTC_H

@@ -1,5 +1,6 @@
 #ifndef OBC_H
 #define OBC_H
+#include "obc_interface.h"
 
 #define NOMINAL_MODE 0
 #define LOW_POWER_MODE 1

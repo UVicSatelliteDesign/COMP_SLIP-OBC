@@ -1,7 +1,7 @@
 #ifndef SRC_OBC_INTERFACE_H
 #define SRC_OBC_INTERFACE_H
 
-#include "main.h"
+//#include "main.h"
 #include "fatfs.h"
 #include "camera.h"
 

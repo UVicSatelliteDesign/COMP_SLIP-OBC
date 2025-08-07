@@ -65,9 +65,12 @@ extern "C"
   /* USER CODE BEGIN EFP */
 
   void obc_notifications(void *vpParameters);
-  void ttc_notifications(void *vpParameters);
   void data_task(void *vpParameters);
+  void image_task(void *vpParameters);
   void low_power_task(void *vpParameters);
+
+  void Task_receiveLL(void *vpParameters);
+  void ttc_notifications(void *vpParameters);
   void receive(void *vpParameters);
 
   /* USER CODE END EFP */
