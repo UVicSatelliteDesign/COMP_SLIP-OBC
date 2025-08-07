@@ -1,0 +1,44 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "dev" ]
+  
+env:
+  ##path to STM32 folder
+  path: "~/actions-runner/_work/COMP_SLIP-OBC/COMP_SLIP-OBC/project/"
+  venv-path: "~/venv/venv/bin"
+  ## name of STM32 folder
+  elf: "COMP_SLIP-OBC"
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          fetch-depth: 0
+
+      - name: Run HIL Test in Background
+        run: |
+          source ${{env.venv-path}}/activate
+          python3 hil_test.py &
+
+      - name: Print modified file
+        run: |
+          echo $(pwd)
+          cd ${{env.path}}
+          echo $(pwd)
+          cd ${{env.path}}/Debug   
+          arm-none-eabi-objcopy -O binary ${{env.elf}}.elf ${{env.elf}}.bin
+          echo Binary file ready
+          st-flash write ${{env.elf}}.bin 0x8000000
+          echo Uploaded Code
+          sleep 3
+          st-flash reset
+          

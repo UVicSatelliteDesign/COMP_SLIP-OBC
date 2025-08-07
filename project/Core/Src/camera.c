@@ -298,11 +298,29 @@ int32_t camera_init(Camera_t *camera) {
  * @note Frees the image buffer after saving
  */
 void save_image_to_flash(Camera_t *camera, uint32_t sector) {
-    if (camera->imageBuffer == NULL){
+    if (camera->imageBuffer == NULL) {
         return;
     }
 
-    flash_write_data(FLASH_TYPE_IMAGE, camera->imageBuffer, camera->actualImageSize, sector);
+    // Check if image size exceeds flash sector size
+    if (camera->actualImageSize > FLASH_SECTOR_SIZE) {
+        // TODO: Handle oversized image - split across multiple sectors
+        return;
+    }
+    
+    // Use the sector parameter to determine storage location
+    uint8_t flash_sector_flag;
+    if (sector == FLASH_SECTOR_2) {
+        flash_sector_flag = FLASH_SECTOR_2;
+    } else if (sector == FLASH_SECTOR_3) {
+        flash_sector_flag = FLASH_SECTOR_3;
+    } else {
+        flash_sector_flag = FLASH_SECTOR_CAMERA; // Default to sector 1
+    }
+
+    if (!flash_write(camera->imageBuffer, camera->actualImageSize, flash_sector_flag, 0)) {
+        // TODO: Handle flash write error
+    }
 
     free(camera->imageBuffer);
     camera->imageBuffer = NULL;
