@@ -1,0 +1,61 @@
+name: Gyroscope HIL Test
+
+on:
+  workflow_call:
+    inputs:
+      address:
+        description: I2C address of the gyroscope to emulate (default 0x68)
+        required: false
+        default: 0x68
+        type: string
+      serial_port:
+        description: Serial device to read STM32 logs from
+        required: false
+        default: /dev/ttyACM0
+        type: string
+      duration_s:
+        description: Seconds to run the emulation and test
+        required: false
+        default: 30
+        type: number
+
+jobs:
+  run:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Start pigpio daemon (if available)
+        shell: bash
+        run: |
+          (which systemctl >/dev/null 2>&1 && sudo systemctl start pigpiod) || true
+          (which pigpiod >/dev/null 2>&1 && sudo pigpiod || true) || true
+
+      - name: Launch gyroscope emulator (placeholder)
+        shell: bash
+        run: |
+          # Gyroscope emulator not yet implemented in hil_test.py; using temp mode as stub with address override
+          HIL_ADDR=${{ inputs.address }} HIL_SERIAL=${{ inputs.serial_port }} HIL_DURATION_S=${{ inputs.duration_s }} python3 hil_test.py temp &
+          echo $! > hil_pid.txt
+
+      - name: Flash STM32 firmware
+        shell: bash
+        run: |
+          arm-none-eabi-objcopy -O binary project/Debug/COMP_SLIP-OBC.elf COMP_SLIP-OBC.bin
+          st-flash write COMP_SLIP-OBC.bin 0x8000000
+          sleep 3
+          st-flash reset
+
+      - name: Wait for test window
+        shell: bash
+        run: |
+          sleep ${{ inputs.duration_s }}
+
+      - name: Stop emulator
+        if: always()
+        shell: bash
+        run: |
+          if [ -f hil_pid.txt ]; then kill $(cat hil_pid.txt) || true; fi
+
+
