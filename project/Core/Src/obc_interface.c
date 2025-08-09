@@ -1,15 +1,20 @@
 #include "obc_interface.h"
-#include "stm32h7xx_hal.h"
-#include <math.h>
-#include <string.h>
-#include <stdio.h>
+#include "camera.h"
+#include "main.h"
+#include "flash_interface.h"
+
+// TODO: Move flash addresses to main.h and include each used address
 
 // I2C Addresses (left shift for HAL)
-#define ALTI_ADDR (0x77 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
+#define ALTI_ADDR (0x76 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
 #define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
 #define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
-#define TEMP_ADDR_TTC (0x40 << 1) // 0x40 if ADD0 pin is pulled low, 0x41 if ADD0 is pulled high
-#define TEMP_ADDR_BMS (0x41 << 1) // 0x50 if ADDR pin is pulled low, 0x51 if ADDR is pulled high
+
+#define TEMP_ADDR_TTC_1 (0x4A << 1)
+#define TEMP_ADDR_TTC_2 (0x4B << 1)
+#define TEMP_ADDR_BMS_1 (0x48 << 1)
+#define TEMP_ADDR_BMS_2 (0x49 << 1)
+#define BMS_ADC_ADDR (0x10 << 1)
 
 // Gyroscope register addresses
 #define GYRO_WHO_AM_I (0x0F)
@@ -23,19 +28,26 @@
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
 
-#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0; // alter to correct section, sensor flash save address
 #define FLASH_SAVE_ADDRESS  ((uint32_t)0x081E0000) // Example sector 7 start (adjust based on your chip)
+#define FLASH_SENSOR_ADDRESS FLASH_SECTOR_0 // alter to correct section
 #define FLASH_MAGIC         ((uint32_t)0xDEADBEEF)
 
+extern I2C_HandleTypeDef hi2c2; // I2C handler for camera 1, BMS ADC sensors, BMS and TTC temperature sensors
+extern I2C_HandleTypeDef hi2c4; // I2C handler for camera 2, accelerometer, altimeter, gyroscope
+
+// Battery
 extern ADC_HandleTypeDef hadc_voltage; // ADC handler for voltage
 extern ADC_HandleTypeDef hadc_current; // ADC handler for current
 extern ADC_HandleTypeDef hadc_temperature; // ADC handler for temperature --battery
 
-////////////sensors adc handler definition start
+// Sensors
 extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sensors
-extern ADC_HandleTypeDef PressureSensor; // ADC handler for pressure --sensors
-extern I2C_HandleTypeDef hi2c2; // I2C handler for sensors
-////////////sensors adc handler definition end
+
+// Altimeter calibration constants
+uint16_t alti_calib[6] = {};
+
+SensorsData sensor_backup = {0}; // Data is written to this by pointer when retrieved from flash memory
+
 // SD card variables
 FRESULT res; // FatFS result code
 uint32_t byteswritten; // File write count
@@ -84,12 +96,6 @@ float calculate_power_usage(float voltage, float current) {
     return voltage * current;
 }
 
-float calculate_energy_usage(float power, float dt) {
-    static float total_energy = 0;
-    total_energy += (power * dt) / 3600.0f;
-    return total_energy;
-}
-
 float estimate_battery_life(float state_of_charge, float avg_power_draw) {
     float battery_capacity_Wh = 50.0f;
     float remaining_energy = (state_of_charge / 100.0f) * battery_capacity_Wh;
@@ -102,132 +108,103 @@ BatteryData get_battery_data(float dt) {
     data.current = read_battery_current();
     data.state_of_charge = calculate_state_of_charge(data.current, dt);
     data.power_usage = calculate_power_usage(data.voltage, data.current);
-    data.total_energy_used = calculate_energy_usage(data.power_usage, dt);
     data.estimated_life = estimate_battery_life(data.state_of_charge, data.power_usage);
-    data.magic = FLASH_MAGIC;
     return data;
 }
 
 void save_battery_data_to_flash(BatteryData *data) {
-	HAL_FLASH_Unlock();
-
-	    // 1. Setup flash erase configuration
-	    FLASH_EraseInitTypeDef erase;
-	    uint32_t pageError;
-
-	    erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
-	    erase.Sector = FLASH_SECTOR_7;                   // Make sure this is correct for your chip!
-	    erase.NbSectors = 1;
-	    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
-
-	    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK) {
-	        // Handle erase error
-	        HAL_FLASH_Lock();
-	        return;
-	    }
-
-	    // 2. Write the data in 64-bit chunks
-	    uint64_t *src = (uint64_t *)data;
-	    uint32_t numWords = sizeof(BatteryData) / 8;
-
-	    for (uint32_t i = 0; i < numWords; i++) {
-	        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SAVE_ADDRESS + (i * 8), src[i]) != HAL_OK) {
-	            // Handle write error
-	            HAL_FLASH_Lock();
-	            return;
-	        }
-	    }
-
-	    HAL_FLASH_Lock();
+    if (!flash_write(data, sizeof(BatteryData), FLASH_SECTOR_BATTERY, BATTERY_DATA_OFFSET)) {
+        // TODO: Handle flash write error
+    }
 }
 
 void load_battery_data_from_flash() {
-    BatteryData *flash_data = (BatteryData *)FLASH_SAVE_ADDRESS;
-    if (flash_data->magic == FLASH_MAGIC) {
-        memcpy(&battery_backup, flash_data, sizeof(BatteryData));
-    } else {
+    if (!flash_read(&battery_backup, sizeof(BatteryData), FLASH_SECTOR_BATTERY, BATTERY_DATA_OFFSET)) {
         memset(&battery_backup, 0, sizeof(BatteryData));
     }
 }
 
 //////////////////sensors functions start
-SensorsData sensor_backup = {0}; // Data is written to this by pointer when retrieved from flash memory
-
 
 void init_sensors() {
     HAL_ADC_Start(&TemperatureSensor); 
-    Hal_ADC_Start(&PressureSensor);
 }
 
-void save_sensor_data_to_flash(SensorsData *data){ // write to flash wrapper
-    HAL_FLASH_Unlock();
+void save_sensor_data_to_flash(SensorsData *data) {
+    if (!flash_write(data, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
+        // TODO: Handle flash write error
 
-    // 1. Setup flash erase configuration
-    FLASH_EraseInitTypeDef erase;
-    uint32_t pageError;
-
-    erase.TypeErase = FLASH_TYPEERASE_SECTORS;       // Erase by sector
-    erase.Sector = FLASH_SENSOR_ADDRESS;                   // Make sure this is correct for your chip!
-    erase.NbSectors = 1;
-    erase.VoltageRange = FLASH_VOLTAGE_RANGE_3;      // 2.7V to 3.6V
-
-    if (HAL_FLASHEx_Erase(&erase, &pageError) != HAL_OK) {
-        // Handle erase error
-        HAL_FLASH_Lock();
-        return;
     }
-
-    // 2. Write the data in 64-bit chunks
-    uint64_t *src = (uint64_t *)data;
-    uint32_t numWords = sizeof(SensorsData) / 8;
-
-    for (uint32_t i = 0; i < numWords; i++) {
-        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, FLASH_SENSOR_ADDRESS + (i * 8), src[i]) != HAL_OK) {
-            // Handle write error
-            HAL_FLASH_Lock();
-            return;
-        }
-    }
-
-    HAL_FLASH_Lock();
 }
 
-void load_sensor_data_from_flash(){ // retrieves flash data and uses a pointer to write it to the sensor_backup struct
-    SensorsData *flash_data = (SensorsData *)FLASH_SENSOR_ADDRESS;
-    if (flash_data->magic == FLASH_MAGIC) {
-        memcpy(&sensor_backup, flash_data, sizeof(SensorsData));
-    } else {
+void load_sensor_data_from_flash() {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         memset(&sensor_backup, 0, sizeof(SensorsData));
     }
 }
 
-
-float read_TTC_temperature() {
+//// Temperature sensors
+float read_TTC_temperature_1() {
     uint8_t raw[2] = {0};
     int16_t temp_raw = 0;
 
-    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_TTC, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
-        return 0xFF;
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_TTC_1, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}
+
+float read_TTC_temperature_2() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_TTC_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
     }
 
     temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
     return (float)temp_raw +273.15 ; // Convert to Kelvin
 }   
 
-float read_BMS_temperature() {
+float read_BMS_temperature_1() {
     uint8_t raw[2] = {0};
     int16_t temp_raw = 0;
 
-    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
-        return 0xFF;
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_1, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+
     }
 
     temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
     return (float)temp_raw +273.15 ; // Convert to Kelvin
 }   
 
+float read_BMS_temperature_2() {
+    uint8_t raw[2] = {0};
+    int16_t temp_raw = 0;
 
-float read_temperature(){ // temperature hardware wrapper
+
+    if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
+        return 100000.0f;
+
+    }
+}
+
+void load_sensor_data_from_flash() {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
+        memset(&sensor_backup, 0, sizeof(SensorsData));
+
+
+    }
+
+    temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
+    return (float)temp_raw +273.15 ; // Convert to Kelvin
+}
+
+float read_OBC_temperature(){ // temperature hardware wrapper
     // //dummy value degree celsius
     // return 10;
     HAL_ADC_PollForConversion(&TemperatureSensor, 100);
@@ -236,30 +213,21 @@ float read_temperature(){ // temperature hardware wrapper
 }
 
 
-float read_pressure(){ // pressure hardware wrapper
-    // //dummy value atmospheres
-    // return 20;
-    HAL_ADC_PollForConversion(&PressureSensor, 100);
-    uint32_t raw = HAL_ADC_GetValue(&PressureSensor);
-    return raw;
-}
-
-//writes current sensor values to flash/global struct and returns struct with final values
 SensorsData read_sensors(){ 
+
     SensorsData data; // initialise empty struct and/or write over flash
-    data.temperature = read_temperature(); // store temperature and pressure to struct
-    data.ttc_temperature = read_TTC_temperature(); // Temp sensor on TTC board
-    data.bms_temperature = read_BMS_temperature(); // Temp sensor on BMS board
-    data.pressure = read_pressure();
+    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    data.temperature_ttc = read_TTC_temperature_1();
+    data.temperature_bms = read_BMS_temperature_1();
+
     data.gyroscope_axis_1 = read_gyroscope_x1();
     data.gyroscope_axis_2 = read_gyroscope_x2();
     data.gyroscope_axis_3 = read_gyroscope_x3();
     data.acceleration_axis_1 = read_acceleration_x1();
     data.acceleration_axis_2 = read_acceleration_x2();
     data.acceleration_axis_3 = read_acceleration_x3();
-    data.magic = FLASH_MAGIC;
-    save_sensor_data_to_flash(&data);
-    return data; // return filled struct
+    data.altitude = altimeter_read();
+    return data; 
 }
 
 // Gyroscope (I2C)
@@ -331,21 +299,141 @@ float read_acceleration_x3(){
     return 43;
 }
 
-// Altimeter (I2C)
-//
-void altimeter_reset(){
-	uint8_t command = 0b00011110; // Reset command for altimeter
-	HAL_I2C_Master_Transmit(&hi2cX /*TODO: replace with relevant I2C instance*/, ALTI_ADDR, command, 1, I2C_Timeout);
+//// Altimeter (I2C)
+// To be called by HL
+uint8_t altimeter_init(){
+	if (altimeter_read_calibration() != 0){
+		return 1;
+	}
+	return 0;
 }
 
+float altimeter_read(){
+	uint32_t alti_adc_pres = altimeter_read_pressure();
+	uint32_t alti_adc_temp = altimeter_read_temperature();
+	// Convert ADC value to altitude (magic numbers come from datasheet)
+	int32_t dT = alti_adc_temp - alti_calib[4]*256;
+	int32_t temperature = 2000 + dT*alti_calib[5]/8388608;
+	int64_t offset = alti_calib[1]*65536 + alti_calib[3]*dT/128;
+	int64_t sens = alti_calib[0]*32768 + alti_calib[2]*dT/256;
+	int32_t pressure = (alti_adc_pres*sens/2097152 - offset)/32768;
+	// TODO: implement second order conversion for improved accuracy
+	// Calculate altitude from pressure (and temperature?)
+	// TODO: make this formula more accurate
+	float altitude = 44330*(1-pow(pressure/(float)101320,1/5.255));
+	return altitude;
+}
 
+uint8_t altimeter_reset(){
+	uint8_t command = 0b00011110; // Reset command for altimeter
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	return 0;
+}
+
+// To be used by LL
+uint32_t altimeter_read_pressure(){
+	uint8_t adc_pres[3] = {};
+	// Read pressure ADC value
+	uint8_t command = 0b01001000; // Initiate pressure conversion command
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	command = 0b00000000; // Read sequence
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_pres, 3, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	// TODO: check if byte order is correct
+	return (adc_pres[0] | (adc_pres[1] << 8) | (adc_pres[2] << 16));
+}
+
+uint32_t altimeter_read_temperature(){
+	uint8_t adc_temp[3] = {};
+	// Read temperature ADC value
+	uint8_t command = 0b01011000; // Initiate temperature conversion command
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFF;
+	}
+	command = 0b00000000; // Read sequence
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_temp, 3, I2C_Timeout) != HAL_OK){
+		return 0xFFFF;
+	}
+	// TODO: check if byte order is correct
+	return (adc_temp[0] | (adc_temp[1] << 8) | (adc_temp[2] << 16));
+}
+
+uint8_t altimeter_read_calibration(){
+	uint8_t temp[2] = {};
+	uint8_t command = 0b10100010; // Read coefficient 1
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[0] = temp[0] | (temp[1] << 8);
+	command = 0b10100100; // Read coefficient 2
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[1] = temp[0] | (temp[1] << 8);
+	command = 0b10100110; // Read coefficient 3
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[2] = temp[0] | (temp[1] << 8);
+	command = 0b10101000; // Read coefficient 4
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[3] = temp[0] | (temp[1] << 8);
+	command = 0b10101010; // Read coefficient 5
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[4] = temp[0] | (temp[1] << 8);
+	command = 0b10101100; // Read coefficient 6
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// TODO: check if byte order is correct
+	alti_calib[5] = temp[0] | (temp[1] << 8);
+	return 0;
+}
 
 // Temperature (I2C)
 //
 
 /////////////sensors functions end
 
-
+//// SD card functions
 // Mount SD card
 FRESULT mount_SD(){
 	res = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
@@ -382,7 +470,7 @@ FRESULT setup_SD(){
 }
 
 // Store telemetry/errors/etc on SD card
-FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
+FRESULT store_data(uint8_t* data, uint8_t data_size, uint8_t type){
 	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
 	if (res != FR_OK){
         f_close(&SDFile);
@@ -410,7 +498,7 @@ FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
 		// Error handling
 		return res;
 	}
-	res = f_write(&SDFile, data, strlen((char *)data), (void *)&byteswritten);
+	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
 		// Error handling
@@ -427,7 +515,7 @@ FRESULT store_data(uint8_t data[MAX_DATA_SIZE], uint8_t type){
 }
 
 // Store images on SD card
-FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
+FRESULT store_image(uint8_t* data, uint8_t data_size){
 	uint8_t size = strlen("UVR-SLIP/Images/image.jpeg") + 10;
 	char path[size];
 	snprintf(path, size, "UVR-SLIP/Images/image%04d.jpeg", image_count);
@@ -437,7 +525,7 @@ FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
 		// Error handling
 		return res;
 	}
-	res = f_write(&SDFile, data, MAX_IMAGE_BUFFER_SIZE, (void *)&byteswritten);
+	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
 		// Error handling
@@ -452,10 +540,3 @@ FRESULT store_image(uint8_t data[MAX_IMAGE_BUFFER_SIZE]){
 FRESULT unmount_SD(){
 	return f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
 }
-
-
-
-
-
-
-
