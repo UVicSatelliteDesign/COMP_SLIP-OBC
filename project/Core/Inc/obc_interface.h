@@ -76,6 +76,7 @@ BatteryData get_battery_data(float dt);
 void save_battery_data_to_flash(BatteryData *data);
 void load_battery_data_from_flash();
 
+
 //// Temperature sensors
 float read_OBC_temperature(); // poll temperature sensor
 float read_TTC_temperature_1();
