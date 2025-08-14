@@ -1,0 +1,58 @@
+name: Sensors Suite
+
+on:
+  workflow_dispatch:
+    inputs:
+      which:
+        description: Which HIL test to run (all, temp, altimeter, gyro, accel)
+        required: false
+        default: all
+        type: choice
+        options:
+          - all
+          - temp
+          - altimeter
+          - gyro
+          - accel
+
+concurrency:
+  group: hil-tests
+  cancel-in-progress: false
+
+jobs:
+  temp:
+    if: ${{ github.event.inputs.which == 'temp' || github.event.inputs.which == 'all' || github.event.inputs.which == '' }}
+    uses: ./.github/workflows/sensor-temp.yml
+    with:
+      address: '0x4A'
+      serial_port: '/dev/ttyACM0'
+      duration_s: '30'
+
+  altimeter:
+    if: ${{ github.event.inputs.which == 'altimeter' || github.event.inputs.which == 'all' || github.event.inputs.which == '' }}
+    needs: [temp]
+    uses: ./.github/workflows/sensor-altimeter.yml
+    with:
+      address: '0x76'
+      serial_port: '/dev/ttyACM0'
+      duration_s: '30'
+
+  gyro:
+    if: ${{ github.event.inputs.which == 'gyro' || github.event.inputs.which == 'all' || github.event.inputs.which == '' }}
+    needs: [altimeter]
+    uses: ./.github/workflows/sensor-gyro.yml
+    with:
+      address: '0x68'
+      serial_port: '/dev/ttyACM0'
+      duration_s: '30'
+
+  accel:
+    if: ${{ github.event.inputs.which == 'accel' || github.event.inputs.which == 'all' || github.event.inputs.which == '' }}
+    needs: [gyro]
+    uses: ./.github/workflows/sensor-accel.yml
+    with:
+      address: '0x1E'
+      serial_port: '/dev/ttyACM0'
+      duration_s: '30'
+
+
