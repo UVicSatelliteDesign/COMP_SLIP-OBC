@@ -9,12 +9,22 @@
 #define ALTI_ADDR (0x76 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
 #define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
 #define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
+
 #define TEMP_ADDR_TTC_1 (0x4A << 1)
 #define TEMP_ADDR_TTC_2 (0x4B << 1)
 #define TEMP_ADDR_BMS_1 (0x48 << 1)
 #define TEMP_ADDR_BMS_2 (0x49 << 1)
 #define BMS_ADC_ADDR (0x10 << 1)
 
+// Gyroscope register addresses
+#define GYRO_WHO_AM_I (0x0F)
+#define GYRO_EXPECTED_ID (0xD7)
+#define GYRO_CTRL1_REG (0x20)
+#define GYRO_CTRL4_REG (0x23)
+#define GYRO_OUT_X_L (0x28)
+#define GYRO_AUTO_INCREMENT (0x80)
+
+#define GYRO_SENSITIVITY_245DPS 8.75f
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
 
@@ -96,7 +106,6 @@ BatteryData get_battery_data(float dt) {
     BatteryData data;
     data.voltage = read_battery_voltage();
     data.current = read_battery_current();
-    data.temperature = read_battery_temperature();
     data.state_of_charge = calculate_state_of_charge(data.current, dt);
     data.power_usage = calculate_power_usage(data.voltage, data.current);
     data.estimated_life = estimate_battery_life(data.state_of_charge, data.power_usage);
@@ -163,8 +172,10 @@ float read_BMS_temperature_1() {
     uint8_t raw[2] = {0};
     int16_t temp_raw = 0;
 
+
     if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_1, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
         return 100000.0f;
+
     }
 
     temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
@@ -175,8 +186,19 @@ float read_BMS_temperature_2() {
     uint8_t raw[2] = {0};
     int16_t temp_raw = 0;
 
+
     if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
         return 100000.0f;
+
+    }
+}
+
+void load_sensor_data_from_flash() {
+    if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
+        memset(&sensor_backup, 0, sizeof(SensorsData));
+
+
+
     }
 
     temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
@@ -192,14 +214,60 @@ float read_OBC_temperature(){ // temperature hardware wrapper
 }
 
 // Gyroscope (I2C)
-float read_gyroscope_x1(){
-    return 31;
+float read_gyroscope_x1() {
+    // === Gyro Init ===
+    uint8_t check = 0;
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_WHO_AM_I, I2C_MEMADD_SIZE_8BIT, &check, 1, I2C_Timeout);
+    if (check != GYRO_EXPECTED_ID) return -1000.0f;
+
+    uint8_t ctrl1 = 0x0F;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL1_REG, I2C_MEMADD_SIZE_8BIT, &ctrl1, 1, I2C_Timeout);
+
+    uint8_t ctrl4 = 0x00;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL4_REG, I2C_MEMADD_SIZE_8BIT, &ctrl4, 1, I2C_Timeout);
+
+    // === Read data ===
+    uint8_t raw[6];
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_OUT_X_L | GYRO_AUTO_INCREMENT, I2C_MEMADD_SIZE_8BIT, raw, 6, I2C_Timeout);
+    int16_t x = (int16_t)(raw[1] << 8 | raw[0]);
+
+    return x * GYRO_SENSITIVITY_245DPS / 1000.0f;
 }
-float read_gyroscope_x2(){
-    return 32;
+
+float read_gyroscope_x2() {
+    uint8_t check = 0;
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_WHO_AM_I, I2C_MEMADD_SIZE_8BIT, &check, 1, I2C_Timeout);
+    if (check != GYRO_EXPECTED_ID) return -1000.0f;
+
+    uint8_t ctrl1 = 0x0F;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL1_REG, I2C_MEMADD_SIZE_8BIT, &ctrl1, 1, I2C_Timeout);
+
+    uint8_t ctrl4 = 0x00;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL4_REG, I2C_MEMADD_SIZE_8BIT, &ctrl4, 1, I2C_Timeout);
+
+    uint8_t raw[6];
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_OUT_X_L | GYRO_AUTO_INCREMENT, I2C_MEMADD_SIZE_8BIT, raw, 6, I2C_Timeout);
+    int16_t y = (int16_t)(raw[3] << 8 | raw[2]);
+
+    return y * GYRO_SENSITIVITY_245DPS / 1000.0f;
 }
-float read_gyroscope_x3(){
-    return 33;
+
+float read_gyroscope_x3() {
+    uint8_t check = 0;
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_WHO_AM_I, I2C_MEMADD_SIZE_8BIT, &check, 1, I2C_Timeout);
+    if (check != GYRO_EXPECTED_ID) return -1000.0f;
+
+    uint8_t ctrl1 = 0x0F;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL1_REG, I2C_MEMADD_SIZE_8BIT, &ctrl1, 1, I2C_Timeout);
+
+    uint8_t ctrl4 = 0x00;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL4_REG, I2C_MEMADD_SIZE_8BIT, &ctrl4, 1, I2C_Timeout);
+
+    uint8_t raw[6];
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_OUT_X_L | GYRO_AUTO_INCREMENT, I2C_MEMADD_SIZE_8BIT, raw, 6, I2C_Timeout);
+    int16_t z = (int16_t)(raw[5] << 8 | raw[4]);
+
+    return z * GYRO_SENSITIVITY_245DPS / 1000.0f;
 }
 
 //// Accelerometer (I2C)
