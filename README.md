@@ -1,87 +1,93 @@
-🛰️ Overview
+# 🛰️ Satellite Firmware — University of Victoria Satellite Design
 
-The Satellite OBC firmware implements high-level and low-level tasks for controlling the payload, managing power, and ensuring reliable communication with the ground. It is written in C for STM32 microcontrollers and runs under FreeRTOS.
+## 📖 Overview
+This repository contains the **On-Board Computer (OBC) firmware** for the UVic Satellite Design project. The OBC runs on an STM32 microcontroller under **FreeRTOS** and is responsible for managing payload operations, sensors, cameras, power systems, and communication with the TTC (Telemetry, Tracking, and Command).
 
-The OBC integrates sensors, cameras, GPS, flash memory, and battery management to support scientific payload operations and telemetry collection.
+The firmware is designed to be **modular, fault-tolerant, and power-aware**, enabling autonomous satellite operation across multiple mission modes (Idle, Nominal, Low Power).
 
-🔧 Core Responsibilities
+---
 
-Task-based Operation (FreeRTOS)
+## 🔧 Core Responsibilities
+- **Task Scheduling (FreeRTOS)**  
+  - `obc_notifications`: handles mode changes, camera requests, GPS polling.  
+  - `data_task`: collects telemetry periodically and stores to flash.  
+  - `low_power_task`: monitors charge/altitude → triggers Low Power Mode.  
+  - `image_task`: captures snapshots from dual cameras every 30s.  
 
-obc_notifications: handles mode changes, GPS requests, camera triggers.
+- **Battery Management System (BMS)**  
+  - Monitors voltage, current, temperature.  
+  - Computes SoC, power draw, cumulative energy, remaining runtime.  
+  - Saves persistent `BatteryData` struct to flash with integrity checks.  
 
-data_task: logs telemetry data periodically.
+- **Sensor Subsystem**  
+  - Temperature, pressure, gyroscope, and accelerometer polling.  
+  - Hardware abstraction layer for upper-level OBC tasks.  
 
-low_power_task: monitors charge and altitude, enabling energy conservation.
+- **GPS Integration**  
+  - UART interface with MAX-M10S.  
+  - Collects `$GPRMC` sentences (position, velocity, time).  
+  - Compact 84-bit storage format for flash memory.  
 
-image_task: captures dual-camera snapshots every 30 seconds.
+- **Camera Subsystem (OV5640)**  
+  - Dual-camera system (I²C + DCMI interface).  
+  - Configurable resolution, pixel format, brightness, effects.  
+  - JPEG compression and buffer management.  
+  - Snapshot pipeline → buffer → flash/SD.  
 
-Battery Management System (BMS)
+- **Flash Interface**  
+  - Abstracted read, write, and erase functions.  
+  - Used by BMS, telemetry logger, and camera.  
 
-Tracks voltage, current, temperature.
+- **Telemetry, Tracking & Command (TTC)**  
+  - Notification-driven logic for transmitting/receiving data.  
+  - Implements ACK/NACK with retransmission timer.  
+  - Handles transitions to “Lost” state and recovery via Ping-ACK.  
 
-Computes derived values: state-of-charge (SoC), power usage, cumulative energy, remaining life.
+---
 
-Stores values persistently to flash using BatteryData struct.
-
-Sensor Integration
-
-Polls temperature, pressure (MS561101BA03-50), gyroscope, accelerometer (KX134-1211).
-
-Validates data with magic numbers in flash.
-
-GPS Subsystem
-
-Interfaced via UART (MAX-M10S).
-
-Collects $GPRMC sentences with position, course, and time.
-
-Provides 84-bit compressed representation for storage.
-
-Camera Subsystem
-
-Dual OV5640 cameras with configurable resolution, pixel format, brightness, and light mode.
-
-Image capture pipeline:
-
-Configure with I²C.
-
-Capture snapshot into shared buffer.
-
-Validate size via JPEG markers.
-
-Store in external memory.
-
-Flash Interface
-
-General-purpose API for write, read, and erase across sectors 1–7.
-
-Used by BMS, telemetry, and image modules.
-
-Telemetry, Tracking & Command (TTC)
-
-Implements task notifications.
-
-Supports ACK/NACK retransmission timer.
-
-Handles communication state transitions (Nominal, Idle, Lost).
-
-📑 System Architecture
-
-📂 Key Files
-satellite/
+## 🗂️ File Structure
 ├── Core/Inc/
-│   ├── obc.h
-│   ├── camera.h
-│   ├── obc_interface.h
-│   ├── flash_interface.h
-│   ├── ttc_interface.h
-│   └── main.h
+│ ├── obc.h # OBC task definitions
+│ ├── camera.h # Camera subsystem
+│ ├── obc_interface.h # Sensor interface
+│ ├── flash_interface.h # Flash read/write/erase
+│ ├── ttc_interface.h # TTC communication
+│ └── main.h # Notifications & system defines
 ├── Core/Src/
-│   ├── obc.c
-│   ├── camera.c
-│   ├── obc_interface.c
-│   ├── flash_interface.c
-│   ├── ttc_interface.c
-│   └── main.c
-└── drivers/
+│ ├── obc.c
+│ ├── camera.c
+│ ├── obc_interface.c
+│ ├── flash_interface.c
+│ ├── ttc_interface.c
+│ └── main.c # FreeRTOS task initialization
+
+
+---
+
+## 📑 System Architecture
+Below are representative diagrams from the documentation:
+
+### OBC Task Flow
+![OBC Task Flow](images/page2_img1.png)
+
+### Battery Management Data Cycle
+![Battery Management Flow](images/page9_img1.png)
+
+### Camera Interface
+![Camera Subsystem](images/page37_img1.png)
+
+---
+
+## ⚙️ Features
+- **Modes:** Idle, Nominal, Low Power.  
+- **Persistent Storage:** Flash + SD card integration.  
+- **Robust Error Handling:** For GPS, camera, memory, and comm failures.  
+- **Power Efficiency:** Automatic switching to Low Power mode when thresholds reached.  
+- **Extendability:** Modular design for adding new payloads or peripherals.  
+
+---
+
+## 🚀 Next Steps
+- Finalize flash sector addressing for mission hardware.  
+- Integrate with full TTC link (CC1201 transceiver).  
+- Expand hardware-in-loop testing coverage (GPIO + peripherals).  
