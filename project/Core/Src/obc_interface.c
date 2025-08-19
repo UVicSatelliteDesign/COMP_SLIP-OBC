@@ -9,12 +9,22 @@
 #define ALTI_ADDR (0x76 << 1) // 0x77 if CSB pin is pulled low, 0x76 if CSB is pulled high
 #define ACCEL_ADDR (0x1E << 1) // 0x1E if ADDR pin is pulled low, 0x1F if ADDR is pulled high
 #define GYRO_ADDR (0x68 << 1) // 0x68 if SDO pin is pulled low, 0x69 if SDO is pulled high
+
 #define TEMP_ADDR_TTC_1 (0x4A << 1)
 #define TEMP_ADDR_TTC_2 (0x4B << 1)
 #define TEMP_ADDR_BMS_1 (0x48 << 1)
 #define TEMP_ADDR_BMS_2 (0x49 << 1)
 #define BMS_ADC_ADDR (0x10 << 1)
 
+// Gyroscope register addresses
+#define GYRO_WHO_AM_I (0x0F)
+#define GYRO_EXPECTED_ID (0xD7)
+#define GYRO_CTRL1_REG (0x20)
+#define GYRO_CTRL4_REG (0x23)
+#define GYRO_OUT_X_L (0x28)
+#define GYRO_AUTO_INCREMENT (0x80)
+
+#define GYRO_SENSITIVITY_245DPS 8.75f
 // I2C transmit timeout (ms)
 #define I2C_Timeout 1000
 
@@ -96,7 +106,6 @@ BatteryData get_battery_data(float dt) {
     BatteryData data;
     data.voltage = read_battery_voltage();
     data.current = read_battery_current();
-    data.temperature = read_battery_temperature();
     data.state_of_charge = calculate_state_of_charge(data.current, dt);
     data.power_usage = calculate_power_usage(data.voltage, data.current);
     data.estimated_life = estimate_battery_life(data.state_of_charge, data.power_usage);
@@ -163,8 +172,10 @@ float read_BMS_temperature_1() {
     uint8_t raw[2] = {0};
     int16_t temp_raw = 0;
 
+
     if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_1, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
         return 100000.0f;
+
     }
 
     temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
@@ -175,6 +186,7 @@ float read_BMS_temperature_2() {
     uint8_t raw[2] = {0};
     int16_t temp_raw = 0;
 
+
     if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
         return 100000.0f;
 
@@ -184,6 +196,8 @@ float read_BMS_temperature_2() {
 void load_sensor_data_from_flash() {
     if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         memset(&sensor_backup, 0, sizeof(SensorsData));
+
+
 
     }
 
@@ -199,52 +213,197 @@ float read_OBC_temperature(){ // temperature hardware wrapper
     return raw;
 }
 
-
-SensorsData read_sensors(){ 
-
-    SensorsData data; // initialise empty struct and/or write over flash
-    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
-    data.temperature_ttc = read_TTC_temperature_1();
-    data.temperature_bms = read_BMS_temperature_1();
-
-    data.gyroscope_axis_1 = read_gyroscope_x1();
-    data.gyroscope_axis_2 = read_gyroscope_x2();
-    data.gyroscope_axis_3 = read_gyroscope_x3();
-    data.acceleration_axis_1 = read_acceleration_x1();
-    data.acceleration_axis_2 = read_acceleration_x2();
-    data.acceleration_axis_3 = read_acceleration_x3();
-    data.altitude = altimeter_read();
-    return data; 
-}
-
 // Gyroscope (I2C)
-float read_gyroscope_x1(){
-    return 31;
-}
-float read_gyroscope_x2(){
-    return 32;
-}
-float read_gyroscope_x3(){
-    return 33;
+float read_gyroscope_x1() {
+    // === Gyro Init ===
+    uint8_t check = 0;
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_WHO_AM_I, I2C_MEMADD_SIZE_8BIT, &check, 1, I2C_Timeout);
+    if (check != GYRO_EXPECTED_ID) return -1000.0f;
+
+    uint8_t ctrl1 = 0x0F;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL1_REG, I2C_MEMADD_SIZE_8BIT, &ctrl1, 1, I2C_Timeout);
+
+    uint8_t ctrl4 = 0x00;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL4_REG, I2C_MEMADD_SIZE_8BIT, &ctrl4, 1, I2C_Timeout);
+
+    // === Read data ===
+    uint8_t raw[6];
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_OUT_X_L | GYRO_AUTO_INCREMENT, I2C_MEMADD_SIZE_8BIT, raw, 6, I2C_Timeout);
+    int16_t x = (int16_t)(raw[1] << 8 | raw[0]);
+
+    return x * GYRO_SENSITIVITY_245DPS / 1000.0f;
 }
 
-// Accelerometer (I2C)
-float read_acceleration_x1(){
-    return 41;
+float read_gyroscope_x2() {
+    uint8_t check = 0;
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_WHO_AM_I, I2C_MEMADD_SIZE_8BIT, &check, 1, I2C_Timeout);
+    if (check != GYRO_EXPECTED_ID) return -1000.0f;
+
+    uint8_t ctrl1 = 0x0F;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL1_REG, I2C_MEMADD_SIZE_8BIT, &ctrl1, 1, I2C_Timeout);
+
+    uint8_t ctrl4 = 0x00;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL4_REG, I2C_MEMADD_SIZE_8BIT, &ctrl4, 1, I2C_Timeout);
+
+    uint8_t raw[6];
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_OUT_X_L | GYRO_AUTO_INCREMENT, I2C_MEMADD_SIZE_8BIT, raw, 6, I2C_Timeout);
+    int16_t y = (int16_t)(raw[3] << 8 | raw[2]);
+
+    return y * GYRO_SENSITIVITY_245DPS / 1000.0f;
 }
-float read_acceleration_x2(){
-    return 42;
+
+float read_gyroscope_x3() {
+    uint8_t check = 0;
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_WHO_AM_I, I2C_MEMADD_SIZE_8BIT, &check, 1, I2C_Timeout);
+    if (check != GYRO_EXPECTED_ID) return -1000.0f;
+
+    uint8_t ctrl1 = 0x0F;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL1_REG, I2C_MEMADD_SIZE_8BIT, &ctrl1, 1, I2C_Timeout);
+
+    uint8_t ctrl4 = 0x00;
+    HAL_I2C_Mem_Write(&hi2c2, GYRO_ADDR, GYRO_CTRL4_REG, I2C_MEMADD_SIZE_8BIT, &ctrl4, 1, I2C_Timeout);
+
+    uint8_t raw[6];
+    HAL_I2C_Mem_Read(&hi2c2, GYRO_ADDR, GYRO_OUT_X_L | GYRO_AUTO_INCREMENT, I2C_MEMADD_SIZE_8BIT, raw, 6, I2C_Timeout);
+    int16_t z = (int16_t)(raw[5] << 8 | raw[4]);
+
+    return z * GYRO_SENSITIVITY_245DPS / 1000.0f;
 }
-float read_acceleration_x3(){
-    return 43;
+
+//// Accelerometer (I2C)
+// To be called by HL
+uint8_t accelerometer_init(){
+	uint8_t cntl1_addr = (0xB1 << 1);
+	uint8_t cntl1 = 0;
+	// Read CNTL1 register
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &cntl1, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// Set PC1 to 0 in CNTL1 to allow writing to other settings (bit 7)
+	// Set GSEL<1:0> to 11 for +-64g range (bits 3 and 4)
+	uint8_t command = 0b00011000 | cntl1; // Data to be written to register (OR with current to not overwrite reserved bits)
+	if (HAL_I2C_Mem_Write(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	return 0;
+	// Read CNTL1 register
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &cntl1, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	// Set PC1 to 1 in CNTL1 to enable accelerometer (bit 7)
+	command = 0b10000000 | cntl1; // Data to be written to register (OR with current to not overwrite reserved bits)
+	if (HAL_I2C_Mem_Write(&hi2c4, ACCEL_ADDR, cntl1_addr, I2C_MEMADD_SIZE_8BIT, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	return 0;
+}
+
+float read_acceleration_x(){
+	uint8_t x_LSB_addr = (0x08 << 1);
+	uint8_t x_MSB_addr = (0x09 << 1);
+	uint8_t x_LSB = 0;
+	uint8_t x_MSB = 0;
+	// Read x acceleration registers (LSB and MSB)
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, x_LSB_addr, I2C_MEMADD_SIZE_8BIT, &x_LSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, x_MSB_addr, I2C_MEMADD_SIZE_8BIT, &x_MSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	// Combine LSB and MSB
+	int16_t x = (x_MSB << 8) | x_LSB;
+	// Return value in g's
+    return x/32768.0*64;
+}
+
+float read_acceleration_y(){
+	uint8_t y_LSB_addr = (0x0A << 1);
+	uint8_t y_MSB_addr = (0x0B << 1);
+	uint8_t y_LSB = 0;
+	uint8_t y_MSB = 0;
+	// Read y acceleration registers (LSB and MSB)
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, y_LSB_addr, I2C_MEMADD_SIZE_8BIT, &y_LSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, y_MSB_addr, I2C_MEMADD_SIZE_8BIT, &y_MSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	// Combine LSB and MSB
+	int16_t y = (y_MSB << 8) | y_LSB;
+	// Return value in g's
+	return y/32768.0*64;
+}
+
+float read_acceleration_z(){
+	uint8_t z_LSB_addr = (0x0C << 1);
+	uint8_t z_MSB_addr = (0x0D << 1);
+	uint8_t z_LSB = 0;
+	uint8_t z_MSB = 0;
+	// Read z acceleration registers (LSB and MSB)
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, z_LSB_addr, I2C_MEMADD_SIZE_8BIT, &z_LSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	if (HAL_I2C_Mem_Read(&hi2c4, ACCEL_ADDR, z_MSB_addr, I2C_MEMADD_SIZE_8BIT, &z_MSB, 1, I2C_Timeout) != HAL_OK){
+		return 0xFFFFFFFF;
+	}
+	// Combine LSB and MSB
+	int16_t z = (z_MSB << 8) | z_LSB;
+	// Return value in g's
+	return z/32768.0*64;
 }
 
 //// Altimeter (I2C)
 // To be called by HL
 uint8_t altimeter_init(){
-	if (altimeter_read_calibration() != 0){
+	uint8_t temp[2] = {};
+	uint8_t command = 0b10100010; // Read coefficient 1
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
 		return 1;
 	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	alti_calib[0] = temp[1] | (temp[0] << 8);
+	command = 0b10100100; // Read coefficient 2
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	alti_calib[1] = temp[1] | (temp[0] << 8);
+	command = 0b10100110; // Read coefficient 3
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	alti_calib[2] = temp[1] | (temp[0] << 8);
+	command = 0b10101000; // Read coefficient 4
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	alti_calib[3] = temp[1] | (temp[0] << 8);
+	command = 0b10101010; // Read coefficient 5
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	alti_calib[4] = temp[1] | (temp[0] << 8);
+	command = 0b10101100; // Read coefficient 6
+	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
+		return 1;
+	}
+	alti_calib[5] = temp[1] | (temp[0] << 8);
 	return 0;
 }
 
@@ -253,13 +412,11 @@ float altimeter_read(){
 	uint32_t alti_adc_temp = altimeter_read_temperature();
 	// Convert ADC value to altitude (magic numbers come from datasheet)
 	int32_t dT = alti_adc_temp - alti_calib[4]*256;
-	int32_t temperature = 2000 + dT*alti_calib[5]/8388608;
+	//int32_t temperature = 2000 + dT*alti_calib[5]/8388608;
 	int64_t offset = alti_calib[1]*65536 + alti_calib[3]*dT/128;
 	int64_t sens = alti_calib[0]*32768 + alti_calib[2]*dT/256;
 	int32_t pressure = (alti_adc_pres*sens/2097152 - offset)/32768;
-	// TODO: implement second order conversion for improved accuracy
-	// Calculate altitude from pressure (and temperature?)
-	// TODO: make this formula more accurate
+	// Calculate altitude from pressure
 	float altitude = 44330*(1-pow(pressure/(float)101320,1/5.255));
 	return altitude;
 }
@@ -287,8 +444,7 @@ uint32_t altimeter_read_pressure(){
 	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_pres, 3, I2C_Timeout) != HAL_OK){
 		return 0xFFFF;
 	}
-	// TODO: check if byte order is correct
-	return (adc_pres[0] | (adc_pres[1] << 8) | (adc_pres[2] << 16));
+	return (adc_pres[2] | (adc_pres[1] << 8) | (adc_pres[0] << 16));
 }
 
 uint32_t altimeter_read_temperature(){
@@ -305,71 +461,25 @@ uint32_t altimeter_read_temperature(){
 	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, adc_temp, 3, I2C_Timeout) != HAL_OK){
 		return 0xFFFF;
 	}
-	// TODO: check if byte order is correct
-	return (adc_temp[0] | (adc_temp[1] << 8) | (adc_temp[2] << 16));
+	return (adc_temp[2] | (adc_temp[1] << 8) | (adc_temp[0] << 16));
 }
 
-uint8_t altimeter_read_calibration(){
-	uint8_t temp[2] = {};
-	uint8_t command = 0b10100010; // Read coefficient 1
-	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	// TODO: check if byte order is correct
-	alti_calib[0] = temp[0] | (temp[1] << 8);
-	command = 0b10100100; // Read coefficient 2
-	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	// TODO: check if byte order is correct
-	alti_calib[1] = temp[0] | (temp[1] << 8);
-	command = 0b10100110; // Read coefficient 3
-	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	// TODO: check if byte order is correct
-	alti_calib[2] = temp[0] | (temp[1] << 8);
-	command = 0b10101000; // Read coefficient 4
-	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	// TODO: check if byte order is correct
-	alti_calib[3] = temp[0] | (temp[1] << 8);
-	command = 0b10101010; // Read coefficient 5
-	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	// TODO: check if byte order is correct
-	alti_calib[4] = temp[0] | (temp[1] << 8);
-	command = 0b10101100; // Read coefficient 6
-	if (HAL_I2C_Master_Transmit(&hi2c4, ALTI_ADDR, &command, 1, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	if (HAL_I2C_Master_Receive(&hi2c4, ALTI_ADDR, temp, 2, I2C_Timeout) != HAL_OK){
-		return 1;
-	}
-	// TODO: check if byte order is correct
-	alti_calib[5] = temp[0] | (temp[1] << 8);
-	return 0;
+//writes current sensor values to flash/global struct and returns struct with final values
+SensorsData read_sensors(){
+    SensorsData data; // initialise empty struct and/or write over flash
+    data.temperature_obc = read_OBC_temperature(); // store temperature and pressure to struct
+    data.temperature_ttc = read_TTC_temperature_1();
+    data.temperature_bms = read_BMS_temperature_1();
+    data.gyroscope_axis_1 = read_gyroscope_x1();
+    data.gyroscope_axis_2 = read_gyroscope_x2();
+    data.gyroscope_axis_3 = read_gyroscope_x3();
+    data.acceleration_x = read_acceleration_x();
+    data.acceleration_y = read_acceleration_y();
+    data.acceleration_z = read_acceleration_z();
+    data.altitude = altimeter_read();
+    save_sensor_data_to_flash(&data);
+    return data; // return filled struct
 }
-
-// Temperature (I2C)
-//
 
 /////////////sensors functions end
 
@@ -410,7 +520,7 @@ FRESULT setup_SD(){
 }
 
 // Store telemetry/errors/etc on SD card
-FRESULT store_data(uint8_t* data, uint8_t data_size, uint8_t type){
+FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
 	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
 	if (res != FR_OK){
         f_close(&SDFile);

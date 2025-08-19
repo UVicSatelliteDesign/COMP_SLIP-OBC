@@ -204,14 +204,14 @@ void receive(void *vpParameters)
 		generatepacket(PING, NULL, 0);
 		handle_transmit(1);
 		break;
-	case NOMINAL:
+	case REQ_NOMINAL:
 		xTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
 		uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		// Acknowledge nominal command
 		generatepacket(ACK_REC_STATUS, seq_num, 2);
 		handle_transmit(1);
 		break;
-	case LOW_POWER:
+	case REQ_LOW_POWER:
 		xTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
 		uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		// Acknowledge low power command
@@ -236,6 +236,8 @@ void receive(void *vpParameters)
 		uint16_t seq_num = (data_buffer[8] << 8) | (data_buffer[9]);
 		// set as acknowledged
 		last_received_seq_num = acked_seq_num;
+		// Stop timer because we're going to send another packet right away
+		xTimerStop(retransmission_timer, 0);
 		// Send next chunk
 		uint16_t image_data_len;
 		flash_read(&image_data_len, sizeof(uint16_t), FLASH_SECTOR_GPS, IMAGE_DATA_LEN_OFFSET);
