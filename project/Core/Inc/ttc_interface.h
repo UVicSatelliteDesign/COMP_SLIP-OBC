@@ -8,6 +8,7 @@
 #include <semphr.h>
 #include "stm32h7xx_hal.h"
 #include "stm32h7xx_hal_spi.h"
+#include "main.h"
 
 typedef uint8_t FIFOsize[128]; // new typedef used for defining FIFO size as mentioned in the CC1201 datasheet
 
@@ -31,7 +32,7 @@ typedef enum
 	ACK_REC_ERROR = 0b00001111,
 } PayloadType;
 
-const MAX_TRANS_ATTEMPTS = 5;
+#define MAX_TRANS_ATTEMPTS 5
 
 extern osMessageQueueId_t receivequeueHandle; // the message queue used for receiving info from the trasnciever
 extern osSemaphoreId_t myBinarySem01Handle;   // used to protect the dirty bit. it is a sempahore
