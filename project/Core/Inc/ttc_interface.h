@@ -40,15 +40,26 @@ void generatepacket(uint8_t type, uint8_t *payload, uint8_t payloadLen);
 void packageAndSendChunks(int camera, int flash_sector, uint16_t fullPayloadLen, int offset);
 
 
+
+
+
 /*
 get_gps:
-    returns a NMEA $GPRMC formatted gps sentence to main as a buffer.
+    polls an NMEA $GPRMC gps sentence from the gps unit and stores this data to flash
 Parameters:
     void
 Returns:
-    returns gps data as a buffer
+    returns a true boolean if successful, and a false boolean otherwise
+
 */
+//////////////// section variables need definition
+uint8_t NMEA_sentence_size; //  the length in bytes of the gps data sentence
+uint8_t interrupt_timeout_length; //  the time until the CPU unfreezes if data has not yet been received
+uint16_t GPS_FLASH_ADDRESS; // to be set before implementation
+////////////////
+extern UART_HandleTypeDef huart4; // GPS UART handle definition
 uint8_t get_gps();
+
 
 void transmit();
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
