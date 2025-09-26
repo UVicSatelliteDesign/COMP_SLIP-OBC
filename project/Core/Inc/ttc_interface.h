@@ -58,7 +58,7 @@ uint8_t interrupt_timeout_length; //  the time until the CPU unfreezes if data h
 uint16_t GPS_FLASH_ADDRESS; // to be set before implementation
 ////////////////
 extern UART_HandleTypeDef huart4; // GPS UART handle definition
-uint8_t get_gps();
+bool get_gps();
 
 
 void transmit();
