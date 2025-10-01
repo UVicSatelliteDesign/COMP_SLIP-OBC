@@ -176,7 +176,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
-  retransmission_timer = xTimerCreate(“Retransmission timer”, pdMS_TO_TICKS(ACK_RECV_TIMEOUT), pdTRUE, (void *) 0, vRetransmissionTimerCallback);
+  retransmission_timer = xTimerCreate("Retransmission timer", pdMS_TO_TICKS(ACK_RECV_TIMEOUT), pdTRUE, (void *) 0, vRetransmissionTimerCallback);
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the queue(s) */
