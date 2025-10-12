@@ -1,8 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file   fatfs.h
-  * @brief  Header for fatfs applications
+  * @file    i2c.h
+  * @brief   This file contains all the function prototypes for
+  *          the i2c.c file
   ******************************************************************************
   * @attention
   *
@@ -17,31 +18,38 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __fatfs_H
-#define __fatfs_H
+#ifndef __I2C_H__
+#define __I2C_H__
+
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-#include "ff.h"
-#include "ff_gen_drv.h"
-#include "sd_diskio.h" /* defines SD_Driver as external */
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
 
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
-extern uint8_t retSD; /* Return value for SD */
-extern char SDPath[4]; /* SD logical drive path */
-extern FATFS SDFatFS; /* File system object for SD logical drive */
-extern FIL SDFile; /* File object for SD */
+extern I2C_HandleTypeDef hi2c2;
 
-void MX_FATFS_Init(void);
+extern I2C_HandleTypeDef hi2c4;
+
+/* USER CODE BEGIN Private defines */
+
+/* USER CODE END Private defines */
+
+void MX_I2C2_Init(void);
+void MX_I2C4_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */
+
 #ifdef __cplusplus
 }
 #endif
-#endif /*__fatfs_H */
+
+#endif /* __I2C_H__ */
+

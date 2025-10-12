@@ -1,8 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file   fatfs.h
-  * @brief  Header for fatfs applications
+  * @file    spi.h
+  * @brief   This file contains all the function prototypes for
+  *          the spi.c file
   ******************************************************************************
   * @attention
   *
@@ -17,31 +18,38 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __fatfs_H
-#define __fatfs_H
+#ifndef __SPI_H__
+#define __SPI_H__
+
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-#include "ff.h"
-#include "ff_gen_drv.h"
-#include "sd_diskio.h" /* defines SD_Driver as external */
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
 
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
-extern uint8_t retSD; /* Return value for SD */
-extern char SDPath[4]; /* SD logical drive path */
-extern FATFS SDFatFS; /* File system object for SD logical drive */
-extern FIL SDFile; /* File object for SD */
+extern SPI_HandleTypeDef hspi2;
 
-void MX_FATFS_Init(void);
+extern SPI_HandleTypeDef hspi4;
+
+/* USER CODE BEGIN Private defines */
+
+/* USER CODE END Private defines */
+
+void MX_SPI2_Init(void);
+void MX_SPI4_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */
+
 #ifdef __cplusplus
 }
 #endif
-#endif /*__fatfs_H */
+
+#endif /* __SPI_H__ */
+

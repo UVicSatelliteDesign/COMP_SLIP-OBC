@@ -31,7 +31,7 @@ typedef enum
 	ACK_REC_ERROR = 0b00001111,
 } PayloadType;
 
-const MAX_TRANS_ATTEMPTS = 5;
+const int MAX_TRANS_ATTEMPTS = 5;
 
 extern osMessageQueueId_t receivequeueHandle; // the message queue used for receiving info from the trasnciever
 extern osSemaphoreId_t myBinarySem01Handle;   // used to protect the dirty bit. it is a sempahore

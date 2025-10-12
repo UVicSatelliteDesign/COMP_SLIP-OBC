@@ -5,6 +5,7 @@
 #include "time.h"
 #include "flash_interface.h"
 
+
 int mode = NOMINAL_MODE; // Start the payload in nominal mode
 HAL_StatusTypeDef status;
 BatteryData battery_data;

@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (12.3.rel1)
+# Toolchain: GNU Tools for STM32 (13.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -9,11 +9,11 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
--include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/subdir.mk
--include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/subdir.mk
--include Middlewares/Third_Party/FreeRTOS/Source/subdir.mk
--include Drivers/STM32H7xx_HAL_Driver/Src/subdir.mk
+-include Middlewares/FreeRTOS/subdir.mk
+-include Middlewares/FatFs/subdir.mk
+-include FATFS/Target/subdir.mk
+-include FATFS/App/subdir.mk
+-include Drivers/STM32H7xx_HAL_Driver/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
@@ -64,8 +64,8 @@ all: main-build
 main-build: COMP_SLIP-OBC.elf secondary-outputs
 
 # Tool invocations
-COMP_SLIP-OBC.elf COMP_SLIP-OBC.map: $(OBJS) $(USER_OBJS) /home/ethan/Desktop/Uvic/Clubs/UVSD/COMP_SLIP-OBC/project/STM32H743ZITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "COMP_SLIP-OBC.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"/home/ethan/Desktop/Uvic/Clubs/UVSD/COMP_SLIP-OBC/project/STM32H743ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="COMP_SLIP-OBC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+COMP_SLIP-OBC.elf COMP_SLIP-OBC.map: $(OBJS) $(USER_OBJS) /Users/rowanstovin/Documents/COMP_SLIP-OBC/project/STM32H743ZITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "COMP_SLIP-OBC.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"/Users/rowanstovin/Documents/COMP_SLIP-OBC/project/STM32H743ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="COMP_SLIP-OBC.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
