@@ -41,6 +41,7 @@ extern "C"
 #include "string.h"
 #include "stdio.h"
 #include "semphr.h"
+#include "timers.h"
 
   /* USER CODE END Includes */
 
@@ -51,7 +52,8 @@ extern "C"
 
   /* Exported constants --------------------------------------------------------*/
   /* USER CODE BEGIN EC */
-
+// Retransmission software timer
+TimerHandle_t retransmission_timer;
   /* USER CODE END EC */
 
   /* Exported macro ------------------------------------------------------------*/
@@ -69,6 +71,9 @@ extern "C"
   void data_task(void *vpParameters);
   void low_power_task(void *vpParameters);
   void receive(void *vpParameters);
+
+  /* Definitions for retransmission software timer */
+  void vRetransmissionTimerCallback( TimerHandle_t xTimer );
 
   /* USER CODE END EFP */
 
