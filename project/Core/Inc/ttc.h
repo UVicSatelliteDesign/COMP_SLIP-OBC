@@ -5,19 +5,26 @@
 #include "timers.h"
 
 #include "ttc_interface.h"
+#include "timers.h"
 
 #define COMM_NOMINAL 1
 #define COMM_LOST 0
-
-/* Timer handle, created in main */
-extern TimerHandle_t retransmission_timer; // Timer handle, created in main
 
 /**
  * ttc_notifications:
  * Task that receives notifications from OBC tasks and handles them; 
  * transmits error, telemetry, and image data packets.
+ *
+ * Declared in main.h
  */
-void ttc_notifications(void *vpParameters);
+
+/**
+ * receive:
+ * Task which parses data received from the TTC and starts
+ * appropriate actions.
+ *
+ * Declared in main.h
+ */
 
 /**
  * handle_transmit:
@@ -37,15 +44,10 @@ void handle_transmit(int acknowlegement);
  * 
  * Parameters:
  * xTimer: Timer handle
+ *
+ * Declared in main.h
  */
-void vRetransmissionTimerCallback( TimerHandle_t xTimer );
 
-/**
- * receive:
- * Task which parses data received from the TTC and starts
- * appropriate actions.
- */
-void receive(void *vpParameters);
 
 void Task_receiveLL(void *vpParamemeters);
 

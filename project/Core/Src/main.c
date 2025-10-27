@@ -52,6 +52,35 @@
 
 /* Private variables ---------------------------------------------------------*/
 
+DCMI_HandleTypeDef hdcmi;
+DMA_HandleTypeDef hdma_dcmi;
+
+I2C_HandleTypeDef hi2c2;
+I2C_HandleTypeDef hi2c4;
+
+SD_HandleTypeDef hsd1;
+
+SPI_HandleTypeDef hspi2;
+SPI_HandleTypeDef hspi4;
+
+UART_HandleTypeDef huart4;
+UART_HandleTypeDef huart3;
+
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+    .name = "defaultTask",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+};
+/* Definitions for receivequeue */
+osMessageQueueId_t receivequeueHandle;
+const osMessageQueueAttr_t receivequeue_attributes = {
+    .name = "receivequeue"};
+/* Definitions for myBinarySem01 */
+osSemaphoreId_t myBinarySem01Handle;
+const osSemaphoreAttr_t myBinarySem01_attributes = {
+    .name = "myBinarySem01"};
 /* USER CODE BEGIN PV */
 
 SemaphoreHandle_t image_mutex;
@@ -117,8 +146,58 @@ int main(void)
   /* USER CODE END 2 */
 
   /* Init scheduler */
-  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
-  MX_FREERTOS_Init();
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* Create the semaphores(s) */
+  /* creation of myBinarySem01 */
+  myBinarySem01Handle = osSemaphoreNew(1, 0, &myBinarySem01_attributes);
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  retransmission_timer = xTimerCreate("Retransmission timer", pdMS_TO_TICKS(ACK_RECV_TIMEOUT), pdTRUE, (void *) 0, vRetransmissionTimerCallback);
+  /* USER CODE END RTOS_TIMERS */
+
+  /* Create the queue(s) */
+  /* creation of receivequeue */
+  receivequeueHandle = osMessageQueueNew(8, sizeof(FIFOsize), &receivequeue_attributes);
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+
+  image_mutex = xSemaphoreCreateMutex();
+
+  // OBC Tasks:
+
+  xTaskCreate(obc_notifications, "OBC Notifications", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
+  xTaskCreate(data_task, "Data Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  xTaskCreate(low_power_task, "Lower Power Task", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 10, NULL); // Highest priority
+
+  // TTC Tasks:
+
+  xTaskCreate(Task_receiveLL, "TTC Receive", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
+  xTaskCreate(ttc_notifications, "TTC Notifications", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  xTaskCreate(receive, "High Level Receive", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
 
   /* Start scheduler */
   osKernelStart();
