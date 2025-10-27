@@ -4,3 +4,21 @@ Release/
 *.launch
 .mxproject
 .DS_Store
+#Build binaries
+*.o
+*.d
+*.su
+*.cyclo
+*.mk
+*.list
+makefile
+
+#build directories
+Debug/
+Release/
+build/
+Build/
+ouput/
+bin/
+obj/
+tmp/
