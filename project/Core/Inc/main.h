@@ -46,11 +46,11 @@ extern "C" {
 
 /* USER CODE END ET */
 
-  /* Exported constants --------------------------------------------------------*/
-  /* USER CODE BEGIN EC */
+/* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN EC */
 // Retransmission software timer
 TimerHandle_t retransmission_timer;
-  /* USER CODE END EC */
+/* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
@@ -71,23 +71,7 @@ void Error_Handler(void);
   /* Definitions for retransmission software timer */
   void vRetransmissionTimerCallback( TimerHandle_t xTimer );
 
-  /* USER CODE END EFP */
-
-  /* Private defines -----------------------------------------------------------*/
-
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
-#define TemperatureSensor_Pin GPIO_PIN_2
-#define TemperatureSensor_GPIO_Port GPIOC
-#define PressureSensor_Pin GPIO_PIN_3
-#define PressureSensor_GPIO_Port GPIOC
-#define LD1_Pin GPIO_PIN_0
-#define LD1_GPIO_Port GPIOB
-#define Transciever_exti_Pin GPIO_PIN_13
-#define Transciever_exti_GPIO_Port GPIOF
-#define Transciever_exti_EXTI_IRQn EXTI15_10_IRQn
-#define LD3_Pin GPIO_PIN_14
-#define LD3_GPIO_Port GPIOB
+/* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
 #define OBC_Temperature_Pin GPIO_PIN_2
