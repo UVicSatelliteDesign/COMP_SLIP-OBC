@@ -1,9 +1,8 @@
 .settings/
-Debug/
-Release/
 *.launch
 .mxproject
 .DS_Store
+
 #Build binaries
 *.o
 *.d
