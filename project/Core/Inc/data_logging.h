@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "flash_interface.h"
+#include "obc_interface.h"
 
 typedef enum{
     sensors = 0,
