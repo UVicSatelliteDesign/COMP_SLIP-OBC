@@ -147,7 +147,7 @@ void image_task(void *vpParameters) {
 			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
 			store_data("Camera 1 error", T_ERROR);
 		}
-		xSemaphoreGive(xMutex);
+		xSemaphoreGive(image_mutex);
 	}
 
 
