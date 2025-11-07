@@ -12,13 +12,14 @@ Camera_t* camera1;
 Camera_t* camera2;
 uint8_t camera1_buffer[MAX_IMAGE_BUFFER_SIZE];
 uint8_t camera2_buffer[MAX_IMAGE_BUFFER_SIZE];
+int camera = 1;
 
 extern SemaphoreHandle_t image_mutex;
 
 void obc_notifications(void *vpParameters) {
     uint32_t received_notification = 0;
-    int camera = 1;
     
+
     configure_camera1(camera1, camera1_buffer);
     configure_camera2(camera2, camera2_buffer);
 
