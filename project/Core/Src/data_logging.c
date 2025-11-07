@@ -23,7 +23,7 @@ bool log_data(DataLogType_t data_specifier){
                 SensorsData *SensorsDataPtr = (SensorsData *) BufferPtr;
                 SensorsData data = *SensorsDataPtr;
                 //printf modified to send to serial
-                printf("%02x, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f", sensors, data.temperature_obc, data.temperature_ttc, data.temperature_bms, data.gyroscope_axis_1, data.gyroscope_axis_2, data.gyroscope_axis_3, data.acceleration_axis_1, data.acceleration_axis_2, data.acceleration_axis_3, data.altitude);
+                printf("%02x, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f", sensors, data.temperature_obc, data.temperature_ttc, data.temperature_bms, data.gyroscope_axis_1, data.gyroscope_axis_2, data.gyroscope_axis_3, data.acceleration_x, data.acceleration_y, data.acceleration_z, data.altitude);
                 free(BufferPtr);
                 return true;
             }
@@ -47,7 +47,7 @@ bool log_data(DataLogType_t data_specifier){
                 BatteryData *BatteryDataPtr = (BatteryData *) BufferPtr;
                 BatteryData data = *BatteryDataPtr;
                 //printf modified to send to serial
-                printf("%02x, %f, %f, %f, %f, %f, %f", battery, data.voltage, data.current, data.temperature, data.state_of_charge, data.power_usage, data.estimated_life);
+                printf("%02x, %f, %f, %f, %f, %f, %f", battery, data.voltage, data.current, data.state_of_charge, data.power_usage, data.estimated_life);
                 free(BufferPtr);
                 return true;
             }
