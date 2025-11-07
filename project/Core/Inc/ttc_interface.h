@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include <semphr.h>
 #include "stm32h7xx_hal.h"

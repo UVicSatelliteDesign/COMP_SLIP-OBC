@@ -1,6 +1,8 @@
 #ifndef TTC_H
 #define TTC_H
 #include "ttc_interface.h"
+
+#include "FreeRTOS.h"
 #include "timers.h"
 
 #define COMM_NOMINAL 1
