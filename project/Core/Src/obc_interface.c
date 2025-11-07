@@ -519,8 +519,8 @@ FRESULT setup_SD(){
 	return res;
 }
 
-// Store telemetry/errors/etc on SD card
-FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
+// Store telemetry/errors/etc (strings) on SD card
+FRESULT store_data(uint8_t* data, enum Type type){
 	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
 	if (res != FR_OK){
         f_close(&SDFile);
@@ -548,7 +548,7 @@ FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
 		// Error handling
 		return res;
 	}
-	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
+	res = f_write(&SDFile, data, strlen(data), (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
 		// Error handling

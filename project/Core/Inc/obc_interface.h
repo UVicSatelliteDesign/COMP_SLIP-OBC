@@ -171,11 +171,10 @@ FRESULT setup_SD();
 /**
  * @brief Stores telemetry, errors, etc (text) on SD card
  * @param data The data to be written
- * @param data_size The size of the data (e.g. string length)
  * @param type Type of data (T_DATA, T_WARNING, or T_ERROR)
  * @return FR_OK if success
  */
-FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type);
+FRESULT store_data(uint8_t* data, enum Type type);
 
 /**
  * @brief Stores images in JPEG format on SD card
