@@ -6,6 +6,8 @@
 #define COMM_NOMINAL 1
 #define COMM_LOST 0
 
+#define ACK_RECV_TIMEOUT 3000		 // timeout before checking for an acknowledgement TODO: change to real value
+
 /**
  * ttc_notifications:
  * Task that receives notifications from OBC tasks and handles them; 
