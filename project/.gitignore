@@ -2,6 +2,7 @@
 *.launch
 .mxproject
 .DS_Store
+Middlewares/
 
 #Build binaries
 *.o

@@ -87,6 +87,15 @@ Below are representative diagrams from the documentation:
 
 ---
 
+## Updating Software Packages
+- Make sure you have the CubeMX and CubeIDE installed on the latest version.
+- In CubeMX click generate code.
+- When building the project make sure to clean and build from inside the .ioc file.
+- You should be automatically prompted to download the new software version (1.12.1).
+- If you are not prompted, open CubeMX and go to "install or remove embedded software packages".
+- Find STM32H7 and install version 1.12.1, then uninstall the old version (likely 1.11.2).
+- After installing, click generate code in CubeMX, then clean and build from inside the ioc file.
+
 ## 🚀 Next Steps
 - Finalize flash sector addressing for mission hardware.  
 - Integrate with full TTC link (CC1201 transceiver).  
