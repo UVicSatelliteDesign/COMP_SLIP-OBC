@@ -35,6 +35,7 @@ float estimate_battery_life(float state_of_charge, float avg_power_draw);
 BatteryData get_battery_data(float dt);
 void save_battery_data_to_flash(BatteryData *data);
 void load_battery_data_from_flash();
+void load_gps_data_from_flash();
 
 ////////////sensors start
 typedef struct { 		// struct containing sensor data values

@@ -47,9 +47,12 @@ extern ADC_HandleTypeDef TemperatureSensor; // ADC handler for temperature --sen
 uint16_t alti_calib[6] = {};
 
 SensorsData sensor_backup = {0}; // Data is written to this by pointer when retrieved from flash memory
+extern uint8_t NMEA_sentence_size; // length in bits of gps data sentence
+
 
 // SD card variables
 FRESULT res; // FatFS result code
+bool SD_functional = 0; // Global flag indicating whether the SD card is functional
 uint32_t byteswritten; // File write count
 uint32_t bytesread; // File read count
 //uint8_t wtext[] = "Example text to write"; // File write buffer
@@ -141,6 +144,13 @@ void load_sensor_data_from_flash() {
     if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         memset(&sensor_backup, 0, sizeof(SensorsData));
     }
+}
+
+//// GPS
+void load_gps_data_from_flash(uint8_t* gps_data_ptr) {
+	if (!flash_read(gps_data_ptr, NMEA_sentence_size, FLASH_SECTOR_GPS, 0)) {
+		memset(gps_data_ptr, 0, NMEA_sentence_size);
+	}
 }
 
 //// Temperature sensors
@@ -487,9 +497,14 @@ SensorsData read_sensors(){
 // Mount SD card
 FRESULT mount_SD(){
 	res = f_mount(&SDFatFS, (TCHAR const*)SDPath, 0);
-	// if (res != FR_OK){
-	// 	// Error handling
-	// }
+
+	// set global flag if SD card is functional or not
+	if (res != FR_OK){
+		SD_functional = false;
+	}
+	else {
+		SD_functional = true;
+	}
 	return res;
 }
 
@@ -498,7 +513,7 @@ FRESULT format_SD(){
 	// TODO: check if SD card is already formatted
 	res = f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext));
 	// if (res != FR_OK){
-	// 	// Error handling
+
 	// }
 	return res;
 }

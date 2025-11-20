@@ -14,6 +14,7 @@ uint8_t camera1_buffer[MAX_IMAGE_BUFFER_SIZE];
 uint8_t camera2_buffer[MAX_IMAGE_BUFFER_SIZE];
 
 extern SemaphoreHandle_t image_mutex;
+extern bool SD_functional; // Flag indicating if the SD card is working
 
 void obc_notifications(void *vpParameters) {
     uint32_t received_notification = 0;
@@ -34,7 +35,7 @@ void obc_notifications(void *vpParameters) {
         	if (mode == LOW_POWER) {
         		// Send Low power warning
         		xTaskNotify(ttc_notifications, WARNING & LOW_POWER, eSetValueWithOverwrite);
-        		store_data("Low power image request", T_WARNING);
+        		store_data("Low power image request", sizeof("Low power image request"), T_WARNING);
 
         	} else {
         		// Take a picture
@@ -48,7 +49,7 @@ void obc_notifications(void *vpParameters) {
         				store_image(camera1->imageBuffer);
         			} else {
         				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
-        				store_data("Camera 1 error", T_ERROR);
+        				store_data("Camera 1 error", sizeof("Camera 1 error"), T_ERROR);
         			}
         		} else {
         			freeImageBuffer(camera2);
@@ -70,23 +71,25 @@ void obc_notifications(void *vpParameters) {
 
         	SensorsData sensor_data;
         	BatteryData battery_data;
-        	// TODO: GPS
-        	// TODO: Altimeter
+        	uint8_t gps_data;
+        	
 
         	load_sensor_data_from_flash();
         	load_battery_data_from_flash();
-        	// TODO: GPS
-        	// TODO: Altimeter
+        	load_gps_data_from_flash(&gps_data);
+        	
 
-        	// Save telemetry to memory
-        	store_data((uint8_t*)&sensor_data, T_DATA);
-        	store_data((uint8_t*)&battery_data, T_DATA);
-        	// TODO: GPS
-        	// TODO: Altimeter
+        	// Save telemetry to memory if sd card is functional
+			if (SD_functional) { // TODO: add blocks like this for every use of SD card
+				store_data((uint8_t*)&sensor_data, sizeof(sensor_data), T_DATA);
+				store_data((uint8_t*)&battery_data, sizeof(battery_data), T_DATA);
+				store_data(&gps_data, sizeof(gps_data), T_DATA);
+			}
+        	
         }
 
         if (received_notification & ERROR & GPS) {
-        	store_data("GPS error", T_ERROR);
+        	store_data("GPS error", sizeof("GPS error"), T_ERROR);
         }
 
         if (received_notification & REQUEST & LOW_POWER) {
@@ -103,7 +106,6 @@ void obc_notifications(void *vpParameters) {
 
 // Collect data
 void data_task(void *vpParameters) {
-	// TODO: Add altimeter readings
 	SensorsData sensor_data;
 	for (;;) {
 		sensor_data = read_sensors();
