@@ -502,6 +502,9 @@ FRESULT mount_SD(){
 	if (res != FR_OK){
 		SD_functional = false;
 	}
+	else {
+		SD_functional = true;
+	}
 	return res;
 }
 
@@ -509,9 +512,9 @@ FRESULT mount_SD(){
 FRESULT format_SD(){
 	// TODO: Check if SD card has been formatted
 	res = f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext));
-	if (res != FR_OK){
-		SD_functional = false;
-	}
+	// if (res != FR_OK){
+
+	// }
 	return res;
 }
 
@@ -520,14 +523,14 @@ FRESULT setup_SD(){
 	// Could change this layout later
 	res = f_mkdir("UVR-SLIP");
 	if (res != FR_OK){
-		SD_functional = false;
+		// Error handling
 		return res;
 	}
 	res = f_mkdir("UVR-SLIP/Images");
-	if (res != FR_OK){
-		SD_functional = false;
-		return res;
-	}
+	// if (res != FR_OK){
+	// 	// Error handling
+	// 	return res;
+	// }
 	return res;
 }
 
@@ -536,7 +539,7 @@ FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
 	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
 	if (res != FR_OK){
         f_close(&SDFile);
-		SD_functional = false;
+		// Error handling
 		return res;
 	}
 	const char* prefix = NULL;
@@ -557,19 +560,19 @@ FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
 	res = f_write(&SDFile, prefix, strlen(prefix), (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
-		SD_functional = false;
+		// Error handling
 		return res;
 	}
 	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
-		SD_functional = false;
+		// Error handling
 		return res;
 	}
 	res = f_write(&SDFile, "\n", strlen((char *)"\n"), (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
-		SD_functional = false;
+		// Error handling
 		return res;
 	}
 	f_close(&SDFile);
@@ -584,13 +587,13 @@ FRESULT store_image(uint8_t* data, uint8_t data_size){
 	res = f_open(&SDFile, path, FA_CREATE_ALWAYS | FA_WRITE);
 	if (res != FR_OK){
         f_close(&SDFile);
-		SD_functional = false;
+		// Error handling
 		return res;
 	}
 	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
         f_close(&SDFile);
-		SD_functional = false;
+		// Error handling
 		return res;
 	}
 	f_close(&SDFile);
