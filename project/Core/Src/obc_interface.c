@@ -52,7 +52,7 @@ extern uint8_t NMEA_sentence_size; // length in bits of gps data sentence
 
 // SD card variables
 FRESULT res; // FatFS result code
-bool SD_functional = 0; // Global flag indicating whether the SD card is functional
+bool SD_functional = false; // Global flag indicating whether the SD card is functional
 uint32_t byteswritten; // File write count
 uint32_t bytesread; // File read count
 //uint8_t wtext[] = "Example text to write"; // File write buffer
@@ -507,7 +507,7 @@ FRESULT mount_SD(){
 
 // Format SD card (run once)
 FRESULT format_SD(){
-	// TODO: check if SD card is already formatted
+	// TODO: Check if SD card has been formatted
 	res = f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext));
 	if (res != FR_OK){
 		SD_functional = false;
