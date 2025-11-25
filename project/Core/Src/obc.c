@@ -35,7 +35,9 @@ void obc_notifications(void *vpParameters) {
         	if (mode == LOW_POWER) {
         		// Send Low power warning
         		xTaskNotify(ttc_notifications, WARNING & LOW_POWER, eSetValueWithOverwrite);
-        		store_data("Low power image request", sizeof("Low power image request"), T_WARNING);
+				if (SD_functional) {
+					store_data("Low power image request", T_WARNING);
+				}
 
         	} else {
         		// Take a picture
@@ -45,11 +47,15 @@ void obc_notifications(void *vpParameters) {
         			camera = 1;
         			status = capture_snapshot(camera1);
         			if (status == HAL_OK) {
-        				save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);
-        				store_image(camera1->imageBuffer);
+        				save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);\
+						if (SD_functional) {
+							store_image(camera1->imageBuffer);
+						}
         			} else {
         				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
-        				store_data("Camera 1 error", sizeof("Camera 1 error"), T_ERROR);
+						if (SD_functional) {
+							store_data("Camera 1 error", T_ERROR);
+						}
         			}
         		} else {
         			freeImageBuffer(camera2);
@@ -57,10 +63,14 @@ void obc_notifications(void *vpParameters) {
         			status = capture_snapshot(camera2);
         			if (status == HAL_OK) {
         			    save_image_to_flash(camera2, FLASH_SECTOR_CAMERA);
-        			    store_image(camera2->imageBuffer);
+						if (SD_functional) {
+							store_image(camera2->imageBuffer);
+						}
         			} else {
         				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
-        				store_data("Camera 2 error", T_ERROR);
+						if (SD_functional) {
+							store_data("Camera 2 error", T_ERROR);
+						}
         			}
         		}
         	}
@@ -80,16 +90,16 @@ void obc_notifications(void *vpParameters) {
         	
 
         	// Save telemetry to memory if sd card is functional
-			if (SD_functional) { // TODO: add blocks like this for every use of SD card
-				store_data((uint8_t*)&sensor_data, sizeof(sensor_data), T_DATA);
-				store_data((uint8_t*)&battery_data, sizeof(battery_data), T_DATA);
-				store_data(&gps_data, sizeof(gps_data), T_DATA);
+			if (SD_functional) { 
+				store_data((uint8_t*)&sensor_data, T_DATA);
+				store_data((uint8_t*)&battery_data, T_DATA);
+				store_data(&gps_data, T_DATA);
 			}
         	
         }
 
-        if (received_notification & ERROR & GPS) {
-        	store_data("GPS error", sizeof("GPS error"), T_ERROR);
+        if (received_notification & ERROR & GPS && SD_functional) {
+        	store_data("GPS error", T_ERROR);
         }
 
         if (received_notification & REQUEST & LOW_POWER) {
@@ -139,14 +149,18 @@ void image_task(void *vpParameters) {
 	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) {
 
 		freeImageBuffer(camera1);
-		camera = 1;
+		camera1 = 1;
 		status = capture_snapshot(camera1);
 		if (status == HAL_OK) {
 			save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);
-			store_image(camera1->imageBuffer);
+			if (SD_functional) {
+				store_image(camera1->imageBuffer);
+			}
 		} else {
 			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
-			store_data("Camera 1 error", T_ERROR);
+			if (SD_functional) {
+				store_data("Camera 1 error", T_ERROR);
+			}
 		}
 		xSemaphoreGive(xMutex);
 	}
@@ -160,10 +174,14 @@ void image_task(void *vpParameters) {
 		status = capture_snapshot(camera2);
 		if (status == HAL_OK) {
 			save_image_to_flash(camera2, FLASH_SECTOR_CAMERA);
-			store_image(camera2->imageBuffer);
+			if (SD_functional) {
+				store_image(camera2->imageBuffer);
+			}
 		} else {
 			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
-			store_data("Camera 2 error", T_ERROR);
+			if (SD_functional) {
+				store_data("Camera 2 error", T_ERROR);
+			}
 		}
 		xSemaphoreGive(image_mutex);
 	}
