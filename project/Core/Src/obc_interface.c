@@ -528,6 +528,7 @@ FRESULT setup_SD(){
 		SD_functional = false;
 		return res;
 	}
+	SD_functional = true;
 	return res;
 }
 
