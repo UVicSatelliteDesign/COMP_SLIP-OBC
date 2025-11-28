@@ -91,9 +91,9 @@ Below are representative diagrams from the documentation:
 - Make sure you have the CubeMX and CubeIDE installed on the latest version.
 - In CubeMX click generate code.
 - When building the project make sure to clean and build from inside the .ioc file.
-- You should be automatically prompted to download the new software version (1.12.1).
+- You should be automatically prompted to download the new software version.
 - If you are not prompted, open CubeMX and go to "install or remove embedded software packages".
-- Find STM32H7 and install version 1.12.1, then uninstall the old version (likely 1.11.2).
+- Find STM32H7 and install the latest version, then uninstall the old version.
 - After installing, click generate code in CubeMX, then clean and build from inside the ioc file.
 
 ## 🚀 Next Steps
