@@ -534,9 +534,12 @@ FRESULT setup_SD(){
 
 // Store telemetry/errors/etc on SD card
 FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
+	if (!SD_functional) {
+		return FR_INT_ERR;
+	}
 	res = f_open(&SDFile, "UVR-SLIP/telemetry.txt", FA_OPEN_APPEND | FA_WRITE);
 	if (res != FR_OK){
-        f_close(&SDFile);
+		f_close(&SDFile);
 		SD_functional = false;
 		return res;
 	}
@@ -557,19 +560,19 @@ FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
 	}
 	res = f_write(&SDFile, prefix, strlen(prefix), (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
-        f_close(&SDFile);
+		f_close(&SDFile);
 		SD_functional = false;
 		return res;
 	}
 	res = f_write(&SDFile, data, data_size, (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
-        f_close(&SDFile);
+		f_close(&SDFile);
 		SD_functional = false;
 		return res;
 	}
 	res = f_write(&SDFile, "\n", strlen((char *)"\n"), (void *)&byteswritten);
 	if((byteswritten == 0) || (res != FR_OK)){
-        f_close(&SDFile);
+		f_close(&SDFile);
 		SD_functional = false;
 		return res;
 	}
@@ -579,6 +582,9 @@ FRESULT store_data(uint8_t* data, uint8_t data_size, enum Type type){
 
 // Store images on SD card
 FRESULT store_image(uint8_t* data, uint8_t data_size){
+	if (!SD_functional) {
+		return FR_INT_ERR;
+	}
 	uint8_t size = strlen("UVR-SLIP/Images/image.jpeg") + 10;
 	char path[size];
 	snprintf(path, size, "UVR-SLIP/Images/image%04d.jpeg", image_count);

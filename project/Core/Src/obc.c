@@ -14,7 +14,6 @@ uint8_t camera1_buffer[MAX_IMAGE_BUFFER_SIZE];
 uint8_t camera2_buffer[MAX_IMAGE_BUFFER_SIZE];
 
 extern SemaphoreHandle_t image_mutex;
-extern bool SD_functional; // Flag indicating if the SD card is working
 
 void obc_notifications(void *vpParameters) {
     uint32_t received_notification = 0;
@@ -35,9 +34,7 @@ void obc_notifications(void *vpParameters) {
         	if (mode == LOW_POWER) {
         		// Send Low power warning
         		xTaskNotify(ttc_notifications, WARNING & LOW_POWER, eSetValueWithOverwrite);
-				if (SD_functional) {
-					store_data("Low power image request", T_WARNING);
-				}
+				store_data("Low power image request", T_WARNING);
 
         	} else {
         		// Take a picture
@@ -48,14 +45,10 @@ void obc_notifications(void *vpParameters) {
         			status = capture_snapshot(camera1);
         			if (status == HAL_OK) {
         				save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);\
-						if (SD_functional) {
-							store_image(camera1->imageBuffer);
-						}
+						store_image(camera1->imageBuffer);
         			} else {
         				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
-						if (SD_functional) {
-							store_data("Camera 1 error", T_ERROR);
-						}
+						store_data("Camera 1 error", T_ERROR);
         			}
         		} else {
         			freeImageBuffer(camera2);
@@ -63,14 +56,10 @@ void obc_notifications(void *vpParameters) {
         			status = capture_snapshot(camera2);
         			if (status == HAL_OK) {
         			    save_image_to_flash(camera2, FLASH_SECTOR_CAMERA);
-						if (SD_functional) {
-							store_image(camera2->imageBuffer);
-						}
+						store_image(camera2->imageBuffer);
         			} else {
         				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
-						if (SD_functional) {
-							store_data("Camera 2 error", T_ERROR);
-						}
+						store_data("Camera 2 error", T_ERROR);
         			}
         		}
         	}
@@ -89,16 +78,13 @@ void obc_notifications(void *vpParameters) {
         	load_gps_data_from_flash(&gps_data);
         	
 
-        	// Save telemetry to memory if sd card is functional
-			if (SD_functional) { 
-				store_data((uint8_t*)&sensor_data, T_DATA);
-				store_data((uint8_t*)&battery_data, T_DATA);
-				store_data(&gps_data, T_DATA);
-			}
-        	
+        	// Save telemetry to memory
+			store_data((uint8_t*)&sensor_data, T_DATA);
+			store_data((uint8_t*)&battery_data, T_DATA);
+			store_data(&gps_data, T_DATA);
         }
 
-        if (received_notification & ERROR & GPS && SD_functional) {
+        if (received_notification & ERROR & GPS) {
         	store_data("GPS error", T_ERROR);
         }
 
@@ -109,7 +95,6 @@ void obc_notifications(void *vpParameters) {
         if (received_notification & REQUEST & NOMINAL) {
         	set_mode(NOMINAL_MODE); // Ground station requested nominal
         }
-
         received_notification = 0;
     }
 }
@@ -149,18 +134,14 @@ void image_task(void *vpParameters) {
 	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) {
 
 		freeImageBuffer(camera1);
-		camera1 = 1;
+		camera = 1;
 		status = capture_snapshot(camera1);
 		if (status == HAL_OK) {
 			save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);
-			if (SD_functional) {
-				store_image(camera1->imageBuffer);
-			}
+			store_image(camera1->imageBuffer);
 		} else {
 			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
-			if (SD_functional) {
-				store_data("Camera 1 error", T_ERROR);
-			}
+			store_data("Camera 1 error", T_ERROR);
 		}
 		xSemaphoreGive(xMutex);
 	}
@@ -174,14 +155,10 @@ void image_task(void *vpParameters) {
 		status = capture_snapshot(camera2);
 		if (status == HAL_OK) {
 			save_image_to_flash(camera2, FLASH_SECTOR_CAMERA);
-			if (SD_functional) {
-				store_image(camera2->imageBuffer);
-			}
+			store_image(camera2->imageBuffer);
 		} else {
 			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
-			if (SD_functional) {
-				store_data("Camera 2 error", T_ERROR);
-			}
+			store_data("Camera 2 error", T_ERROR);
 		}
 		xSemaphoreGive(image_mutex);
 	}
