@@ -44,7 +44,7 @@ void obc_notifications(void *vpParameters) {
         			camera = 1;
         			status = capture_snapshot(camera1);
         			if (status == HAL_OK) {
-        				save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);\
+        				save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);
 						store_image(camera1->imageBuffer);
         			} else {
         				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
