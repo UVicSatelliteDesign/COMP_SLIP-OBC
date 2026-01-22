@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include <semphr.h>
 #include "stm32h7xx_hal.h"
@@ -56,6 +57,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 
 bool ReadRegisterBurst();
-uint16_t sequenceNum; // Current sequence number
+extern uint16_t sequenceNum = 0; // Current sequence number
 
 #endif

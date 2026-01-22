@@ -18,8 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include "fatfs.h"
+#include "ttc_interface.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -80,7 +81,7 @@ const osSemaphoreAttr_t myBinarySem01_attributes = {
   .cb_size = sizeof(myBinarySem01ControlBlock),
 };
 /* USER CODE BEGIN PV */
-
+TimerHandle_t retransmission_timer;
 SemaphoreHandle_t image_mutex;
 char buf[100];
 
@@ -765,36 +766,12 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : Transceiver_exti_Pin */
-  GPIO_InitStruct.Pin = Transciever_exti_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;      // Keep as interrupt
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(Transciever_exti_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : USB_OTG_FS_PWR_EN_Pin */
-  GPIO_InitStruct.Pin = USB_OTG_FS_PWR_EN_Pin;
+  GPIO_InitStruct.Pin = Transceiver_exti_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(USB_OTG_FS_PWR_EN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(Transceiver_exti_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : USB_OTG_FS_OVCR_Pin */
-  GPIO_InitStruct.Pin = USB_OTG_FS_OVCR_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(USB_OTG_FS_OVCR_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PG11 PG13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_13;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.Alternate = GPIO_AF11_ETH;
-  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
-
-  /* EXTI interrupt init */
-  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-  
   /*AnalogSwitch Config */
   HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PA0, SYSCFG_SWITCH_PA0_CLOSE);
 

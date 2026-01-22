@@ -49,7 +49,7 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 // Retransmission software timer
-TimerHandle_t retransmission_timer;
+extern TimerHandle_t retransmission_timer;
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -67,6 +67,7 @@ void Error_Handler(void);
   void data_task(void *vpParameters);
   void low_power_task(void *vpParameters);
   void receive(void *vpParameters);
+  void Task_receiveLL(void *vpParameters);
 
   /* Definitions for retransmission software timer */
   void vRetransmissionTimerCallback( TimerHandle_t xTimer );
@@ -114,6 +115,9 @@ void Error_Handler(void);
 #define Transceiver_exti_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
+
+// This may need a different value
+#define ACK_RECV_TIMEOUT 1000
 
   /*
    * Set mode from TTC: REQUEST & <MODE>
