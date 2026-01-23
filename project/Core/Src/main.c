@@ -732,28 +732,28 @@ static void MX_GPIO_Init(void)
   /* USER CODE BEGIN MX_GPIO_Init_1 */
   
   /*Configure GPIO pin : Transceiver_exti_Pin */
-  GPIO_InitStruct.Pin = Transciever_exti_Pin;
+  GPIO_InitStruct.Pin = Transceiver_exti_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;      // Keep as interrupt
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(Transciever_exti_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(Transceiver_exti_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = Transceiver_exti_Pin;
 
   /*Configure GPIO pin : USB_OTG_FS_PWR_EN_Pin */
-  GPIO_InitStruct.Pin = USB_OTG_FS_PWR_EN_Pin;
-  GPIO_InitStruct.Pin = Transceiver_exti_Pin;
+  //GPIO_InitStruct.Pin = USB_OTG_FS_PWR_EN_Pin; // Should we keep?
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   
-  // Keep only one of these probably?
-  HAL_GPIO_Init(USB_OTG_FS_PWR_EN_GPIO_Port, &GPIO_InitStruct); //old
-  HAL_GPIO_Init(Transceiver_exti_GPIO_Port, &GPIO_InitStruct); //new
+  // Keep?
+  //HAL_GPIO_Init(USB_OTG_FS_PWR_EN_GPIO_Port, &GPIO_InitStruct); // Should we keep?
 
   // May not need these!
   /*Configure GPIO pin : USB_OTG_FS_OVCR_Pin */
-  GPIO_InitStruct.Pin = USB_OTG_FS_OVCR_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(USB_OTG_FS_OVCR_GPIO_Port, &GPIO_InitStruct);
+
+  //GPIO_InitStruct.Pin = USB_OTG_FS_OVCR_Pin;
+  //GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  //GPIO_InitStruct.Pull = GPIO_NOPULL;
+  //HAL_GPIO_Init(USB_OTG_FS_OVCR_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PG11 PG13 */
   GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_13;
