@@ -1,6 +1,7 @@
 .settings/
 *.launch
 .mxproject
+.cproject
 .DS_Store
 Middlewares/
 
