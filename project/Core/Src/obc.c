@@ -73,19 +73,18 @@ void obc_notifications(void *vpParameters) {
 
         	SensorsData sensor_data;
         	BatteryData battery_data;
-        	// TODO: GPS
-        	// TODO: Altimeter
+        	uint8_t gps_data;
+        	
 
         	load_sensor_data_from_flash();
         	load_battery_data_from_flash();
-        	// TODO: GPS
-        	// TODO: Altimeter
+        	load_gps_data_from_flash(&gps_data);
+        	
 
         	// Save telemetry to memory
         	store_data((uint8_t*)&sensor_data, sizeof(sensor_data), T_DATA);
         	store_data((uint8_t*)&battery_data, sizeof(battery_data), T_DATA);
-        	// TODO: GPS
-        	// TODO: Altimeter
+        	store_data(&gps_data, T_DATA);
         }
 
         if (received_notification & ERROR & GPS) {
@@ -99,14 +98,12 @@ void obc_notifications(void *vpParameters) {
         if (received_notification & REQUEST & NOMINAL) {
         	set_mode(NOMINAL_MODE); // Ground station requested nominal
         }
-
         received_notification = 0;
     }
 }
 
 // Collect data
 void data_task(void *vpParameters) {
-	// TODO: Add altimeter readings
 	SensorsData sensor_data;
 	for (;;) {
 		sensor_data = read_sensors();
