@@ -11,7 +11,7 @@
 #define MAX_PACKET_SIZE 128
 
 uint16_t last_received_seq_num;			 // last received seq num ack
-uint8_t ACK_RECV_TIMEOUT = 3000;		 // timeout before checking for an acknowledgement TODO: change to real value
+//uint8_t ACK_RECV_TIMEOUT = 3000;		 // timeout before checking for an acknowledgement TODO: change to real value
 int communication_status = COMM_NOMINAL; // Nominal=1, Lost=0
 
 void ttc_notifications(void *vpParameters) {
@@ -196,7 +196,8 @@ void receive(void *vpParameters)
 
 	uint8_t packet_length = data_buffer[0];
 	PayloadType packet_type = (PayloadType)data_buffer[1];
-
+	uint16_t seq_num;
+	uint16_t acked_seq_num;
 	switch (packet_type)
 	{
 	case PING:
@@ -206,14 +207,14 @@ void receive(void *vpParameters)
 		break;
 	case REQ_NOMINAL:
 		xTaskNotify(obc_notifications, REQUEST & NOMINAL, eSetValueWithOverwrite);
-		uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+		seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		// Acknowledge nominal command
 		generatepacket(ACK_REC_STATUS, seq_num, 2);
 		handle_transmit(1);
 		break;
 	case REQ_LOW_POWER:
 		xTaskNotify(obc_notifications, REQUEST & LOW_POWER, eSetValueWithOverwrite);
-		uint16_t seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+		seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		// Acknowledge low power command
 		generatepacket(ACK_REC_STATUS, seq_num, 2);
 		handle_transmit(1);
@@ -227,13 +228,13 @@ void receive(void *vpParameters)
 		xTaskNotify(obc_notifications, REQUEST & CAMERA & SUB_2, eSetValueWithOverwrite);
 		break;
 	case ACK_REC_CAMER:
-		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+		acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		uint8_t camera = data_buffer[4];
 		// Contains an offset
 		int acked_offset = (data_buffer[5] << 16) |
 								(data_buffer[6] << 8) |
 								(data_buffer[7]);
-		uint16_t seq_num = (data_buffer[8] << 8) | (data_buffer[9]);
+		seq_num = (data_buffer[8] << 8) | (data_buffer[9]);
 		// set as acknowledged
 		last_received_seq_num = acked_seq_num;
 		// Stop timer because we're going to send another packet right away
@@ -246,17 +247,17 @@ void receive(void *vpParameters)
 		break;
 	case ACK_REC_TELEMETRY:
 		// set as acknowledged
-		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+		acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		last_received_seq_num = acked_seq_num;
 		break;
 	case ACK_REC_ERROR:
 		// set as acknowledged
-		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+		acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		last_received_seq_num = acked_seq_num;
 		break;
 	case ERROR_DUP:
 		// last packet was received twice by GS
-		uint16_t acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
+		acked_seq_num = (data_buffer[2] << 8) | (data_buffer[3]);
 		last_received_seq_num = acked_seq_num;
 		break;
 	default:

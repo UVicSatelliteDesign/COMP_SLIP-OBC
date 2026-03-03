@@ -23,18 +23,14 @@
 #define __MAIN_H
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32h7xx_hal.h"
-#include "stm32h7xx_hal_spi.h"
-#include "ttc.h"
-#include "obc.h"
 
-  /* Private includes ----------------------------------------------------------*/
-  /* USER CODE BEGIN Includes */
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -43,56 +39,43 @@ extern "C"
 #include "semphr.h"
 #include "timers.h"
 
-  /* USER CODE END Includes */
+/* USER CODE END Includes */
 
-  /* Exported types ------------------------------------------------------------*/
-  /* USER CODE BEGIN ET */
+/* Exported types ------------------------------------------------------------*/
+/* USER CODE BEGIN ET */
+typedef uint8_t FIFOsize[128]; // new typedef used for defining FIFO size as mentioned in the CC1201 datasheet
 
-  /* USER CODE END ET */
+/* USER CODE END ET */
 
-  /* Exported constants --------------------------------------------------------*/
-  /* USER CODE BEGIN EC */
+/* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN EC */
 // Retransmission software timer
-TimerHandle_t retransmission_timer;
-  /* USER CODE END EC */
+extern TimerHandle_t retransmission_timer;
+/* USER CODE END EC */
 
-  /* Exported macro ------------------------------------------------------------*/
-  /* USER CODE BEGIN EM */
+/* Exported macro ------------------------------------------------------------*/
+/* USER CODE BEGIN EM */
 
-  /* USER CODE END EM */
+/* USER CODE END EM */
 
-  /* Exported functions prototypes ---------------------------------------------*/
-  void Error_Handler(void);
+/* Exported functions prototypes ---------------------------------------------*/
+void Error_Handler(void);
 
-  /* USER CODE BEGIN EFP */
+/* USER CODE BEGIN EFP */
 
   void obc_notifications(void *vpParameters);
   void ttc_notifications(void *vpParameters);
   void data_task(void *vpParameters);
   void low_power_task(void *vpParameters);
   void receive(void *vpParameters);
+  void Task_receiveLL(void *vpParameters);
 
   /* Definitions for retransmission software timer */
   void vRetransmissionTimerCallback( TimerHandle_t xTimer );
 
-  /* USER CODE END EFP */
+/* USER CODE END EFP */
 
-  /* Private defines -----------------------------------------------------------*/
-
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
-#define TemperatureSensor_Pin GPIO_PIN_2
-#define TemperatureSensor_GPIO_Port GPIOC
-#define PressureSensor_Pin GPIO_PIN_3
-#define PressureSensor_GPIO_Port GPIOC
-#define LD1_Pin GPIO_PIN_0
-#define LD1_GPIO_Port GPIOB
-#define Transciever_exti_Pin GPIO_PIN_13
-#define Transciever_exti_GPIO_Port GPIOF
-#define Transciever_exti_EXTI_IRQn EXTI15_10_IRQn
-#define LD3_Pin GPIO_PIN_14
-#define LD3_GPIO_Port GPIOB
-
+/* Private defines -----------------------------------------------------------*/
 #define OBC_Temperature_Pin GPIO_PIN_2
 #define OBC_Temperature_GPIO_Port GPIOC
 #define CAM1_PD_Pin GPIO_PIN_0
@@ -121,7 +104,6 @@ TimerHandle_t retransmission_timer;
 #define Memory_MISO_GPIO_Port GPIOB
 #define Memory_MOSI_Pin GPIO_PIN_15
 #define Memory_MOSI_GPIO_Port GPIOB
-
 #define STLINK_RX_Pin GPIO_PIN_8
 #define STLINK_RX_GPIO_Port GPIOD
 #define STLINK_TX_Pin GPIO_PIN_9
@@ -133,7 +115,10 @@ TimerHandle_t retransmission_timer;
 #define Transceiver_exti_Pin GPIO_PIN_5
 #define Transceiver_exti_GPIO_Port GPIOD
 
-  /* USER CODE BEGIN Private defines */
+/* USER CODE BEGIN Private defines */
+
+// This may need a different value
+#define ACK_RECV_TIMEOUT 1000
 
   /*
    * Set mode from TTC: REQUEST & <MODE>
@@ -167,7 +152,7 @@ TimerHandle_t retransmission_timer;
 #define SUB_3 0x4000 // 			Acceleration
 #define SUB_4 0x8000 // 			Gyroscope
 
-  /* USER CODE END Private defines */
+/* USER CODE END Private defines */
 
 #ifdef __cplusplus
 }

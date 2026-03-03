@@ -17,21 +17,23 @@
  * @version 1.0
  * @note Requires HAL library for STM32H7xx and OV5640 driver
  */
-
-#include "ttc.h"
-#include "ttc_interface.h"
+#include "main.h"
 #include "stm32h7xx_hal.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "ov5640.h"
-#include "ov5640_reg.h"
 
 #include "camera.h"
 #include "camera_recovery.h"
 #include "camera_bsp.h"
+
+#include "ov5640.h"
+#include "ov5640_reg.h"
+
 #include "flash_interface.h"
 
+#include "ttc.h"
+#include "ttc_interface.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 /** @def SWITCH_CAMERA(camera, state)
  *  @brief Macro to switch camera state via GPIO
  *  @param camera Camera structure containing GPIO information

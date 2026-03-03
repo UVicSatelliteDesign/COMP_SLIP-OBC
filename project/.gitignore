@@ -1,5 +1,25 @@
 .settings/
-Debug/
-Release/
 *.launch
 .mxproject
+.cproject
+.DS_Store
+Middlewares/
+
+#Build binaries
+*.o
+*.d
+*.su
+*.cyclo
+*.mk
+*.list
+makefile
+
+#build directories
+Debug/
+Release/
+build/
+Build/
+ouput/
+bin/
+obj/
+tmp/

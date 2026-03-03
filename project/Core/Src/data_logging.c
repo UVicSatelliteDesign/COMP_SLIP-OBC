@@ -1,11 +1,17 @@
+#include "flash_interface.h"
+#include "data_logging.h"
+#include "obc_interface.h"
 #include "stm32h7xx_hal.h"
+
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include "flash_interface.h"
-#include "data_logging.h"
-#include "obc_interface.h"
+
+int FLASH_MEMORY_SIZE_SENSORS = sizeof(SensorsData);
+int FLASH_MEMORY_SIZE_GPS = 79;
+int FLASH_MEMORY_SIZE_BATTERY = sizeof(BatteryData);
 /*
 this will contain functions implementing data logging over serial
 functions will be documented in .h file
@@ -23,7 +29,7 @@ bool log_data(DataLogType_t data_specifier){
                 SensorsData *SensorsDataPtr = (SensorsData *) BufferPtr;
                 SensorsData data = *SensorsDataPtr;
                 //printf modified to send to serial
-                printf("%02x, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f", sensors, data.temperature_obc, data.temperature_ttc, data.temperature_bms, data.gyroscope_axis_1, data.gyroscope_axis_2, data.gyroscope_axis_3, data.acceleration_axis_1, data.acceleration_axis_2, data.acceleration_axis_3, data.altitude);
+                printf("%02x, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f", sensors, data.temperature_obc, data.temperature_ttc, data.temperature_bms, data.gyroscope_axis_1, data.gyroscope_axis_2, data.gyroscope_axis_3, data.acceleration_x, data.acceleration_y, data.acceleration_z, data.altitude);
                 free(BufferPtr);
                 return true;
             }
@@ -34,7 +40,7 @@ bool log_data(DataLogType_t data_specifier){
                 uint8_t *GPSPtr = (uint8_t *) BufferPtr;
                 printf("%02x, ", gps);
                 for(int i = 0; i < FLASH_MEMORY_SIZE_GPS; i++){
-                    printf("%02x", GPSPtr);
+                    printf("%02x", *GPSPtr);
                     GPSPtr++;
                 }
                 free(BufferPtr);
