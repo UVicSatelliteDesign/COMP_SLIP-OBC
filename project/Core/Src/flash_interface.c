@@ -67,7 +67,7 @@ bool flash_write(void* memory_address, int memory_size, uint8_t flash_sector_fla
     HAL_FLASH_Unlock();
     
     // Write magic number first
-    if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, write_address, 0xDEADBEEF) != HAL_OK) {
+    if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, write_address, 0xDEADBEEF) != HAL_OK) {
         HAL_FLASH_Lock();
         return false;
     }
@@ -76,7 +76,7 @@ bool flash_write(void* memory_address, int memory_size, uint8_t flash_sector_fla
     uint32_t numWords = (memory_size + 7) / 8;
     
     for (uint32_t i = 0; i < numWords; i++) {
-        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, write_address + 4 + (i * 8), src[i]) != HAL_OK) {
+        if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, write_address + 4 + (i * 8), src[i]) != HAL_OK) {
             HAL_FLASH_Lock();
             return false;
         }

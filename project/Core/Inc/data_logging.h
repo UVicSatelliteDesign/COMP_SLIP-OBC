@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "flash_interface.h"
+#include "obc_interface.h"
 
 typedef enum{
     sensors = 0,
@@ -12,9 +13,9 @@ typedef enum{
 }DataLogType_t;
 
 ///////////////////////////////
-int FLASH_MEMORY_SIZE_SENSORS = sizeof(SensorsData);  
-int FLASH_MEMORY_SIZE_GPS = 79;      //size in bytes: 79 characters at 1byte/char
-int FLASH_MEMORY_SIZE_BATTERY = sizeof(BatteryData);  
+extern int FLASH_MEMORY_SIZE_SENSORS;
+extern int FLASH_MEMORY_SIZE_GPS;      //size in bytes: 79 characters at 1byte/char
+extern int FLASH_MEMORY_SIZE_BATTERY;
 /////////////^^^These size variables need declaration/////////////////
 
 

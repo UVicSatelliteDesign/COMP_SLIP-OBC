@@ -1,9 +1,9 @@
 #include "ttc_interface.h"
-
+#include "main.h"
 #include "flash_interface.h"
 #include "stm32h7xx_hal.h"
 
-uint8_t gps_rx_buffer[]; // gps reception buffer
+uint8_t gps_rx_buffer[128]; // gps reception buffer
 //////////////// section variables need definition
 uint8_t NMEA_sentence_size; //  the length in bits of the gps data sentence
 uint8_t interrupt_timeout_length; //  the time until the CPU unfreezes if data has not yet been received
@@ -33,7 +33,6 @@ bool get_gps(){ // this is formatted for polling
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "main.h"
 
 #define MAX_PACKET_SIZE 128
 #define HEADER_SIZE 6
@@ -131,15 +130,13 @@ void packageAndSendChunks(int camera, int flash_sector, uint16_t fullPayloadLen,
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if (GPIO_Pin == Transciever_exti_Pin)
+	if (GPIO_Pin == Transceiver_exti_Pin)
 	{
 		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 		xSemaphoreGiveFromISR(myBinarySem01Handle, &xHigherPriorityTaskWoken);
 		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 	}
 }
-
-sequenceNum = 0;
 
 void transmit()
 {
@@ -182,15 +179,6 @@ void CC12_SendCommand(uint8_t *command, int length)
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); // CS high
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	if (GPIO_Pin == Transciever_exti_Pin)
-	{
-		BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-		xSemaphoreGiveFromISR(myBinarySem01Handle, &xHigherPriorityTaskWoken);
-		portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	}
-}
 
 /**
  * @brief Reads data from the RX FIFO of the CC1201 using SPI burst read mode.

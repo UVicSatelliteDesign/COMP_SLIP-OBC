@@ -1,9 +1,11 @@
+#include <string.h>
 #include "obc.h"
 #include "obc_interface.h"
 #include "camera.h"
 #include "main.h"
 #include "time.h"
 #include "flash_interface.h"
+
 
 int mode = NOMINAL_MODE; // Start the payload in nominal mode
 HAL_StatusTypeDef status;
@@ -14,6 +16,7 @@ uint8_t camera1_buffer[MAX_IMAGE_BUFFER_SIZE];
 uint8_t camera2_buffer[MAX_IMAGE_BUFFER_SIZE];
 
 extern SemaphoreHandle_t image_mutex;
+extern TaskHandle_t ttc_notifications_handle;
 
 void obc_notifications(void *vpParameters) {
     uint32_t received_notification = 0;
@@ -33,8 +36,8 @@ void obc_notifications(void *vpParameters) {
         if (received_notification & REQUEST & CAMERA) {
         	if (mode == LOW_POWER) {
         		// Send Low power warning
-        		xTaskNotify(ttc_notifications, WARNING & LOW_POWER, eSetValueWithOverwrite);
-				store_data("Low power image request", T_WARNING);
+        		xTaskNotify(ttc_notifications_handle, WARNING & LOW_POWER, eSetValueWithOverwrite);
+        		store_data((uint8_t*)"Low power image request", sizeof("Low power image request"), T_WARNING);
 
         	} else {
         		// Take a picture
@@ -45,10 +48,10 @@ void obc_notifications(void *vpParameters) {
         			status = capture_snapshot(camera1);
         			if (status == HAL_OK) {
         				save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);
-						store_image(camera1->imageBuffer);
+        				store_image(camera1->imageBuffer, sizeof(camera1->imageBuffer));
         			} else {
-        				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
-						store_data("Camera 1 error", T_ERROR);
+        				xTaskNotify(ttc_notifications_handle, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
+        				store_data((uint8_t*)"Camera 1 error", sizeof("Camera 1 error"), T_ERROR);
         			}
         		} else {
         			freeImageBuffer(camera2);
@@ -56,10 +59,10 @@ void obc_notifications(void *vpParameters) {
         			status = capture_snapshot(camera2);
         			if (status == HAL_OK) {
         			    save_image_to_flash(camera2, FLASH_SECTOR_CAMERA);
-						store_image(camera2->imageBuffer);
+        			    store_image(camera2->imageBuffer, sizeof(camera2->imageBuffer));
         			} else {
-        				xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
-						store_data("Camera 2 error", T_ERROR);
+        				xTaskNotify(ttc_notifications_handle, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
+        				store_data((uint8_t*)"Camera 2 error", sizeof("Camera 2 error"), T_ERROR);
         			}
         		}
         	}
@@ -79,13 +82,13 @@ void obc_notifications(void *vpParameters) {
         	
 
         	// Save telemetry to memory
-			store_data((uint8_t*)&sensor_data, T_DATA);
-			store_data((uint8_t*)&battery_data, T_DATA);
-			store_data(&gps_data, T_DATA);
+        	store_data((uint8_t*)&sensor_data, sizeof(sensor_data), T_DATA);
+        	store_data((uint8_t*)&battery_data, sizeof(battery_data), T_DATA);
+        	store_data(&gps_data, T_DATA);
         }
 
         if (received_notification & ERROR & GPS) {
-        	store_data("GPS error", T_ERROR);
+        	store_data((uint8_t*)"GPS error", sizeof("GPS error"), T_ERROR);
         }
 
         if (received_notification & REQUEST & LOW_POWER) {
@@ -106,7 +109,7 @@ void data_task(void *vpParameters) {
 		sensor_data = read_sensors();
 		save_battery_data_to_flash(&battery_data); // Continuously updated in low_power_task
 		save_sensor_data_to_flash(&sensor_data);
-		xTaskNotify(ttc_notifications, REQUEST & GPS, eSetValueWithOverwrite); // Request GPS data
+		xTaskNotify(ttc_notifications_handle, REQUEST & GPS, eSetValueWithOverwrite); // Request GPS data
 
 		if (mode == NOMINAL) {
 			vTaskDelay(pdMS_TO_TICKS(NOMINAL_INTERVAL)); // Wait nominal time
@@ -134,16 +137,16 @@ void image_task(void *vpParameters) {
 	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) {
 
 		freeImageBuffer(camera1);
-		camera = 1;
+		int camera = 1;
 		status = capture_snapshot(camera1);
 		if (status == HAL_OK) {
 			save_image_to_flash(camera1, FLASH_SECTOR_CAMERA);
-			store_image(camera1->imageBuffer);
+			store_image(camera1->imageBuffer, sizeof(camera1->imageBuffer));
 		} else {
-			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
-			store_data("Camera 1 error", T_ERROR);
+			xTaskNotify(ttc_notifications_handle, ERROR & CAMERA & SUB_1, eSetValueWithOverwrite);
+			store_data((uint8_t*)"Camera 1 error", sizeof("Camera 1 error"), T_ERROR);
 		}
-		xSemaphoreGive(xMutex);
+		xSemaphoreGive(image_mutex);
 	}
 
 
@@ -151,14 +154,14 @@ void image_task(void *vpParameters) {
 	if (xSemaphoreTake(image_mutex, portMAX_DELAY) == pdTRUE) {
 
 		freeImageBuffer(camera2);
-		camera = 2;
+		int camera = 2;
 		status = capture_snapshot(camera2);
 		if (status == HAL_OK) {
 			save_image_to_flash(camera2, FLASH_SECTOR_CAMERA);
-			store_image(camera2->imageBuffer);
+			store_image(camera2->imageBuffer, sizeof(camera2->imageBuffer));
 		} else {
-			xTaskNotify(ttc_notifications, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
-			store_data("Camera 2 error", T_ERROR);
+			xTaskNotify(ttc_notifications_handle, ERROR & CAMERA & SUB_2, eSetValueWithOverwrite);
+			store_data((uint8_t*)"Camera 2 error", sizeof("Camera 2 error"), T_ERROR);
 		}
 		xSemaphoreGive(image_mutex);
 	}
@@ -170,8 +173,8 @@ void image_task(void *vpParameters) {
 void set_mode(int m) {
 	mode = m;
 	if (m == NOMINAL) {
-		xTaskNotify(ttc_notifications, INFO & NOMINAL, eSetValueWithOverwrite);
+		xTaskNotify(ttc_notifications_handle, INFO & NOMINAL, eSetValueWithOverwrite);
 	} else if (m == LOW_POWER) {
-		xTaskNotify(ttc_notifications, INFO & LOW_POWER, eSetValueWithOverwrite);
+		xTaskNotify(ttc_notifications_handle, INFO & LOW_POWER, eSetValueWithOverwrite);
 	}
 }

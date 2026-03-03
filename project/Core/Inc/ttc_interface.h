@@ -4,13 +4,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include <semphr.h>
 #include "stm32h7xx_hal.h"
 #include "stm32h7xx_hal_spi.h"
 #include "main.h"
-
-typedef uint8_t FIFOsize[128]; // new typedef used for defining FIFO size as mentioned in the CC1201 datasheet
 
 typedef enum
 {
@@ -43,19 +42,19 @@ void packageAndSendChunks(int camera, int flash_sector, uint16_t fullPayloadLen,
 
 /*
 get_gps:
-    returns a NMEA $GPRMC formatted gps sentence to main as a buffer.
+    polls an NMEA $GPRMC gps sentence from the gps unit and stores this data to flash
 Parameters:
     void
 Returns:
-    returns gps data as a buffer
+    returns a true boolean if successful, and a false boolean otherwise
 */
-uint8_t get_gps();
+bool get_gps();
 
 void transmit();
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 
 bool ReadRegisterBurst();
-uint16_t sequenceNum; // Current sequence number
+extern uint16_t sequenceNum = 0; // Current sequence number
 
 #endif

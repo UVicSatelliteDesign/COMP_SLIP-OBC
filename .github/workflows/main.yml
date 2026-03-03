@@ -29,14 +29,12 @@ jobs:
           source ${{env.venv-path}}/activate
           python3 hil_test.py &
 
-
       - name: Print modified file
         run: |
           echo $(pwd)
           cd ${{env.path}}
           echo $(pwd)
           cd ${{env.path}}/Debug   
-
           arm-none-eabi-objcopy -O binary ${{env.elf}}.elf ${{env.elf}}.bin
           echo Binary file ready
           st-flash write ${{env.elf}}.bin 0x8000000

@@ -194,7 +194,8 @@ float read_BMS_temperature_1() {
 
 float read_BMS_temperature_2() {
     uint8_t raw[2] = {0};
-    int16_t temp_raw = 0;
+    //Unused variable, might be outdated
+    //int16_t temp_raw = 0;
 
 
     if (HAL_I2C_Mem_Read(&hi2c2, TEMP_ADDR_BMS_2, 0x00, I2C_MEMADD_SIZE_8BIT, raw, 2, I2C_Timeout) != HAL_OK) {
@@ -202,7 +203,8 @@ float read_BMS_temperature_2() {
 
     }
 }
-
+//Duplicate function
+/*
 void load_sensor_data_from_flash() {
     if (!flash_read(&sensor_backup, sizeof(SensorsData), FLASH_SECTOR_SENSORS, SENSOR_DATA_OFFSET)) {
         memset(&sensor_backup, 0, sizeof(SensorsData));
@@ -210,11 +212,11 @@ void load_sensor_data_from_flash() {
 
 
     }
-
+	//Don't know what these are for, function returns void.
     temp_raw = (int16_t)((raw[0] << 4) | raw[1] >> 4);
     return (float)temp_raw +273.15 ; // Convert to Kelvin
 }
-
+*/
 float read_OBC_temperature(){ // temperature hardware wrapper
     // //dummy value degree celsius
     // return 10;

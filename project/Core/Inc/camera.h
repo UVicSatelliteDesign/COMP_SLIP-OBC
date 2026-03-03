@@ -25,7 +25,7 @@
 #define IMAGE_SIZE_2 (IMAGE_WIDTH * IMAGE_HEIGHT * 3 * JPEG_COMPRESSION_RATIO) /**< Size of the image buffer in bytes (for 640x480, JPEG, Colour). */
 
 // MAX IMAGE BUFFER SIZE - choose larger image between camera 1 and 2 (assume camera1 has the larger image size for now)
-#define MAX_IMAGE_BUFFER_SIZE (IMAGE_WIDTH * IMAGE_HEIGHT * 3 * JPEG_COMPRESSION_RATIO)
+#define MAX_IMAGE_BUFFER_SIZE ((uint32_t)(IMAGE_WIDTH * IMAGE_HEIGHT * 3 * JPEG_COMPRESSION_RATIO))
 
 /**
  * @struct Camera_t
