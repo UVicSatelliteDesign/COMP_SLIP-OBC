@@ -11,8 +11,6 @@
 #include "stm32h7xx_hal_spi.h"
 #include "main.h"
 
-typedef uint8_t FIFOsize[128]; // new typedef used for defining FIFO size as mentioned in the CC1201 datasheet
-
 typedef enum
 {
 	PING = 0b00000000,
