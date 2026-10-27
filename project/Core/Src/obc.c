@@ -84,7 +84,7 @@ void obc_notifications(void *vpParameters) {
         	// Save telemetry to memory
         	store_data((uint8_t*)&sensor_data, sizeof(sensor_data), T_DATA);
         	store_data((uint8_t*)&battery_data, sizeof(battery_data), T_DATA);
-        	store_data(&gps_data, T_DATA);
+        	store_data((uint8_t*)&gps_data, sizeof(gps_data), T_DATA);
         }
 
         if (received_notification & ERROR & GPS) {
