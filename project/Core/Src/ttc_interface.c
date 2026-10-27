@@ -10,6 +10,8 @@ uint8_t interrupt_timeout_length; //  the time until the CPU unfreezes if data h
 uint16_t GPS_FLASH_ADDRESS; // to be set before implementation
 ////////////////
 extern UART_HandleTypeDef huart4; // GPS UART handle definition
+extern SPI_HandleTypeDef hspi2;   // CC1201 SPI (CS on PB12)
+uint16_t sequenceNum = 0;         // Current sequence number
 
 
 /*
@@ -162,7 +164,7 @@ void writeToTransmitBuffer(uint8_t *data, uint16_t length)
 	// transmit the data packet
 	for (int i = 0; i < length; i++)
 	{
-		HAL_SPI_Transmit(&hspi1, *data, length, HAL_MAX_DELAY);
+		HAL_SPI_Transmit(&hspi2, *data, length, HAL_MAX_DELAY);
 		data++; // go to next
 	}
 	// pull CS high to end SPI communication
@@ -174,7 +176,7 @@ void CC12_SendCommand(uint8_t *command, int length)
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET); // CS low
 
 	// transmit command over spi
-	HAL_SPI_Transmit(&hspi1, command, length, HAL_MAX_DELAY);
+	HAL_SPI_Transmit(&hspi2, command, length, HAL_MAX_DELAY);
 
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET); // CS high
 }

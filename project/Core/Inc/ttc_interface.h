@@ -55,6 +55,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
 
 
 bool ReadRegisterBurst();
-extern uint16_t sequenceNum = 0; // Current sequence number
+extern uint16_t sequenceNum; // Current sequence number
+void writeToTransmitBuffer(uint8_t *data, uint16_t length);
+void CC12_SendCommand(uint8_t *command, int length);
 
 #endif
